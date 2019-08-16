@@ -1,0 +1,5 @@
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Name "[RemoteRules] NetBios-TCP135" -DisplayName "[RemoteRules] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Name "[RemoteRules] NetBios-UDP137" -DisplayName "[RemoteRules] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Name "[RemoteRules] NetBios-UDP138" -DisplayName "[RemoteRules] NetBios2" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Name "[RemoteRules] NetBios-TCP139" -DisplayName "[RemoteRules] NetBios3" -ErrorAction Ignore
+set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip* -Name NetbiosOptions -Value 2
