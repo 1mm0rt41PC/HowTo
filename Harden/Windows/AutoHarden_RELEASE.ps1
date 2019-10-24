@@ -1,12 +1,29 @@
-﻿$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+﻿# 2019-10-25
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 Add-Type -AssemblyName System.Windows.Forms
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
+mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
+Start-Transcript -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
 ####################################################################################################
-# 0-Hardening-Firewall
+# 0-AutoUpdate
 ####################################################################################################
-Write-Progress -Activity AutoHarden -Status "0-Hardening-Firewall" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-Hardening-Firewall"
+Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
+$Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
+$Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec bypass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
+$Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
+Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
+
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
+Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -Completed
+
+
+####################################################################################################
+# 1-Hardening-Firewall
+####################################################################################################
+Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-Firewall"
 # Cleaning firewall rules
 Set-NetFirewallProfile -DefaultInboundAction Block
 Get-NetFirewallRule  | foreach { 
@@ -29,15 +46,15 @@ New-NetFirewallRule -direction Outbound -Action Allow -Program "C:\Program Files
 New-NetFirewallRule -direction Inbound -Action Allow -Program "C:\Program Files (x86)\Nmap\nmap.exe" -Name "[RemoteRules][IN] NMAP bypass SNMP & co" -DisplayName "[RemoteRules][IN] NMAP bypass SNMP & co" -ErrorAction Ignore
 New-NetFirewallRule -direction Inbound -Action Allow -Program "C:\Program Files (x86)\VMware\VMware Workstation\vmnat.exe" -Name "[RemoteRules][IN] VMWare bypass SNMP & co" -DisplayName "[RemoteRules][IN] VMWare bypass SNMP & co" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Allow -Program "C:\Program Files (x86)\VMware\VMware Workstation\vmnat.exe" -Name "[RemoteRules][OUT] VMWare bypass SNMP & co" -DisplayName "[RemoteRules][OUT] VMWare bypass SNMP & co" -ErrorAction Ignore
-Write-Progress -Activity AutoHarden -Status "0-Hardening-Firewall" -Completed
+Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
 
 
 ####################################################################################################
-# 1-Hardening-HardDriveEncryption
+# 2-Hardening-HardDriveEncryption
 ####################################################################################################
-Write-Progress -Activity AutoHarden -Status "1-Hardening-HardDriveEncryption" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-HardDriveEncryption"
-$config="C:\Windows\1-Hardening-HardDriveEncryption.AutoHarden";
+Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 2-Hardening-HardDriveEncryption"
+$config="C:\Windows\AutoHarden\2-Hardening-HardDriveEncryption.ask";
 $ret=cat $config -ErrorAction Ignore;
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Encrypt the HardDrive C:?","Encrypt the HardDrive C:?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
@@ -51,12 +68,13 @@ try{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector | foreach {
 		if( -not [string]::IsNullOrEmpty($_.RecoveryPassword) ){
+			Add-Type -AssemblyName System.Windows.Forms
 			[System.Windows.Forms.MessageBox]::Show("Please keep a note of this RecoveryPassword "+$_.RecoveryPassword);
 		}
 	}
 }
 }else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
-Write-Progress -Activity AutoHarden -Status "1-Hardening-HardDriveEncryption" -Completed
+Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
 
 
 ####################################################################################################
@@ -477,7 +495,7 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -Complet
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoUpdate"
-$config="C:\Windows\Optimiz-DisableAutoUpdate.AutoHarden";
+$config="C:\Windows\AutoHarden\Optimiz-DisableAutoUpdate.ask";
 $ret=cat $config -ErrorAction Ignore;
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable auto update?","Disable auto update?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
@@ -497,7 +515,7 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -Complet
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
-$config="C:\Windows\Optimiz-DisableDefender.AutoHarden";
+$config="C:\Windows\AutoHarden\Optimiz-DisableDefender.ask";
 $ret=cat $config -ErrorAction Ignore;
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable WindowsDefender?","Disable WindowsDefender?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
@@ -511,7 +529,7 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
-$config="C:\Windows\Software-install-notepad++.AutoHarden";
+$config="C:\Windows\AutoHarden\Software-install-notepad++.ask";
 $ret=cat $config -ErrorAction Ignore;
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Replace notepad with notepad++?","Replace notepad with notepad++?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
@@ -624,3 +642,4 @@ choco upgrade all -y
 Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
+Stop-Transcript
