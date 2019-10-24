@@ -219,7 +219,12 @@ for rule in $RULES; do
 	fi
 done
 
-if [ "$1" = "" ]; then
+if [ "$1" = "--rebuild" ]; then
+	found2dict 1
+	exit 0
+fi
+
+if [ "$1" = "" ] || [ "$HASHES" = "" ]; then
 	echo 'Usage:'
 	echo "  $0 <hash-type> <hash-file>"
 	echo ''
@@ -243,7 +248,7 @@ if [ "$DICO_PATH" = "" ] || [ ! -f "`find $DICO_PATH -maxdepth 1 -type f -name '
 fi
 
 if [ ! -f "$HASHES" ]; then
-	echo "[!] File >$HASHES< not found"
+	echo "[!] File for hashes \"$HASHES\" not found"
 	exit 1
 fi
 
@@ -273,12 +278,6 @@ fi
 ([ "${HASH_TYPE^^}" = "NETNTLMV1" ] || [ "${HASH_TYPE^^}" = "NTLMV1" ]) && export HASH_TYPE=5500
 ([ "${HASH_TYPE^^}" = "NETNTLMV2" ] || [ "${HASH_TYPE^^}" = "NTLMV2" ]) && export HASH_TYPE=5600
 [ "${HASH_TYPE^^}" = "PMKID" ] && export HASH_TYPE=16800
-
-if [ "$HASH_TYPE" = "--rebuild" ]; then
-	found2dict 1
-	exit 0
-fi
-
 
 if [ "$HASH_TYPE" -lt 0 ] || [ ! -f "$HASHES" ]; then
 	echo -e '\033[31m*******************************************************************************'
