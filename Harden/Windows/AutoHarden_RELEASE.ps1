@@ -10,12 +10,17 @@ Start-Transcript -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format 
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
+$config="C:\Windows\AutoHarden\0-AutoUpdate.ask";
+$ret=cat $config -ErrorAction Ignore;
+if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?","Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?", "YesNo" , "Question" ) -eq "Yes") ){
+[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
 $Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec bypass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
+}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -Completed
 
 
