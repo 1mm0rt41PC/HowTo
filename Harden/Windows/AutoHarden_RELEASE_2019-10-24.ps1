@@ -1,5 +1,6 @@
 ﻿$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
+Add-Type -AssemblyName System.Windows.Forms
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
 ####################################################################################################
 # 0-Hardening-Firewall
@@ -36,14 +37,25 @@ Write-Progress -Activity AutoHarden -Status "0-Hardening-Firewall" -Completed
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "1-Hardening-HardDriveEncryption" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-HardDriveEncryption"
+$config="C:\Windows\1-Hardening-HardDriveEncryption.AutoHarden";
+$ret=cat $config -ErrorAction Ignore;
+if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Encrypt the HardDrive C:?","Encrypt the HardDrive C:?", "YesNo" , "Question" ) -eq "Yes") ){
+[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
 # AES 256-bit 
-reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f 
+reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f
+
 try{
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector
 }catch{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -ErrorAction Continue
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
+	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector | foreach {
+		if( -not [string]::IsNullOrEmpty($_.RecoveryPassword) ){
+			[System.Windows.Forms.MessageBox]::Show("Please keep a note of this RecoveryPassword "+$_.RecoveryPassword);
+		}
+	}
 }
+}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
 Write-Progress -Activity AutoHarden -Status "1-Hardening-HardDriveEncryption" -Completed
 
 
@@ -465,13 +477,18 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -Complet
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoUpdate"
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoRebootWithLoggedOnUsers /t REG_DWORD /d 1 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 0 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootRelaunchTimeoutEnabled /t REG_DWORD /d 0 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootWarningTimeoutEnabled /t REG_DWORD /d 0 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallDay /t REG_DWORD /d 0 /f
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallTime /t REG_DWORD /d 3 /f
+$config="C:\Windows\Optimiz-DisableAutoUpdate.AutoHarden";
+$ret=cat $config -ErrorAction Ignore;
+if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable auto update?","Disable auto update?", "YesNo" , "Question" ) -eq "Yes") ){
+[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoRebootWithLoggedOnUsers /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootRelaunchTimeoutEnabled /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootWarningTimeoutEnabled /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallDay /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallTime /t REG_DWORD /d 3 /f
+}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -Completed
 
 
@@ -480,7 +497,12 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -Complet
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
-#reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+$config="C:\Windows\Optimiz-DisableDefender.AutoHarden";
+$ret=cat $config -ErrorAction Ignore;
+if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable WindowsDefender?","Disable WindowsDefender?", "YesNo" , "Question" ) -eq "Yes") ){
+[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
 
@@ -489,6 +511,10 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 ####################################################################################################
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
+$config="C:\Windows\Software-install-notepad++.AutoHarden";
+$ret=cat $config -ErrorAction Ignore;
+if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Replace notepad with notepad++?","Replace notepad with notepad++?", "YesNo" , "Question" ) -eq "Yes") ){
+[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
 ################################################################################
 # Installation de choco
 #
@@ -553,6 +579,7 @@ WScript.Quit
 if( [System.IO.File]::Exists($npp_path) ){
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
+}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
 
 

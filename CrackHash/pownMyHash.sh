@@ -39,7 +39,7 @@ export DICO_PATH_CYGWIN=./dico/
 export HCB=$HC/hashcat64.bin
 export HASH_TYPE=$1
 export HASHES=`realpath $2 2>/dev/null`
-export SCRIPT_PATH=`realpath $0`
+export SCRIPT_PATH=`realpath -s $0`
 export SCRIPT_PATH=`dirname $SCRIPT_PATH`
 export FINDINGS=$SCRIPT_PATH/.pownMyHash.dico
 
