@@ -212,6 +212,24 @@ if [ ! -f "$HCB" ]; then
 	fi
 fi
 
+for rule in $RULES; do
+	if [ ! -f "$HC/rules/$rule" ]; then
+		echo "[!] Rule >$rule< not found in \"$HC/rules/\""
+		exit 1
+	fi
+done
+
+if [ "$1" = "" ]; then
+	echo 'Usage:'
+	echo "  $0 <hash-type> <hash-file>"
+	echo ''
+	echo 'With:'
+	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
+	echo '  <hash-file>: The file that contains the hashed passwords'
+	#$HCB --force --example-hashes
+	exit
+fi
+
 if [ "$DICO_PATH" = "" ] || [ ! -f "`find $DICO_PATH -maxdepth 1 -type f -name '*.dico' 2>/dev/null | head -n1`" ]; then
 	export _findme=`find . -maxdepth 3 -name '*.dico' -type f | grep -vF '/.' 2>/dev/null | head -n1`
 	if [ ! -f "$_findme" ]; then
@@ -228,13 +246,6 @@ if [ ! -f "$HASHES" ]; then
 	echo "[!] File >$HASHES< not found"
 	exit 1
 fi
-
-for rule in $RULES; do
-	if [ ! -f "$HC/rules/$rule" ]; then
-		echo "[!] Rule >$rule< not found in \"$HC/rules/\""
-		exit 1
-	fi
-done
 
 # Fix all path to be valid in Windows if needed
 if [ "`which cygpath`" != "" ] ; then
@@ -279,7 +290,7 @@ if [ "$HASH_TYPE" -lt 0 ] || [ ! -f "$HASHES" ]; then
 	echo 'With:'
 	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
 	echo '  <hash-file>: The file that contains the hashed passwords'
-	$HCB --force --example-hashes
+	#$HCB --force --example-hashes
 	exit
 fi
 
