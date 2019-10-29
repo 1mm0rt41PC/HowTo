@@ -1,4 +1,5 @@
 # Cleaning firewall rules
+netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
 Get-NetFirewallRule  | foreach { 
 	if( -not $_.Name.StartsWith('[RemoteRules]') ){

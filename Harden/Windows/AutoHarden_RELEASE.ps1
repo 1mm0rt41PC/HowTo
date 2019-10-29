@@ -1,35 +1,53 @@
-﻿# 2019-10-25
+﻿# 2019-10-29
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 Add-Type -AssemblyName System.Windows.Forms
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
 mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
 Start-Transcript -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
-####################################################################################################
-# 0-AutoUpdate
-####################################################################################################
+
+echo "####################################################################################################"
+echo "# Install AutoHarden Cert"
+echo "####################################################################################################"
+$AutoHardenCert = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
+[IO.File]::WriteAllBytes($AutoHardenCert, [Convert]::FromBase64String("MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoXDTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GSl1NergVq/3WmT8LDpaZ0XSpExZ7soHR3gs8eztnfe07r+Fl+W7l6lz3wUGFt52VY17WCa53tr5dYRPzYt2J6TWT874tqZqlo+lUl8ONK1roAww2flcDajm8VUXM0k0sLM17H9NLykO3DeBuh2PVaXUxGDej+N8PsYF3/7Gv2AW0ZHGflrondcXb2/eh8xwbwRENsGaMXvnGr9RWkufC6bKq31J8BBnP+/65M6541AueBoH8pLbANPZgHKES+8V9UWlYKOeSoeBhtL1k3Rr8tfizRWx1zg/pBNL0WTOLcusmuJkdHkdHbHaW6Jc/vh06Cs6xqz9/Dkg+K3BvOmfwZfAjl+qdgzM8dUU8/GWhswngwLAz64nZ82mZv/Iw6egC0rj5MYV0tpEjIgtVVgHavUfyXoIETNXFQR4SoK6PfeVkEzbRh03xhU65MSgBgWVv1YbOtdgXK0MmCs3ngVPJdVaqBjgcrK++X3Kxasb/bOkcfQjff/EK+BPb/xs+pXEqryYbtbeX0v2rbV9cugPUj+mneucZBLFjuRcXhzVbXLrwXVne7yTD/sIKfe7dztzchg19AY6/qkkRkroaKLASpfCAVx2LuCgeFGn//QaEtCpFxMo2dcnW2a+54pkzrCRTRg1N2wBQFAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQAQLtHeMr2qJnfhha2x2aCIApPjfHiHT4RNPI2Lq71jEbTpzdDFJQkKq4R3brGcpcnuU9VjUwz/BgKer+SFpkwFwTHyJpEFkbGavNo/ez3bqoehvqlTYDJO/i2mK0fvKmShfne6dZT+ftLpZCP4zngcANlp+kHy7mNRMB+LJv+jPc0kJ2oP4nIsLejyfxMj0lXuTJJRhxeZssdh0tq4MZP5MjSeiE5/AMuKT12uJ6klNUFS+OlEpZyHkIpgy4HxflXSvhchJ9U1YXF2IQ47WOrqwCXPUinHKZ8LwB0b0/35IlRCpub5KdRf803+4Okf9fL4rfc1cg9ZbLxuK9neFg1+ESL4aPyoV03TbN7Cdsd/sfx4mJ8jXJD+AXZ1ZofAAapYf9J5C71ChCZlhIGBvVc+dTUCWcUYgNOD9Nw+NiV6mARmVHl9SFL7yEtNYFgo0nWiNklqMqBLDxmrrD27sgBpFUwbMZ52truQwaaSHD7hFb4Tb1B0JVaGoog3QfNOXaFeez/fAt5L+yo78cDm7Q2tXvy2g0xDAL/TXn7bhtDzQunltBzdULrJEQO4zI0h8YgmF88a0zYZ9HRkDUn6dR9+G8TlZuUsWSOdvLdEvad9RqiHKeSrL6qgLBT5kqVt6AFsEtmFNz1s7xpsw/zPZvIXtQTmb4h+GcE/b2sUFZUkRA=="))
+Import-Certificate -Filepath $AutoHardenCert -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
+$AutoHardenCertCA = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
+[IO.File]::WriteAllBytes($AutoHardenCertCA, [Convert]::FromBase64String("MIIFHDCCAwSgAwIBAgIQa8VTLnfdzZxP14xJKNvthzANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUwOVoXDTM5MTIzMTIzNTk1OVowGDEWMBQGA1UEAxMNQXV0b0hhcmRlbi1DQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBANlm8tv2IqVairIP90RnIsNlQYPMAvUwRcC6Nw+0Qlv56tWczvMl9IF0+h2vUF5+lnSEkJMGBqeLFaJgSo9lNyHeTfjjqpEcMVBw1nXl6VSfNiirD7fJTkyZ3rl63PsOwbfWCPDW1AvLufYhBiijPlK1k4RJFkiFZbZkpe5ys0uY4QVFj+ZTaW0EA0MncX2YZ775QnX7HJO0HfMcHGGTxOPhAqJ7Pp+IBrs75laaASekJSTVub7jqs5aeApQkUWgKel1fmK0tBv35deE1P5ABXi+KnuzWCZDU8znIDAnj1qz+6c21KKhslEdzYlRSlq4kPcF964GECxRtgq0z1pzhV/WvBJjWjNp3G5e8jUfjuAg2utF/xd/j7GNU8vllDAXFjl4czc1saGZDcU8a/uaweKMjqR4WfyUp/H/mB7JFJlOHBGTRszWaAU/4E0V+bICXNI5augkV29ci0HouBG3WFcQiA5q+1U2vY/scVyMPm8ZecCe2b+SD/ipPtFspcOPStRm5EQgL4CWdVpSmm8+JRO0NcrSnQtNPCwPBT3c7OLOwYLBl8WHcJG1yOJtQvLjv1koMmJkHR0djODx8Ig9fqAFLH0c694E6VJbojDVGp/LRR9LnJnzYlWAYoT3ScPQ9uesgr4x8VSnrM6cMG3ASQD92RVXKCDep/Rq29IXtvjpAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQDBiDwoVi2YhWzlMUTE5JHUUUkGkTaMVKfjYBFiUHeQQIaUuSq3dMRPlfpDRSzt3TW5mfwcPdwwatE0xeGN3r3zyQgnzEG/vMVrxwkgfFekVYvE4Ja551MSkwAA2fuTHGsRB9tEbTrkbGr35bXZYxOpGHpZIifFETFCT6rOpheDdxOEU6YyLeIYgGdGCmKStJ3XSkvqBh7oQ45M0+iqX9yjJNGoUg+XMLnk4K++7rxIk/SGtUBuIpsB3ksmIsXImelUxHw3xe6nGkkncAm9yX7rTU1M1fqrxaoBiGvx9jlqxDVMIzzDga7vKXDsP/iUmb4feeTIoy7+SgqGWsSvRiLt6A5CeIQ5XaTrhWN+mbGq6vvFTZuctY6LzdufwhlbZXFmfU/LnsRprM2EzYfba8VZmmfMBBpnYrw5q/3d5f9OSmNkRQjs0HfVab9b44hWNUd2QJ6yvjM5gdB367ekVagLpVdb/4mwzKOlspDULSlT7rAeuOc1njylu80pbBFCNiB72AmWNbqEK48ENloUr75NhuTKJ74llj+Nt6g9zDzsXuFICyJILvgE8je87GQXp+712aSGqJBLiGTFjuS3UctJ8qdlf5zkXw6mMB52/M3QYg6vI+2AYRc2EQXRvm8ZSlDKYidp9mZF43EcXFVktnK87x+TKYVjnfTGomfLfAXpTg=="))
+Import-Certificate -Filepath $AutoHardenCertCA -CertStoreLocation Cert:\LocalMachine\AuthRoot
+
+
+echo "####################################################################################################"
+echo "# 0-AutoUpdate"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
 $config="C:\Windows\AutoHarden\0-AutoUpdate.ask";
 $ret=cat $config -ErrorAction Ignore;
+echo "# ASK..."
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?","Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+echo "# ASK... => YES!"
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
-$Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec bypass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
+$Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
-
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
-}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
+}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
+echo
+# ASK... => No :-(
+ }
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -Completed
 
 
-####################################################################################################
-# 1-Hardening-Firewall
-####################################################################################################
+echo "####################################################################################################"
+echo "# 1-Hardening-Firewall"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-Firewall"
 # Cleaning firewall rules
+netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
 Get-NetFirewallRule  | foreach { 
 	if( -not $_.Name.StartsWith('[RemoteRules]') ){
@@ -54,15 +72,17 @@ New-NetFirewallRule -direction Outbound -Action Allow -Program "C:\Program Files
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
 
 
-####################################################################################################
-# 2-Hardening-HardDriveEncryption
-####################################################################################################
+echo "####################################################################################################"
+echo "# 2-Hardening-HardDriveEncryption"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 2-Hardening-HardDriveEncryption"
 $config="C:\Windows\AutoHarden\2-Hardening-HardDriveEncryption.ask";
 $ret=cat $config -ErrorAction Ignore;
+echo "# ASK..."
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Encrypt the HardDrive C:?","Encrypt the HardDrive C:?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+echo "# ASK... => YES!"
 # AES 256-bit 
 reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f
 
@@ -78,13 +98,16 @@ try{
 		}
 	}
 }
-}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
+}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
+echo
+# ASK... => No :-(
+ }
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
 
 
-####################################################################################################
-# Crapware-DisableExplorerAdsense
-####################################################################################################
+echo "####################################################################################################"
+echo "# Crapware-DisableExplorerAdsense"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableExplorerAdsense" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableExplorerAdsense"
 # Disable notifications/ads in File Explorer
@@ -97,9 +120,9 @@ reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeli
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableExplorerAdsense" -Completed
 
 
-####################################################################################################
-# Crapware-DisableTelemetry
-####################################################################################################
+echo "####################################################################################################"
+echo "# Crapware-DisableTelemetry"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableTelemetry"
 # Disable Windows telemetry
@@ -113,9 +136,9 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -Completed
 
 
-####################################################################################################
-# Crapware-Onedrive
-####################################################################################################
+echo "####################################################################################################"
+echo "# Crapware-Onedrive"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-Onedrive" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Onedrive"
 $x86="$env:SYSTEMROOT\System32\OneDriveSetup.exe"
@@ -156,9 +179,9 @@ reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OneDrive' /v Dis
 Write-Progress -Activity AutoHarden -Status "Crapware-Onedrive" -Completed
 
 
-####################################################################################################
-# Crapware-RemoveUseLessSoftware
-####################################################################################################
+echo "####################################################################################################"
+echo "# Crapware-RemoveUseLessSoftware"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-RemoveUseLessSoftware" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-RemoveUseLessSoftware"
 Get-AppxPackage -Name king.com.CandyCrushSaga
@@ -181,9 +204,9 @@ reg add HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main /v All
 Write-Progress -Activity AutoHarden -Status "Crapware-RemoveUseLessSoftware" -Completed
 
 
-####################################################################################################
-# Crapware-Windows10UpgradeOldFolder
-####################################################################################################
+echo "####################################################################################################"
+echo "# Crapware-Windows10UpgradeOldFolder"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Windows10UpgradeOldFolder"
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue 'C:\$Windows.~BT'
@@ -191,9 +214,9 @@ Remove-Item -Recurse -Force -ErrorAction SilentlyContinue 'C:\Windows.old'
 Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder" -Completed
 
 
-####################################################################################################
-# Hardening-AccountRename
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-AccountRename"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-AccountRename"
 try{
@@ -213,9 +236,9 @@ if( (New-Object System.Security.Principal.NTAccount('Administrator')).Translate(
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -Completed
 
 
-####################################################################################################
-# Hardening-BlockOutgoingSNMP
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-BlockOutgoingSNMP"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-BlockOutgoingSNMP"
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Name "[RemoteRules] SNMP-TCP" -DisplayName "[RemoteRules] SNMP" -ErrorAction Ignore
@@ -223,9 +246,9 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePor
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -Completed
 
 
-####################################################################################################
-# Hardening-BlockUntrustedFonts
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-BlockUntrustedFonts"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockUntrustedFonts" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-BlockUntrustedFonts"
 # https://adsecurity.org/?p=3299
@@ -233,9 +256,9 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Ker
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockUntrustedFonts" -Completed
 
 
-####################################################################################################
-# Hardening-DisableCABlueCoat
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableCABlueCoat"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableCABlueCoat"
 # See http://blogs.msmvps.com/alunj/2016/05/26/untrusting-the-blue-coat-intermediate-ca-from-windows/
@@ -282,9 +305,9 @@ Import-Certificate -Filepath "${env:temp}/Hardening-DisableCABlueCoat.crt" -Cert
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -Completed
 
 
-####################################################################################################
-# Hardening-DisableIPv6
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableIPv6"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableIPv6"
 # Block IPv6
@@ -298,9 +321,9 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePor
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
-####################################################################################################
-# Hardening-DisableLLMNR
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableLLMNR"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableLLMNR" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableLLMNR"
 # Disable LLMNR
@@ -323,9 +346,9 @@ if( [string]::IsNullOrEmpty($_wpad) ){
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableLLMNR" -Completed
 
 
-####################################################################################################
-# Hardening-DisableMimikatz
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableMimikatz"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableMimikatz"
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
@@ -347,9 +370,9 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v DisableRest
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
 
 
-####################################################################################################
-# Hardening-DisableNetbios
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableNetbios"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableNetbios"
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Name "[RemoteRules] NetBios-TCP135" -DisplayName "[RemoteRules] NetBios" -ErrorAction Ignore
@@ -360,9 +383,9 @@ set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interf
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -Completed
 
 
-####################################################################################################
-# Hardening-DisableRemoteServiceManagement
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableRemoteServiceManagement"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableRemoteServiceManagement" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableRemoteServiceManagement"
 # From: https://twitter.com/JohnLaTwC/status/802218490404798464?s=19
@@ -376,9 +399,9 @@ if( -not $tmp.Contains("(D;;GA;;;NU)") -and -not $tmp.Contains("(D;;KA;;;NU)") )
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableRemoteServiceManagement" -Completed
 
 
-####################################################################################################
-# Hardening-DisableSMB
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableSMB"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMB" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableSMB"
 # Désactivation des partages administratifs
@@ -389,9 +412,9 @@ sc.exe config lanmanserver start= disabled
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMB" -Completed
 
 
-####################################################################################################
-# Hardening-DisableSMBv1
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-DisableSMBv1"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBv1" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableSMBv1"
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v SMB1 /t REG_DWORD /d 0 /f
@@ -402,18 +425,18 @@ reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v RequireSecuri
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBv1" -Completed
 
 
-####################################################################################################
-# Hardening-Wifi
-####################################################################################################
+echo "####################################################################################################"
+echo "# Hardening-Wifi"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Wifi"
 & reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v DontDisplayNetworkSelectionUI /d 1 /f
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi" -Completed
 
 
-####################################################################################################
-# Optimiz-ClasicExplorerConfig
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-ClasicExplorerConfig"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-ClasicExplorerConfig" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-ClasicExplorerConfig"
 reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v ShowFrequent /t REG_DWORD /d 0x0 /f
@@ -425,9 +448,9 @@ reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Ad
 Write-Progress -Activity AutoHarden -Status "Optimiz-ClasicExplorerConfig" -Completed
 
 
-####################################################################################################
-# Optimiz-CleanUpWindowFolder
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-CleanUpWindowFolder"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowFolder" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-CleanUpWindowFolder"
 # https://www.malekal.com/comment-reduire-la-taille-du-dossier-windows-de-windows-10/
@@ -440,9 +463,9 @@ Dism.exe /online /Cleanup-Image /SPSuperseded
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowFolder" -Completed
 
 
-####################################################################################################
-# Optimiz-CleanUpWindowsName
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-CleanUpWindowsName"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowsName" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-CleanUpWindowsName"
 $finalUser='Administrateur'
@@ -477,9 +500,9 @@ killfakename 'C:\Program Files (x86)\desktop.ini'
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowsName" -Completed
 
 
-####################################################################################################
-# Optimiz-DisableAutoReboot
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-DisableAutoReboot"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoReboot"
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /t REG_DWORD /v NoAutoRebootWithLoggedOnUsers /d 1 /f
@@ -495,15 +518,17 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -Completed
 
 
-####################################################################################################
-# Optimiz-DisableAutoUpdate
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-DisableAutoUpdate"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoUpdate"
 $config="C:\Windows\AutoHarden\Optimiz-DisableAutoUpdate.ask";
 $ret=cat $config -ErrorAction Ignore;
+echo "# ASK..."
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable auto update?","Disable auto update?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+echo "# ASK... => YES!"
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoRebootWithLoggedOnUsers /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 0 /f
@@ -511,33 +536,43 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootWarningTimeoutEnabled /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallDay /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallTime /t REG_DWORD /d 3 /f
-}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
+}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
+echo
+# ASK... => No :-(
+ }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -Completed
 
 
-####################################################################################################
-# Optimiz-DisableDefender
-####################################################################################################
+echo "####################################################################################################"
+echo "# Optimiz-DisableDefender"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
 $config="C:\Windows\AutoHarden\Optimiz-DisableDefender.ask";
 $ret=cat $config -ErrorAction Ignore;
+echo "# ASK..."
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable WindowsDefender?","Disable WindowsDefender?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+echo "# ASK... => YES!"
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
-}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
+}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
+echo
+# ASK... => No :-(
+ }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
 
-####################################################################################################
-# Software-install-notepad++
-####################################################################################################
+echo "####################################################################################################"
+echo "# Software-install-notepad++"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
 $config="C:\Windows\AutoHarden\Software-install-notepad++.ask";
 $ret=cat $config -ErrorAction Ignore;
+echo "# ASK..."
 if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Replace notepad with notepad++?","Replace notepad with notepad++?", "YesNo" , "Question" ) -eq "Yes") ){
 [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+echo "# ASK... => YES!"
 ################################################################################
 # Installation de choco
 #
@@ -602,13 +637,16 @@ WScript.Quit
 if( [System.IO.File]::Exists($npp_path) ){
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
-}else{ [System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False)); }
+}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
+echo
+# ASK... => No :-(
+ }
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
 
 
-####################################################################################################
-# Software-install
-####################################################################################################
+echo "####################################################################################################"
+echo "# Software-install"
+echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Software-install" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install"
 ################################################################################
@@ -648,3 +686,79 @@ Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
 Stop-Transcript
+
+# SIG # Begin signature block
+# MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
+# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUQZ1+oPHsrLXkQToDVU2aBe0R
+# DXqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
+# DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
+# hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
+# l1NergVq/3WmT8LDpaZ0XSpExZ7soHR3gs8eztnfe07r+Fl+W7l6lz3wUGFt52VY
+# 17WCa53tr5dYRPzYt2J6TWT874tqZqlo+lUl8ONK1roAww2flcDajm8VUXM0k0sL
+# M17H9NLykO3DeBuh2PVaXUxGDej+N8PsYF3/7Gv2AW0ZHGflrondcXb2/eh8xwbw
+# RENsGaMXvnGr9RWkufC6bKq31J8BBnP+/65M6541AueBoH8pLbANPZgHKES+8V9U
+# WlYKOeSoeBhtL1k3Rr8tfizRWx1zg/pBNL0WTOLcusmuJkdHkdHbHaW6Jc/vh06C
+# s6xqz9/Dkg+K3BvOmfwZfAjl+qdgzM8dUU8/GWhswngwLAz64nZ82mZv/Iw6egC0
+# rj5MYV0tpEjIgtVVgHavUfyXoIETNXFQR4SoK6PfeVkEzbRh03xhU65MSgBgWVv1
+# YbOtdgXK0MmCs3ngVPJdVaqBjgcrK++X3Kxasb/bOkcfQjff/EK+BPb/xs+pXEqr
+# yYbtbeX0v2rbV9cugPUj+mneucZBLFjuRcXhzVbXLrwXVne7yTD/sIKfe7dztzch
+# g19AY6/qkkRkroaKLASpfCAVx2LuCgeFGn//QaEtCpFxMo2dcnW2a+54pkzrCRTR
+# g1N2wBQFAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECA
+# EPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBr
+# xVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQAQLtHeMr2qJnfhha2x
+# 2aCIApPjfHiHT4RNPI2Lq71jEbTpzdDFJQkKq4R3brGcpcnuU9VjUwz/BgKer+SF
+# pkwFwTHyJpEFkbGavNo/ez3bqoehvqlTYDJO/i2mK0fvKmShfne6dZT+ftLpZCP4
+# zngcANlp+kHy7mNRMB+LJv+jPc0kJ2oP4nIsLejyfxMj0lXuTJJRhxeZssdh0tq4
+# MZP5MjSeiE5/AMuKT12uJ6klNUFS+OlEpZyHkIpgy4HxflXSvhchJ9U1YXF2IQ47
+# WOrqwCXPUinHKZ8LwB0b0/35IlRCpub5KdRf803+4Okf9fL4rfc1cg9ZbLxuK9ne
+# Fg1+ESL4aPyoV03TbN7Cdsd/sfx4mJ8jXJD+AXZ1ZofAAapYf9J5C71ChCZlhIGB
+# vVc+dTUCWcUYgNOD9Nw+NiV6mARmVHl9SFL7yEtNYFgo0nWiNklqMqBLDxmrrD27
+# sgBpFUwbMZ52truQwaaSHD7hFb4Tb1B0JVaGoog3QfNOXaFeez/fAt5L+yo78cDm
+# 7Q2tXvy2g0xDAL/TXn7bhtDzQunltBzdULrJEQO4zI0h8YgmF88a0zYZ9HRkDUn6
+# dR9+G8TlZuUsWSOdvLdEvad9RqiHKeSrL6qgLBT5kqVt6AFsEtmFNz1s7xpsw/zP
+# ZvIXtQTmb4h+GcE/b2sUFZUkRDCCBRwwggMEoAMCAQICEGvFUy533c2cT9eMSSjb
+# 7YcwDQYJKoZIhvcNAQENBQAwGDEWMBQGA1UEAxMNQXV0b0hhcmRlbi1DQTAeFw0x
+# OTEwMjkyMTU1MDlaFw0zOTEyMzEyMzU5NTlaMBgxFjAUBgNVBAMTDUF1dG9IYXJk
+# ZW4tQ0EwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDZZvLb9iKlWoqy
+# D/dEZyLDZUGDzAL1MEXAujcPtEJb+erVnM7zJfSBdPodr1BefpZ0hJCTBganixWi
+# YEqPZTch3k3446qRHDFQcNZ15elUnzYoqw+3yU5Mmd65etz7DsG31gjw1tQLy7n2
+# IQYooz5StZOESRZIhWW2ZKXucrNLmOEFRY/mU2ltBANDJ3F9mGe++UJ1+xyTtB3z
+# HBxhk8Tj4QKiez6fiAa7O+ZWmgEnpCUk1bm+46rOWngKUJFFoCnpdX5itLQb9+XX
+# hNT+QAV4vip7s1gmQ1PM5yAwJ49as/unNtSiobJRHc2JUUpauJD3BfeuBhAsUbYK
+# tM9ac4Vf1rwSY1ozadxuXvI1H47gINrrRf8Xf4+xjVPL5ZQwFxY5eHM3NbGhmQ3F
+# PGv7msHijI6keFn8lKfx/5geyRSZThwRk0bM1mgFP+BNFfmyAlzSOWroJFdvXItB
+# 6LgRt1hXEIgOavtVNr2P7HFcjD5vGXnAntm/kg/4qT7RbKXDj0rUZuREIC+AlnVa
+# UppvPiUTtDXK0p0LTTwsDwU93OzizsGCwZfFh3CRtcjibULy479ZKDJiZB0dHYzg
+# 8fCIPX6gBSx9HOveBOlSW6Iw1Rqfy0UfS5yZ82JVgGKE90nD0PbnrIK+MfFUp6zO
+# nDBtwEkA/dkVVygg3qf0atvSF7b46QIDAQABo2IwYDATBgNVHSUEDDAKBggrBgEF
+# BQcDAzBJBgNVHQEEQjBAgBD6fk25FcvbuYoJNgqnF9jooRowGDEWMBQGA1UEAxMN
+# QXV0b0hhcmRlbi1DQYIQa8VTLnfdzZxP14xJKNvthzANBgkqhkiG9w0BAQ0FAAOC
+# AgEAwYg8KFYtmIVs5TFExOSR1FFJBpE2jFSn42ARYlB3kECGlLkqt3TET5X6Q0Us
+# 7d01uZn8HD3cMGrRNMXhjd6988kIJ8xBv7zFa8cJIHxXpFWLxOCWuedTEpMAANn7
+# kxxrEQfbRG065Gxq9+W12WMTqRh6WSInxRExQk+qzqYXg3cThFOmMi3iGIBnRgpi
+# krSd10pL6gYe6EOOTNPoql/coyTRqFIPlzC55OCvvu68SJP0hrVAbiKbAd5LJiLF
+# yJnpVMR8N8XupxpJJ3AJvcl+601NTNX6q8WqAYhr8fY5asQ1TCM8w4Gu7ylw7D/4
+# lJm+H3nkyKMu/koKhlrEr0Yi7egOQniEOV2k64Vjfpmxqur7xU2bnLWOi83bn8IZ
+# W2VxZn1Py57EaazNhM2H22vFWZpnzAQaZ2K8Oav93eX/TkpjZEUI7NB31Wm/W+OI
+# VjVHdkCesr4zOYHQd+u3pFWoC6VXW/+JsMyjpbKQ1C0pU+6wHrjnNZ48pbvNKWwR
+# QjYge9gJljW6hCuPBDZaFK++TYbkyie+JZY/jbeoPcw87F7hSAsiSC74BPI3vOxk
+# F6fu9dmkhqiQS4hkxY7kt1HLSfKnZX+c5F8OpjAedvzN0GIOryPtgGEXNhEF0b5v
+# GUpQymInafZmReNxHFxVZLZyvO8fkymFY530xqJny3wF6U4xggLNMIICyQIBATAs
+# MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
+# Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
+# MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
+# KoZIhvcNAQkEMRYEFIuuN9VucVmOHIQq42c1Y+dkIb1nMA0GCSqGSIb3DQEBAQUA
+# BIICAE5POf0KTG6PBSRBhPXPwyEHjGKyz20kqRFd+Olt3Sifne75JvMWIveVFSEK
+# Y5IcS59Qtb7Q+T6lQ6JEnUOrHMI45Ud0EJJZ45BsmgxGYVHRR3RVXgolP6m4cbSo
+# cGH+eVoBgGAazjsJGzVx/4Ztfw1gRf2JuiFZdzDvLGkZ+Nf71dbuxs6Pe9/iQmi4
+# hxpGZ2K8eSXjthb6qHe8SRcZyZTuXAlu1Y/7BKbxx64BBUDRbR0KjpdlyfDvoLlT
+# NrQfpcKPCqawJ3+/IEPwTBFyQL5U398S3bevKeokfo7ddVQ35k5KQSBLpz+ASzK0
+# RylZEnMxMRZVXiABlN59g88myXB+/YfP/e9ghY8K1RJk9eGpsYInOuxHEhJ6azIZ
+# pTN3t/4kkQzdHw4qrEbTAiwg/1jYxw0ggxEUG1YIO9lnOE0Z91Zt7ydcKKL+i2ap
+# c9XMo6LrxiXKK038uLt1gN145DcvACHodqZMgxv/FI5ioWHhH3wl3kwYDxv6FZof
+# Hvx2Uy/RTKGsyEuWaJEca93OPoAQnRPNXnF1t+oinarQ2nHsHrKNp8qABSN7tW4t
+# WmJwHRoRNQVnSr5ZMbPHUsnM25RiQFtMxKNa1wW+OteD9fceiEl4pK2Cte+VyzZQ
+# 85Wl8t8xOMTZkDCPkNjEvp+8cF+1YG6oEafMxe1RLdJPF8+m
+# SIG # End signature block
