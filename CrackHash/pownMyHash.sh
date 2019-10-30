@@ -103,6 +103,7 @@ function found2dict
 	export found2dict_a=`cat $FINDINGS | wc -l`
 	echo "[*] AFTER: $found2dict_a"
 	rm $T1 $T1.2
+	chmod ugo=rw -- "$FINDINGS"
 }
 
 
@@ -152,10 +153,10 @@ function isProcessHashCat
 function hashcat
 {
 	if [ "`which cygpath`" = "" ] ; then
-		$HCB --force -w 3 -m $HASH_TYPE $HASHES -a $*
+		$HCB --force -w 3 --session=$HASHES -m $HASH_TYPE $HASHES -a $*
 	else
 		export _lastline="`tail -n1 $HC/hashcat.potfile`"
-		cmd /c "start ""$HCB"" --force -w 3 -m $HASH_TYPE $HASHES -a $*"
+		cmd /c "start ""$HCB"" --force -w 3 --session=$HASHES -m $HASH_TYPE $HASHES -a $*"
 		while isProcessHashCat; do
 			sleep 1
 			grep -A1000 -F "$_lastline" "$HC/hashcat.potfile" | grep -vF "$_lastline"
@@ -256,7 +257,6 @@ fi
 if [ "`which cygpath`" != "" ] ; then
 	#export HC=`cygpath -w $HC 2>/dev/null`
 	export HCB=`cygpath -w $HCB 2>/dev/null`
-	
 	export DICO_PATH=`realpath $DICO_PATH_CYGWIN 2>/dev/null`
 	export DICO_PATH=`dirname $DICO_PATH 2>/dev/null`
 	export DICO_PATH=`cygpath -w $DICO_PATH 2>/dev/null`
@@ -268,7 +268,14 @@ fi
 
 if isProcessHashCat; then
 	echo '[!] Hashcat is already running'
-	exit
+	[ "`ps a | grep -E '[p]ownMyHash' | wc -l`" = "0" ] && exit
+	export query='?'
+	while [ "$query" != "" ] && [ "$query" != "y" ] && [ "$query" != "n" ]; do
+		echo "[?] Split the workspace with \"`ps a | grep -E '[p]ownMyHash' | awk -F '/bin/bash ' '{print $2}'`\" ? [Y/n]"
+		read -n 1 query >/dev/null
+		export query
+	done
+	[ "${query^}" = "N" ] && exit;
 fi
 
 ####################################################################################################
@@ -347,7 +354,7 @@ if title "Using dico"; then
 fi
 
 
-for $dico in `echo $DICO_PATH/*_month.dico $DICO_PATH/*city*.dico`; do
+for dico in `echo $DICO_PATH/*_month.dico $DICO_PATH/*city*.dico`; do
 	if title "Brute force password with $dico base"; then	
 		hashcat 6 `absPath $dico` '?a?a?a?a?a'
 		hashcat 6 `absPath $dico` '?d?d?d?d?a?a'
