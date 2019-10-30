@@ -1,8 +1,22 @@
-﻿# 2019-10-30
+﻿# 2019-10-31
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 Add-Type -AssemblyName System.Windows.Forms
+function ask( $query, $config ){
+	$config="C:\Windows\AutoHarden\${config}";
+	$ret=cat $config -ErrorAction Ignore;
+	echo "# ASK..."
+	if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("${query}?","${query}?", "YesNo" , "Question" ) -eq "Yes") ){
+		[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+		echo "# ASK... => YES!"
+		return $true;
+	}else{
+		echo "# ASK... => NO :-("
+		[System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False));
+		return $false;
+	}
+}
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
 mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
 Start-Transcript -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
@@ -23,21 +37,13 @@ echo "# 0-AutoUpdate"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
-$config="C:\Windows\AutoHarden\0-AutoUpdate.ask";
-$ret=cat $config -ErrorAction Ignore;
-echo "# ASK..."
-if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?","Auto update AutoHarden and execute AutoHarden every day at 08h00 AM?", "YesNo" , "Question" ) -eq "Yes") ){
-[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-echo "# ASK... => YES!"
+if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
 $Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
-}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
-echo
-# ASK... => No :-(
- }
+}
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -Completed
 
 
@@ -77,12 +83,7 @@ echo "# 2-Hardening-HardDriveEncryption"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 2-Hardening-HardDriveEncryption"
-$config="C:\Windows\AutoHarden\2-Hardening-HardDriveEncryption.ask";
-$ret=cat $config -ErrorAction Ignore;
-echo "# ASK..."
-if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Encrypt the HardDrive C:?","Encrypt the HardDrive C:?", "YesNo" , "Question" ) -eq "Yes") ){
-[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-echo "# ASK... => YES!"
+if( ask "Encrypt the HardDrive C:" "2-Hardening-HardDriveEncryption.ask" ){
 # AES 256-bit 
 reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f
 
@@ -100,10 +101,7 @@ try{
 		}
 	}
 }
-}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
-echo
-# ASK... => No :-(
- }
+}
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
 
 
@@ -143,6 +141,7 @@ echo "# Crapware-Onedrive"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-Onedrive" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Onedrive"
+if( ask "Remove OneDrive" "Crapware-Onedrive.ask" ){
 $x86="$env:SYSTEMROOT\System32\OneDriveSetup.exe"
 $x64="$env:SYSTEMROOT\SysWOW64\OneDriveSetup.exe"
 $onedriverPath = $false
@@ -178,6 +177,7 @@ reg add 'HKEY_CLASSES_ROOT\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1F
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\OneDrive' /v PreventNetworkTrafficPreUserSignIn /t REG_DWORD /d 1 /f
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OneDrive' /v DisableFileSync /t REG_DWORD /d 1 /f
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OneDrive' /v DisableFileSyncNGSC /t REG_DWORD /d 1 /f
+}
 Write-Progress -Activity AutoHarden -Status "Crapware-Onedrive" -Completed
 
 
@@ -221,6 +221,7 @@ echo "# Hardening-AccountRename"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-AccountRename"
+if( ask "Invert the administrator and guest accounts" "Hardening-AccountRename.ask" ){
 try{
 if( (New-Object System.Security.Principal.NTAccount('Administrateur')).Translate([System.Security.Principal.SecurityIdentifier]).value.EndsWith('-500') ){
 	Rename-LocalUser -Name Administrateur -NewName Adm
@@ -235,6 +236,7 @@ if( (New-Object System.Security.Principal.NTAccount('Administrator')).Translate(
 	Rename-LocalUser -Name Adm -NewName Guest
 }
 }catch{}
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -Completed
 
 
@@ -362,13 +364,17 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v DisableRestrictedAdmin /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v DisableRestrictedAdminOutboundCreds /t REG_DWORD /d 1 /f
 
-# Credentials Guard
-#reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /t REG_DWORD /d 1 /f
-#reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 1 /f
-# Credentials Guard bloque VMWare...
-# En cas de blocage, il faut d�sactive CG via DG_Readiness.ps1 -Disable
-# cf https://stackoverflow.com/questions/39858200/vmware-workstation-and-device-credential-guard-are-not-compatible
-# cf https://www.microsoft.com/en-us/download/details.aspx?id=53337
+if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
+	if( ask "Do you want to enable `"Credentials Guard`" and disable VMWare/VirtualBox", "CredentialsGuard.ask" ){
+		# Credentials Guard
+		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /t REG_DWORD /d 1 /f
+		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 1 /f
+		# Credentials Guard bloque VMWare...
+		# En cas de blocage, il faut d�sactive CG via DG_Readiness.ps1 -Disable
+		# cf https://stackoverflow.com/questions/39858200/vmware-workstation-and-device-credential-guard-are-not-compatible
+		# cf https://www.microsoft.com/en-us/download/details.aspx?id=53337
+	}
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
 
 
@@ -525,12 +531,7 @@ echo "# Optimiz-DisableAutoUpdate"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoUpdate"
-$config="C:\Windows\AutoHarden\Optimiz-DisableAutoUpdate.ask";
-$ret=cat $config -ErrorAction Ignore;
-echo "# ASK..."
-if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable auto update?","Disable auto update?", "YesNo" , "Question" ) -eq "Yes") ){
-[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-echo "# ASK... => YES!"
+if( ask "Disable auto update" "Optimiz-DisableAutoUpdate.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoRebootWithLoggedOnUsers /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 0 /f
@@ -538,10 +539,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v RebootWarningTimeoutEnabled /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallDay /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v ScheduledInstallTime /t REG_DWORD /d 3 /f
-}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
-echo
-# ASK... => No :-(
- }
+}
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -Completed
 
 
@@ -550,17 +548,9 @@ echo "# Optimiz-DisableDefender"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
-$config="C:\Windows\AutoHarden\Optimiz-DisableDefender.ask";
-$ret=cat $config -ErrorAction Ignore;
-echo "# ASK..."
-if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Disable WindowsDefender?","Disable WindowsDefender?", "YesNo" , "Question" ) -eq "Yes") ){
-[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-echo "# ASK... => YES!"
+if( ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
-}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
-echo
-# ASK... => No :-(
- }
+}
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
 
@@ -569,12 +559,7 @@ echo "# Software-install-notepad++"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
-$config="C:\Windows\AutoHarden\Software-install-notepad++.ask";
-$ret=cat $config -ErrorAction Ignore;
-echo "# ASK..."
-if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("Replace notepad with notepad++?","Replace notepad with notepad++?", "YesNo" , "Question" ) -eq "Yes") ){
-[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-echo "# ASK... => YES!"
+if( ask "Replace notepad with notepad++" "Software-install-notepad++.ask" ){
 ################################################################################
 # Installation de choco
 #
@@ -639,10 +624,7 @@ WScript.Quit
 if( [System.IO.File]::Exists($npp_path) ){
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
-}else{ [System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False)); echo 
-echo
-# ASK... => No :-(
- }
+}
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
 
 
@@ -692,8 +674,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUipaEgpTqcRZ/T7PgAlAIDQA1
-# 4wKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1Zu2WVpt5TA6W7OXajLaYAlh
+# 69+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -751,16 +733,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFFgOiwrbE8gr4leOrFAvtTr7JLV5MA0GCSqGSIb3DQEBAQUA
-# BIICAF6zXtdaIvOaHgnFthTQtYo6dfV6cyCQ3OpTy7Inma+/o4ryuD3Pm4WfuJ8t
-# UJ9G4iOtpac7SLtqFb6mcyAI9KMlA4OytnD7+bcdW92HvSz+5xhCYTkKzUqU26sW
-# uSHtosglLZmJHwc0ojfde07Bl5i5zINYUKeecOPfYM8+VJH5eBWLbQK9nJcjoxb7
-# d1uA+Uu6Wejpmi37WjIYXURtzBI3iNJPTqAkEcL9E7EoLCMWTlrKvhUtXUp+EpZ+
-# nOu9DKVIpfjee5A4n3+HqnczOaNKuzjpBkDQtW2YqmE06PEJ4EsVGrPc0K8T190+
-# iPpTApkRfXd82mnY1KRlNTrmUs+5Ur424+8gs6slERfCl7gZQvsQaHDnbxvu20Mc
-# trb3Mtbr6Teaek7YAxH9bDb3jDmeh3Zllp24OMe0jOEKv2OvKUfqdN7DLNMpe1z6
-# gM4m3Nuub45R1Yph8cOa6r0V68iV13FYxxGAW25VwXFZbmg7mdCJmsN4qugODOee
-# YqgU9NuKGdAc8xMKO/t44h52bg1qXjVVa3FSRppq1diGB2Z5MSx9chs7/9EX7FAH
-# xMZVm0vffdIbbzndUFDCIiAsodueWPIJID6ttUgglH0CNMrsYbSgndVRoOctzulW
-# 2VzuMI+iF/6f0ThfNHRa83wfiwL5NjQ51qNl5WQLBW+e24QQ
+# KoZIhvcNAQkEMRYEFMM4D02Qd4/HmuwnIAukZ1/+YbXDMA0GCSqGSIb3DQEBAQUA
+# BIICACftCBzGPT12QwgX33ZGKFGx0ZAYFmp3/UzTqcOeJ7v2Wzx+Wb071AHKC8oP
+# imfB4OgJyg8T3BOXp5rEvSOcPFdaO4bdASR5IB5vizGFn3L/l+3y7eHJlrY6xu3z
+# VVPC1cSiPBD+ODgE0Ta39MSaAG6ua9K2Hr8I9gUHMF5CSwXwOuwHU4oqzrkj7jY9
+# OpPJat9X0xw+q5BI2U/clZGPrTiWiimeP4QwkxvvFl5GhHh3jWCPuSQjQVVGaVOV
+# wTM9kvlR2Gfov4/Z4xu3SJbbVkr/SZ9oxn3u6ulCFa5rFcsJMxoE8b0V3HBqL71o
+# RDfkagmzXlqJe7TbnZdvQsgu+OX8oTJhqTsU/b3Q3MgKu2CAoqk4tINXx+V/xu7l
+# WVPllRGx3wFqmmQEtOZpxako5LhFrbFYSbCQjiH6lYJc++K5EljcMaORqP3SWszo
+# ommSpj7UEESxxk7TXMKN/Hv9PD5tXRlP5hmsPhj9x76+P1MMTkbure04bLWu83hq
+# WlF0C64YgHY0cEp01ngamaOz14sZh+/ad4NMb/5oEFJEhiwYaFVLJp7S8CXENJ6B
+# rCPogvbytUhudsGVULPrpgqRWfnxS9migdU4qvVmhRpfObd6x/mitBn24NmBhvfS
+# 6p6LawED0o8RZHEghAaTKWq0tJY0OQyM5mmSgxI3wC8rtdfJ
 # SIG # End signature block
