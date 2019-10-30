@@ -42,7 +42,7 @@ export HASHES=`realpath $2 2>/dev/null`
 export SCRIPT_PATH=`realpath -s $0`
 export SCRIPT_PATH=`dirname $SCRIPT_PATH`
 export FINDINGS=$SCRIPT_PATH/.pownMyHash.dico
-
+export SESSION_NAME=`echo $HASHES | sed -e 's#[\\/]#_#g'`
 
 ####################################################################################################
 # FUNCTIONS
@@ -153,10 +153,10 @@ function isProcessHashCat
 function hashcat
 {
 	if [ "`which cygpath`" = "" ] ; then
-		$HCB --force -w 3 --session=$HASHES -m $HASH_TYPE $HASHES -a $*
+		$HCB --force -w 3 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*
 	else
 		export _lastline="`tail -n1 $HC/hashcat.potfile`"
-		cmd /c "start ""$HCB"" --force -w 3 --session=$HASHES -m $HASH_TYPE $HASHES -a $*"
+		cmd /c "start ""$HCB"" --force -w 3 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*"
 		while isProcessHashCat; do
 			sleep 1
 			grep -A1000 -F "$_lastline" "$HC/hashcat.potfile" | grep -vF "$_lastline"
