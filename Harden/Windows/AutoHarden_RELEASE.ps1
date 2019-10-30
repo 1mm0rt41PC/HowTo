@@ -1,4 +1,4 @@
-﻿# 2019-10-29
+﻿# 2019-10-30
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
@@ -87,7 +87,9 @@ echo "# ASK... => YES!"
 reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f
 
 try{
-	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector
+	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector |foreach {
+		Write-Host ("C: is protected with: "+$_.KeyProtectorType)
+	}
 }catch{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -ErrorAction Continue
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
@@ -690,8 +692,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUQZ1+oPHsrLXkQToDVU2aBe0R
-# DXqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUipaEgpTqcRZ/T7PgAlAIDQA1
+# 4wKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -749,16 +751,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFIuuN9VucVmOHIQq42c1Y+dkIb1nMA0GCSqGSIb3DQEBAQUA
-# BIICAE5POf0KTG6PBSRBhPXPwyEHjGKyz20kqRFd+Olt3Sifne75JvMWIveVFSEK
-# Y5IcS59Qtb7Q+T6lQ6JEnUOrHMI45Ud0EJJZ45BsmgxGYVHRR3RVXgolP6m4cbSo
-# cGH+eVoBgGAazjsJGzVx/4Ztfw1gRf2JuiFZdzDvLGkZ+Nf71dbuxs6Pe9/iQmi4
-# hxpGZ2K8eSXjthb6qHe8SRcZyZTuXAlu1Y/7BKbxx64BBUDRbR0KjpdlyfDvoLlT
-# NrQfpcKPCqawJ3+/IEPwTBFyQL5U398S3bevKeokfo7ddVQ35k5KQSBLpz+ASzK0
-# RylZEnMxMRZVXiABlN59g88myXB+/YfP/e9ghY8K1RJk9eGpsYInOuxHEhJ6azIZ
-# pTN3t/4kkQzdHw4qrEbTAiwg/1jYxw0ggxEUG1YIO9lnOE0Z91Zt7ydcKKL+i2ap
-# c9XMo6LrxiXKK038uLt1gN145DcvACHodqZMgxv/FI5ioWHhH3wl3kwYDxv6FZof
-# Hvx2Uy/RTKGsyEuWaJEca93OPoAQnRPNXnF1t+oinarQ2nHsHrKNp8qABSN7tW4t
-# WmJwHRoRNQVnSr5ZMbPHUsnM25RiQFtMxKNa1wW+OteD9fceiEl4pK2Cte+VyzZQ
-# 85Wl8t8xOMTZkDCPkNjEvp+8cF+1YG6oEafMxe1RLdJPF8+m
+# KoZIhvcNAQkEMRYEFFgOiwrbE8gr4leOrFAvtTr7JLV5MA0GCSqGSIb3DQEBAQUA
+# BIICAF6zXtdaIvOaHgnFthTQtYo6dfV6cyCQ3OpTy7Inma+/o4ryuD3Pm4WfuJ8t
+# UJ9G4iOtpac7SLtqFb6mcyAI9KMlA4OytnD7+bcdW92HvSz+5xhCYTkKzUqU26sW
+# uSHtosglLZmJHwc0ojfde07Bl5i5zINYUKeecOPfYM8+VJH5eBWLbQK9nJcjoxb7
+# d1uA+Uu6Wejpmi37WjIYXURtzBI3iNJPTqAkEcL9E7EoLCMWTlrKvhUtXUp+EpZ+
+# nOu9DKVIpfjee5A4n3+HqnczOaNKuzjpBkDQtW2YqmE06PEJ4EsVGrPc0K8T190+
+# iPpTApkRfXd82mnY1KRlNTrmUs+5Ur424+8gs6slERfCl7gZQvsQaHDnbxvu20Mc
+# trb3Mtbr6Teaek7YAxH9bDb3jDmeh3Zllp24OMe0jOEKv2OvKUfqdN7DLNMpe1z6
+# gM4m3Nuub45R1Yph8cOa6r0V68iV13FYxxGAW25VwXFZbmg7mdCJmsN4qugODOee
+# YqgU9NuKGdAc8xMKO/t44h52bg1qXjVVa3FSRppq1diGB2Z5MSx9chs7/9EX7FAH
+# xMZVm0vffdIbbzndUFDCIiAsodueWPIJID6ttUgglH0CNMrsYbSgndVRoOctzulW
+# 2VzuMI+iF/6f0ThfNHRa83wfiwL5NjQ51qNl5WQLBW+e24QQ
 # SIG # End signature block

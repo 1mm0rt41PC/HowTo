@@ -2,7 +2,9 @@
 reg add 'HKLM\SOFTWARE\Policies\Microsoft\FVE' /v EncryptionMethod  /t REG_DWORD /d 4 /f
 
 try{
-	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector
+	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector |foreach {
+		Write-Host ("C: is protected with: "+$_.KeyProtectorType)
+	}
 }catch{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -ErrorAction Continue
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
