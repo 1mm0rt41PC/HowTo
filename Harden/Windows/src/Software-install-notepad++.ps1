@@ -21,7 +21,7 @@ function chocoInstall( $pk )
 $global:chocoList = & choco list -localonly 
 
 chocoInstall notepadplusplus.install
-$npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName
+$npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName.Replace('.exe','.vbs')
 
 @'
 '// DISCLAIMER
