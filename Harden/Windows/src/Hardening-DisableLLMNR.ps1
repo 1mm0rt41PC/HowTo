@@ -15,3 +15,7 @@ $_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
 }
+$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
+if( [string]::IsNullOrEmpty($_wpad) ){
+	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
+}
