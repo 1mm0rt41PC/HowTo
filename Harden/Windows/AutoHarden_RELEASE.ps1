@@ -1,4 +1,4 @@
-﻿# 2019-10-31
+﻿# 2019-11-04
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
@@ -347,6 +347,10 @@ $_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
 }
+$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
+if( [string]::IsNullOrEmpty($_wpad) ){
+	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableLLMNR" -Completed
 
 
@@ -355,17 +359,20 @@ echo "# Hardening-DisableMimikatz"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableMimikatz"
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential /t REG_DWORD /d 0 /f
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t REG_DWORD /d 1 /f
+
+if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-DomainCred.ask") -eq $false ){
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /t REG_DWORD /d 1 /f
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
+}
 
 # This sets up your RDP session to NOT store credentials in the memory of the target host.
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v DisableRestrictedAdmin /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v DisableRestrictedAdminOutboundCreds /t REG_DWORD /d 1 /f
 
 if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
-	if( ask "Do you want to enable `"Credentials Guard`" and disable VMWare/VirtualBox", "CredentialsGuard.ask" ){
+	if( ask "Do you want to enable `"Credentials Guard`" and disable VMWare/VirtualBox" "CredentialsGuard.ask" ){
 		# Credentials Guard
 		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /t REG_DWORD /d 1 /f
 		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 1 /f
@@ -431,6 +438,16 @@ reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v Requ
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v EnableSecuritySignature /t REG_DWORD /d 1 /f
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v RequireSecuritySignature /t REG_DWORD /d 1 /f
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBv1" -Completed
+
+
+echo "####################################################################################################"
+echo "# Hardening-DNSCache"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-DNSCache" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DNSCache"
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v MaxCacheTtl /t REG_DWORD /d 10 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v MaxNegativeCacheTtl /t REG_DWORD /d 10 /f
+Write-Progress -Activity AutoHarden -Status "Hardening-DNSCache" -Completed
 
 
 echo "####################################################################################################"
@@ -583,7 +600,7 @@ function chocoInstall( $pk )
 $global:chocoList = & choco list -localonly 
 
 chocoInstall notepadplusplus.install
-$npp_path='C:\Program Files\Notepad++\notepad++.vbs'
+$npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName
 
 @'
 '// DISCLAIMER
@@ -622,6 +639,9 @@ WScript.Quit
 '@ | out-file -encoding ASCII $npp_path
 
 if( [System.IO.File]::Exists($npp_path) ){
+	# Create sub folder
+	reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /v Debugger /t REG_SZ /d x /f
+	# Create key
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
 }
@@ -674,8 +694,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1Zu2WVpt5TA6W7OXajLaYAlh
-# 69+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUf/f67+tWHvkSwWCzUOmpR1g4
+# xHmgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -733,16 +753,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFMM4D02Qd4/HmuwnIAukZ1/+YbXDMA0GCSqGSIb3DQEBAQUA
-# BIICACftCBzGPT12QwgX33ZGKFGx0ZAYFmp3/UzTqcOeJ7v2Wzx+Wb071AHKC8oP
-# imfB4OgJyg8T3BOXp5rEvSOcPFdaO4bdASR5IB5vizGFn3L/l+3y7eHJlrY6xu3z
-# VVPC1cSiPBD+ODgE0Ta39MSaAG6ua9K2Hr8I9gUHMF5CSwXwOuwHU4oqzrkj7jY9
-# OpPJat9X0xw+q5BI2U/clZGPrTiWiimeP4QwkxvvFl5GhHh3jWCPuSQjQVVGaVOV
-# wTM9kvlR2Gfov4/Z4xu3SJbbVkr/SZ9oxn3u6ulCFa5rFcsJMxoE8b0V3HBqL71o
-# RDfkagmzXlqJe7TbnZdvQsgu+OX8oTJhqTsU/b3Q3MgKu2CAoqk4tINXx+V/xu7l
-# WVPllRGx3wFqmmQEtOZpxako5LhFrbFYSbCQjiH6lYJc++K5EljcMaORqP3SWszo
-# ommSpj7UEESxxk7TXMKN/Hv9PD5tXRlP5hmsPhj9x76+P1MMTkbure04bLWu83hq
-# WlF0C64YgHY0cEp01ngamaOz14sZh+/ad4NMb/5oEFJEhiwYaFVLJp7S8CXENJ6B
-# rCPogvbytUhudsGVULPrpgqRWfnxS9migdU4qvVmhRpfObd6x/mitBn24NmBhvfS
-# 6p6LawED0o8RZHEghAaTKWq0tJY0OQyM5mmSgxI3wC8rtdfJ
+# KoZIhvcNAQkEMRYEFOpDZl4IxSV4FokqxPt5X4lVfJGDMA0GCSqGSIb3DQEBAQUA
+# BIICAAoFcqsN7xQ4U7kjxyJeBVzlsM0FEBiIFwDt0z8aQ2Z4OSiW2gYjxmwxEXBl
+# qreesYafgC167cUbs9lHIl7Jmx+9B2hb3yA+C0NGt/hV4GrFaJK1UvI7VIfZI4i6
+# /a51k7nxTspkpla47TeCSJoVQ7ZTyjQNVyY37HIc4FYe9l5ai+3r0PESoSTS48BS
+# XnH02y68S+PiKVX9fOCavhK8s7i50S9hFiRsGsFJ/KBYpQMDSIja85eK38UZFLC8
+# cKTQpUPc5h/LwxPhOIglU4SriDNoMPuKVy5+dc3flJhurvlF1GsgPwARfiYNqIcy
+# /MSvSSN0FJM5iv9Dno5g5JY/wfLvhTUjMzMJP4e2hgA0EE1VxBvQnxyergRKapB6
+# 5ooVhs+YVAavRY6evf+IF18rTqQklIBzFrXtdSwb9mRrHqm5mfYuIm0HYMFGvJUa
+# UiiqJ1CtCUswfS9B46xmULxVKAvruakso2lSZXpIq0yGBc2By5JEsO2VjiTeBBIm
+# IdnzSjctIJMIUbndKyFan/qnUMQlyw1bZE8yTjlV8D9S5HLuyt6dyH6wdUV4CuPu
+# QglLvcItMfRF5qj2MO+mJS872S53n1qMDJY3gRRAR/dGXWJl1vFbqQza+sLc7MAj
+# 3oozpNI7elg5rMS+yY2QVmNMMgXINi+nikNIQtZlHpRJmasQ
 # SIG # End signature block

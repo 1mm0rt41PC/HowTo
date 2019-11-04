@@ -21,7 +21,7 @@ function chocoInstall( $pk )
 $global:chocoList = & choco list -localonly 
 
 chocoInstall notepadplusplus.install
-$npp_path='C:\Program Files\Notepad++\notepad++.vbs'
+$npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName
 
 @'
 '// DISCLAIMER
@@ -60,5 +60,8 @@ WScript.Quit
 '@ | out-file -encoding ASCII $npp_path
 
 if( [System.IO.File]::Exists($npp_path) ){
+	# Create sub folder
+	reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /v Debugger /t REG_SZ /d x /f
+	# Create key
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
