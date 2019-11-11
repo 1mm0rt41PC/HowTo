@@ -1,4 +1,25 @@
-﻿# 2019-11-04
+﻿# AutoHarden - A simple script that automates Windows Hardening
+#
+# Filename: AutoHarden.ps1
+# Author: 1mm0rt41PC - immortal-pc.info - https://github.com/1mm0rt41PC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not, write to the
+# Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Update: 2019-11-11
+$AutoHarden_version="2019-11-11"
+$global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
@@ -7,29 +28,42 @@ function ask( $query, $config ){
 	$config="C:\Windows\AutoHarden\${config}";
 	$ret=cat $config -ErrorAction Ignore;
 	echo "# ASK..."
-	if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("${query}?","${query}?", "YesNo" , "Question" ) -eq "Yes") ){
-		[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-		echo "# ASK... => YES!"
-		return $true;
-	}else{
-		echo "# ASK... => NO :-("
-		[System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False));
+	try{
+		if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("${query}?","${query}?", "YesNo" , "Question" ) -eq "Yes") ){
+			[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
+			echo "# ASK... => YES!"
+			return $true;
+		}else{
+			echo "# ASK... => NO :-("
+			[System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False));
+			return $false;
+		}
+	}catch{
+		if( $global:AutoHarden_boradcastMsg ) {
+			$global:AutoHarden_boradcastMsg=$false
+			msg * "An update of AutoHarden require an action from the administrator. Please run C:\Windows\AutoHarden\AutoHarden.ps1"
+		}
 		return $false;
 	}
 }
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
 mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
-Start-Transcript -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
+Start-Transcript -Force -IncludeInvocationHeader -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
+$DebugPreference = "Continue"
+$VerbosePreference = "Continue"
+$InformationPreference = "Continue"
 
 echo "####################################################################################################"
 echo "# Install AutoHarden Cert"
 echo "####################################################################################################"
-$AutoHardenCert = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
-[IO.File]::WriteAllBytes($AutoHardenCert, [Convert]::FromBase64String("MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoXDTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GSl1NergVq/3WmT8LDpaZ0XSpExZ7soHR3gs8eztnfe07r+Fl+W7l6lz3wUGFt52VY17WCa53tr5dYRPzYt2J6TWT874tqZqlo+lUl8ONK1roAww2flcDajm8VUXM0k0sLM17H9NLykO3DeBuh2PVaXUxGDej+N8PsYF3/7Gv2AW0ZHGflrondcXb2/eh8xwbwRENsGaMXvnGr9RWkufC6bKq31J8BBnP+/65M6541AueBoH8pLbANPZgHKES+8V9UWlYKOeSoeBhtL1k3Rr8tfizRWx1zg/pBNL0WTOLcusmuJkdHkdHbHaW6Jc/vh06Cs6xqz9/Dkg+K3BvOmfwZfAjl+qdgzM8dUU8/GWhswngwLAz64nZ82mZv/Iw6egC0rj5MYV0tpEjIgtVVgHavUfyXoIETNXFQR4SoK6PfeVkEzbRh03xhU65MSgBgWVv1YbOtdgXK0MmCs3ngVPJdVaqBjgcrK++X3Kxasb/bOkcfQjff/EK+BPb/xs+pXEqryYbtbeX0v2rbV9cugPUj+mneucZBLFjuRcXhzVbXLrwXVne7yTD/sIKfe7dztzchg19AY6/qkkRkroaKLASpfCAVx2LuCgeFGn//QaEtCpFxMo2dcnW2a+54pkzrCRTRg1N2wBQFAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQAQLtHeMr2qJnfhha2x2aCIApPjfHiHT4RNPI2Lq71jEbTpzdDFJQkKq4R3brGcpcnuU9VjUwz/BgKer+SFpkwFwTHyJpEFkbGavNo/ez3bqoehvqlTYDJO/i2mK0fvKmShfne6dZT+ftLpZCP4zngcANlp+kHy7mNRMB+LJv+jPc0kJ2oP4nIsLejyfxMj0lXuTJJRhxeZssdh0tq4MZP5MjSeiE5/AMuKT12uJ6klNUFS+OlEpZyHkIpgy4HxflXSvhchJ9U1YXF2IQ47WOrqwCXPUinHKZ8LwB0b0/35IlRCpub5KdRf803+4Okf9fL4rfc1cg9ZbLxuK9neFg1+ESL4aPyoV03TbN7Cdsd/sfx4mJ8jXJD+AXZ1ZofAAapYf9J5C71ChCZlhIGBvVc+dTUCWcUYgNOD9Nw+NiV6mARmVHl9SFL7yEtNYFgo0nWiNklqMqBLDxmrrD27sgBpFUwbMZ52truQwaaSHD7hFb4Tb1B0JVaGoog3QfNOXaFeez/fAt5L+yo78cDm7Q2tXvy2g0xDAL/TXn7bhtDzQunltBzdULrJEQO4zI0h8YgmF88a0zYZ9HRkDUn6dR9+G8TlZuUsWSOdvLdEvad9RqiHKeSrL6qgLBT5kqVt6AFsEtmFNz1s7xpsw/zPZvIXtQTmb4h+GcE/b2sUFZUkRA=="))
-Import-Certificate -Filepath $AutoHardenCert -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
-$AutoHardenCertCA = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
-[IO.File]::WriteAllBytes($AutoHardenCertCA, [Convert]::FromBase64String("MIIFHDCCAwSgAwIBAgIQa8VTLnfdzZxP14xJKNvthzANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUwOVoXDTM5MTIzMTIzNTk1OVowGDEWMBQGA1UEAxMNQXV0b0hhcmRlbi1DQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBANlm8tv2IqVairIP90RnIsNlQYPMAvUwRcC6Nw+0Qlv56tWczvMl9IF0+h2vUF5+lnSEkJMGBqeLFaJgSo9lNyHeTfjjqpEcMVBw1nXl6VSfNiirD7fJTkyZ3rl63PsOwbfWCPDW1AvLufYhBiijPlK1k4RJFkiFZbZkpe5ys0uY4QVFj+ZTaW0EA0MncX2YZ775QnX7HJO0HfMcHGGTxOPhAqJ7Pp+IBrs75laaASekJSTVub7jqs5aeApQkUWgKel1fmK0tBv35deE1P5ABXi+KnuzWCZDU8znIDAnj1qz+6c21KKhslEdzYlRSlq4kPcF964GECxRtgq0z1pzhV/WvBJjWjNp3G5e8jUfjuAg2utF/xd/j7GNU8vllDAXFjl4czc1saGZDcU8a/uaweKMjqR4WfyUp/H/mB7JFJlOHBGTRszWaAU/4E0V+bICXNI5augkV29ci0HouBG3WFcQiA5q+1U2vY/scVyMPm8ZecCe2b+SD/ipPtFspcOPStRm5EQgL4CWdVpSmm8+JRO0NcrSnQtNPCwPBT3c7OLOwYLBl8WHcJG1yOJtQvLjv1koMmJkHR0djODx8Ig9fqAFLH0c694E6VJbojDVGp/LRR9LnJnzYlWAYoT3ScPQ9uesgr4x8VSnrM6cMG3ASQD92RVXKCDep/Rq29IXtvjpAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQDBiDwoVi2YhWzlMUTE5JHUUUkGkTaMVKfjYBFiUHeQQIaUuSq3dMRPlfpDRSzt3TW5mfwcPdwwatE0xeGN3r3zyQgnzEG/vMVrxwkgfFekVYvE4Ja551MSkwAA2fuTHGsRB9tEbTrkbGr35bXZYxOpGHpZIifFETFCT6rOpheDdxOEU6YyLeIYgGdGCmKStJ3XSkvqBh7oQ45M0+iqX9yjJNGoUg+XMLnk4K++7rxIk/SGtUBuIpsB3ksmIsXImelUxHw3xe6nGkkncAm9yX7rTU1M1fqrxaoBiGvx9jlqxDVMIzzDga7vKXDsP/iUmb4feeTIoy7+SgqGWsSvRiLt6A5CeIQ5XaTrhWN+mbGq6vvFTZuctY6LzdufwhlbZXFmfU/LnsRprM2EzYfba8VZmmfMBBpnYrw5q/3d5f9OSmNkRQjs0HfVab9b44hWNUd2QJ6yvjM5gdB367ekVagLpVdb/4mwzKOlspDULSlT7rAeuOc1njylu80pbBFCNiB72AmWNbqEK48ENloUr75NhuTKJ74llj+Nt6g9zDzsXuFICyJILvgE8je87GQXp+712aSGqJBLiGTFjuS3UctJ8qdlf5zkXw6mMB52/M3QYg6vI+2AYRc2EQXRvm8ZSlDKYidp9mZF43EcXFVktnK87x+TKYVjnfTGomfLfAXpTg=="))
-Import-Certificate -Filepath $AutoHardenCertCA -CertStoreLocation Cert:\LocalMachine\AuthRoot
+if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
+	$AutoHardenCert = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
+	[IO.File]::WriteAllBytes($AutoHardenCert, [Convert]::FromBase64String("MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoXDTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GSl1NergVq/3WmT8LDpaZ0XSpExZ7soHR3gs8eztnfe07r+Fl+W7l6lz3wUGFt52VY17WCa53tr5dYRPzYt2J6TWT874tqZqlo+lUl8ONK1roAww2flcDajm8VUXM0k0sLM17H9NLykO3DeBuh2PVaXUxGDej+N8PsYF3/7Gv2AW0ZHGflrondcXb2/eh8xwbwRENsGaMXvnGr9RWkufC6bKq31J8BBnP+/65M6541AueBoH8pLbANPZgHKES+8V9UWlYKOeSoeBhtL1k3Rr8tfizRWx1zg/pBNL0WTOLcusmuJkdHkdHbHaW6Jc/vh06Cs6xqz9/Dkg+K3BvOmfwZfAjl+qdgzM8dUU8/GWhswngwLAz64nZ82mZv/Iw6egC0rj5MYV0tpEjIgtVVgHavUfyXoIETNXFQR4SoK6PfeVkEzbRh03xhU65MSgBgWVv1YbOtdgXK0MmCs3ngVPJdVaqBjgcrK++X3Kxasb/bOkcfQjff/EK+BPb/xs+pXEqryYbtbeX0v2rbV9cugPUj+mneucZBLFjuRcXhzVbXLrwXVne7yTD/sIKfe7dztzchg19AY6/qkkRkroaKLASpfCAVx2LuCgeFGn//QaEtCpFxMo2dcnW2a+54pkzrCRTRg1N2wBQFAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQAQLtHeMr2qJnfhha2x2aCIApPjfHiHT4RNPI2Lq71jEbTpzdDFJQkKq4R3brGcpcnuU9VjUwz/BgKer+SFpkwFwTHyJpEFkbGavNo/ez3bqoehvqlTYDJO/i2mK0fvKmShfne6dZT+ftLpZCP4zngcANlp+kHy7mNRMB+LJv+jPc0kJ2oP4nIsLejyfxMj0lXuTJJRhxeZssdh0tq4MZP5MjSeiE5/AMuKT12uJ6klNUFS+OlEpZyHkIpgy4HxflXSvhchJ9U1YXF2IQ47WOrqwCXPUinHKZ8LwB0b0/35IlRCpub5KdRf803+4Okf9fL4rfc1cg9ZbLxuK9neFg1+ESL4aPyoV03TbN7Cdsd/sfx4mJ8jXJD+AXZ1ZofAAapYf9J5C71ChCZlhIGBvVc+dTUCWcUYgNOD9Nw+NiV6mARmVHl9SFL7yEtNYFgo0nWiNklqMqBLDxmrrD27sgBpFUwbMZ52truQwaaSHD7hFb4Tb1B0JVaGoog3QfNOXaFeez/fAt5L+yo78cDm7Q2tXvy2g0xDAL/TXn7bhtDzQunltBzdULrJEQO4zI0h8YgmF88a0zYZ9HRkDUn6dR9+G8TlZuUsWSOdvLdEvad9RqiHKeSrL6qgLBT5kqVt6AFsEtmFNz1s7xpsw/zPZvIXtQTmb4h+GcE/b2sUFZUkRA=="))
+	Import-Certificate -Filepath $AutoHardenCert -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
+	$AutoHardenCertCA = "${env:temp}\"+[System.IO.Path]::GetRandomFileName()+".cer"
+	[IO.File]::WriteAllBytes($AutoHardenCertCA, [Convert]::FromBase64String("MIIFHDCCAwSgAwIBAgIQa8VTLnfdzZxP14xJKNvthzANBgkqhkiG9w0BAQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUwOVoXDTM5MTIzMTIzNTk1OVowGDEWMBQGA1UEAxMNQXV0b0hhcmRlbi1DQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBANlm8tv2IqVairIP90RnIsNlQYPMAvUwRcC6Nw+0Qlv56tWczvMl9IF0+h2vUF5+lnSEkJMGBqeLFaJgSo9lNyHeTfjjqpEcMVBw1nXl6VSfNiirD7fJTkyZ3rl63PsOwbfWCPDW1AvLufYhBiijPlK1k4RJFkiFZbZkpe5ys0uY4QVFj+ZTaW0EA0MncX2YZ775QnX7HJO0HfMcHGGTxOPhAqJ7Pp+IBrs75laaASekJSTVub7jqs5aeApQkUWgKel1fmK0tBv35deE1P5ABXi+KnuzWCZDU8znIDAnj1qz+6c21KKhslEdzYlRSlq4kPcF964GECxRtgq0z1pzhV/WvBJjWjNp3G5e8jUfjuAg2utF/xd/j7GNU8vllDAXFjl4czc1saGZDcU8a/uaweKMjqR4WfyUp/H/mB7JFJlOHBGTRszWaAU/4E0V+bICXNI5augkV29ci0HouBG3WFcQiA5q+1U2vY/scVyMPm8ZecCe2b+SD/ipPtFspcOPStRm5EQgL4CWdVpSmm8+JRO0NcrSnQtNPCwPBT3c7OLOwYLBl8WHcJG1yOJtQvLjv1koMmJkHR0djODx8Ig9fqAFLH0c694E6VJbojDVGp/LRR9LnJnzYlWAYoT3ScPQ9uesgr4x8VSnrM6cMG3ASQD92RVXKCDep/Rq29IXtvjpAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECAEPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBrxVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQDBiDwoVi2YhWzlMUTE5JHUUUkGkTaMVKfjYBFiUHeQQIaUuSq3dMRPlfpDRSzt3TW5mfwcPdwwatE0xeGN3r3zyQgnzEG/vMVrxwkgfFekVYvE4Ja551MSkwAA2fuTHGsRB9tEbTrkbGr35bXZYxOpGHpZIifFETFCT6rOpheDdxOEU6YyLeIYgGdGCmKStJ3XSkvqBh7oQ45M0+iqX9yjJNGoUg+XMLnk4K++7rxIk/SGtUBuIpsB3ksmIsXImelUxHw3xe6nGkkncAm9yX7rTU1M1fqrxaoBiGvx9jlqxDVMIzzDga7vKXDsP/iUmb4feeTIoy7+SgqGWsSvRiLt6A5CeIQ5XaTrhWN+mbGq6vvFTZuctY6LzdufwhlbZXFmfU/LnsRprM2EzYfba8VZmmfMBBpnYrw5q/3d5f9OSmNkRQjs0HfVab9b44hWNUd2QJ6yvjM5gdB367ekVagLpVdb/4mwzKOlspDULSlT7rAeuOc1njylu80pbBFCNiB72AmWNbqEK48ENloUr75NhuTKJ74llj+Nt6g9zDzsXuFICyJILvgE8je87GQXp+712aSGqJBLiGTFjuS3UctJ8qdlf5zkXw6mMB52/M3QYg6vI+2AYRc2EQXRvm8ZSlDKYidp9mZF43EcXFVktnK87x+TKYVjnfTGomfLfAXpTg=="))
+	Import-Certificate -Filepath $AutoHardenCertCA -CertStoreLocation Cert:\LocalMachine\AuthRoot
+}
 
 
 echo "####################################################################################################"
@@ -44,6 +78,9 @@ $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
 }
+else{
+Unregister-ScheduledTask -TaskName "AutoHarden" -Confirm:$False -ErrorAction SilentlyContinue
+}
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -Completed
 
 
@@ -55,26 +92,85 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-Fir
 # Cleaning firewall rules
 netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
-Get-NetFirewallRule  | foreach { 
-	if( -not $_.Name.StartsWith('[RemoteRules]') ){
-		echo ('Cleaning old rules '+$_.Name)
-		Remove-NetFirewallRule -Name $_.Name
+Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | foreach { 
+	echo ('Cleaning old rules '+$_.Name)
+	$_ | Disable-NetFirewallRule
+	$_ | Remove-NetFirewallRule
+}
+
+function blockExe( $name, $exe ){
+	get-item $exe | foreach {
+		New-NetFirewallRule -direction Outbound -Action Block -Program $_.Fullname -Name ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$_.Fullname) -DisplayName ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$_.Fullname) -ErrorAction Ignore
 	}
 }
 
+if( (ask "Block communication for evil tools ?" "block-communication-for-powershell,eviltools.ask") -eq $true ){
+	blockExe "Powershell" "C:\Windows\WinSxS\*\powershell.exe"
+	blockExe "Powershell" "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+	blockExe "WScript" "C:\Windows\system32\wscript.exe"
+	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe"
+	blockExe "Mshta" "C:\Windows\system32\mshta.exe"
+	blockExe "CertUtil" "C:\Windows\System32\certutil.exe"
+}else{
+	"Powershell", "WScript", "BitsAdmin", "Mshta", "CertUtil" | foreach {
+		$target=$_
+		Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] $target :") } | foreach { 
+			echo ('Cleaning old rules '+$_.Name)
+			$_ | Disable-NetFirewallRule
+			$_ | Remove-NetFirewallRule
+		}
+	}
+}
 
-New-NetFirewallRule -direction Outbound -Action Block -Program "powershell.exe" -Name "[RemoteRules] Powershell" -DisplayName "[RemoteRules] Powershell" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "wscript.exe" -Name "[RemoteRules] WScript" -DisplayName "[RemoteRules] WScript" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "mshta.exe" -Name "[RemoteRules] Mshta" -DisplayName "[RemoteRules] Mshta" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "winword.exe" -Name "[RemoteRules] Winword" -DisplayName "[RemoteRules] Winword" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "excel.exe" -Name "[RemoteRules] Excel" -DisplayName "[RemoteRules] Excel" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "excel.exe" -Name "[RemoteRules] Excel" -DisplayName "[RemoteRules] Excel" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Program "certutil.exe" -Name "[RemoteRules] CertUtil" -DisplayName "[RemoteRules] CertUtil" -ErrorAction Ignore
-
-New-NetFirewallRule -direction Outbound -Action Allow -Program "C:\Program Files (x86)\Nmap\nmap.exe" -Name "[RemoteRules][OUT] NMAP bypass SNMP & co" -DisplayName "[RemoteRules][OUT] NMAP bypass SNMP & co" -ErrorAction Ignore
-New-NetFirewallRule -direction Inbound -Action Allow -Program "C:\Program Files (x86)\Nmap\nmap.exe" -Name "[RemoteRules][IN] NMAP bypass SNMP & co" -DisplayName "[RemoteRules][IN] NMAP bypass SNMP & co" -ErrorAction Ignore
-New-NetFirewallRule -direction Inbound -Action Allow -Program "C:\Program Files (x86)\VMware\VMware Workstation\vmnat.exe" -Name "[RemoteRules][IN] VMWare bypass SNMP & co" -DisplayName "[RemoteRules][IN] VMWare bypass SNMP & co" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Allow -Program "C:\Program Files (x86)\VMware\VMware Workstation\vmnat.exe" -Name "[RemoteRules][OUT] VMWare bypass SNMP & co" -DisplayName "[RemoteRules][OUT] VMWare bypass SNMP & co" -ErrorAction Ignore
+if( (ask "Block communication for Word and Excel ?" "block-communication-for-excel,word.ask") -eq $true ){
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\root\*\EXCEL.EXE"
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\root\*\EXCEL.EXE"
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\EXCEL.EXE"
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe"
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe"
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe"
+}else{
+	"Excel", "Word" | foreach {
+		$target=$_
+		Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] $target :") } | foreach { 
+			echo ('Cleaning old rules '+$_.Name)
+			$_ | Disable-NetFirewallRule
+			$_ | Remove-NetFirewallRule
+		}
+	}
+}
+if( (Get-Item "C:\Program Files*\Nmap\nmap.exe") -ne $null ){
+	if( (ask "Allow NMAP to bypass the local firewall ?" "Allow-nmap.ask") -eq $true ){
+		$nmap = (Get-Item "C:\Program Files*\Nmap\nmap.exe").Fullname
+		New-NetFirewallRule -direction Outbound -Action Allow -Program $nmap -Name "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -ErrorAction Ignore
+		New-NetFirewallRule -direction Inbound -Action Allow -Program $nmap -Name "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -ErrorAction Ignore
+	}else{
+		"[OUT] NMAP", "[IN] NMAP" | foreach {
+			$target=$_
+			Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] $target :") } | foreach { 
+				echo ('Cleaning old rules '+$_.Name)
+				$_ | Disable-NetFirewallRule
+				$_ | Remove-NetFirewallRule
+			}
+		}
+	}
+}
+if( (Get-Item "C:\Program Files*\VMware\VMware Workstation\vmnat.exe") -ne $null ){
+	if( (ask "Allow VMWARE to bypass the local firewall ?" "Allow-vmware.ask") -eq $true ){
+		$vmware = (Get-Item "C:\Program Files*\VMware\VMware Workstation\vmnat.exe").Fullname
+		New-NetFirewallRule -direction Inbound -Action Allow -Program $vmware -Name "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -ErrorAction Ignore
+		New-NetFirewallRule -direction Outbound -Action Allow -Program $vmware -Name "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -ErrorAction Ignore
+	}else{
+		"[OUT] VMWare", "[IN] VMWare" | foreach {
+			$target=$_
+			Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] $target :") } | foreach { 
+				echo ('Cleaning old rules '+$_.Name)
+				$_ | Disable-NetFirewallRule
+				$_ | Remove-NetFirewallRule
+			}
+		}	
+	}
+}
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
 
 
@@ -189,17 +285,21 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Remove
 Get-AppxPackage -Name king.com.CandyCrushSaga
 Get-AppxPackage *3dbuilder* | Remove-AppxPackage
 Get-AppxPackage *officehub* | Remove-AppxPackage
-Get-AppxPackage *skypeapp* | Remove-AppxPackage
 Get-AppxPackage *getstarted* | Remove-AppxPackage
 Get-AppxPackage *zunemusic* | Remove-AppxPackage
 Get-AppxPackage *bingfinance* | Remove-AppxPackage
 Get-AppxPackage *zunevideo* | Remove-AppxPackage
-Get-AppxPackage *onenote* | Remove-AppxPackage
 Get-AppxPackage *people* | Remove-AppxPackage -ErrorAction SilentlyContinue
 Get-AppxPackage *windowsphone* | Remove-AppxPackage
 Get-AppxPackage *bingsports* | Remove-AppxPackage
 Get-AppxPackage *xboxapp* | Remove-AppxPackage
 
+if( (ask "Uninstall OneNote ?" "Uninstall-OneNote.ask") -eq $true ){
+	Get-AppxPackage *onenote* | Remove-AppxPackage
+}
+if( (ask "Uninstall Skype ?" "Uninstall-Skype.ask") -eq $true ){
+	Get-AppxPackage *skypeapp* | Remove-AppxPackage
+}
 reg add HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main /v AllowPrelaunch /d 0 /t REG_DWORD /f
 
 # List: Get-AppxPackage
@@ -237,6 +337,22 @@ if( (New-Object System.Security.Principal.NTAccount('Administrator')).Translate(
 }
 }catch{}
 }
+else{
+try{
+if( (New-Object System.Security.Principal.NTAccount('Invité')).Translate([System.Security.Principal.SecurityIdentifier]).value.EndsWith('-500') ){
+	Rename-LocalUser -Name Administrateur -NewName Adm
+	Rename-LocalUser -Name Invité -NewName Administrateur
+	Rename-LocalUser -Name Adm -NewName Invité
+}
+}catch{}
+try{
+if( (New-Object System.Security.Principal.NTAccount('Guest')).Translate([System.Security.Principal.SecurityIdentifier]).value.EndsWith('-500') ){
+	Rename-LocalUser -Name Administrator -NewName Adm
+	Rename-LocalUser -Name Guest -NewName Administrator
+	Rename-LocalUser -Name Adm -NewName Guest
+}
+}catch{}
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -Completed
 
 
@@ -245,8 +361,17 @@ echo "# Hardening-BlockOutgoingSNMP"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-BlockOutgoingSNMP"
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Name "[RemoteRules] SNMP-TCP" -DisplayName "[RemoteRules] SNMP" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Name "[RemoteRules] SNMP-UDP" -DisplayName "[RemoteRules] SNMP" -ErrorAction Ignore
+if( ask "Disable SNMP communication (can break printers)" "Hardening-BlockOutgoingSNMP.ask" ){
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+}
+else{
+Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] SNMP") } | foreach { 
+	echo ('Cleaning old rules '+$_.Name)
+	$_ | Disable-NetFirewallRule
+	$_ | Remove-NetFirewallRule
+}
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -Completed
 
 
@@ -315,13 +440,13 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableIPv6"
 # Block IPv6
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 41 -Name "[RemoteRules] IPv6" -DisplayName "[RemoteRules] IPv6" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 43 -Name "[RemoteRules] IPv6-Route" -DisplayName "[RemoteRules] IPv6-Route" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 44 -Name "[RemoteRules] IPv6-Frag" -DisplayName "[RemoteRules] IPv6-Frag" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 59 -Name "[RemoteRules] IPv6-NoNxt" -DisplayName "[RemoteRules] IPv6-NoNxt" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 60 -Name "[RemoteRules] IPv6-Opts" -DisplayName "[RemoteRules] IPv6-Opts" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Name "[RemoteRules] ICMPv6" -DisplayName "[RemoteRules] ICMPv6" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Name "[RemoteRules] DHCPv6" -DisplayName "[RemoteRules] DHCPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 41 -Name "[AutoHarden-$AutoHarden_version] IPv6" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 43 -Name "[AutoHarden-$AutoHarden_version] IPv6-Route" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Route" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 44 -Name "[AutoHarden-$AutoHarden_version] IPv6-Frag" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Frag" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 59 -Name "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 60 -Name "[AutoHarden-$AutoHarden_version] IPv6-Opts" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Opts" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Name "[AutoHarden-$AutoHarden_version] ICMPv6" -DisplayName "[AutoHarden-$AutoHarden_version] ICMPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
@@ -333,9 +458,9 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Disab
 # Disable LLMNR
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /t REG_DWORD /v EnableMulticast /d 0 /f
 nbtstat.exe /n
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "5355" -Name "[RemoteRules] LLMNR-TCP" -DisplayName "[RemoteRules] LLMNR" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Name "[RemoteRules] LLMNR-UDP" -DisplayName "[RemoteRules] LLMNR" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Name "[RemoteRules] MBNS" -DisplayName "[RemoteRules] MBNS" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "5355" -Name "[AutoHarden-$AutoHarden_version] LLMNR-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Name "[AutoHarden-$AutoHarden_version] LLMNR-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Name "[AutoHarden-$AutoHarden_version] MBNS" -DisplayName "[AutoHarden-$AutoHarden_version] MBNS" -ErrorAction Ignore
 
 # Disable wpad
 reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "DefaultConnectionSettings" /f
@@ -365,6 +490,9 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t
 if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-DomainCred.ask") -eq $false ){
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /t REG_DWORD /d 1 /f
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
+}else{
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f
 }
 
 # This sets up your RDP session to NOT store credentials in the memory of the target host.
@@ -380,6 +508,9 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
 		# En cas de blocage, il faut d�sactive CG via DG_Readiness.ps1 -Disable
 		# cf https://stackoverflow.com/questions/39858200/vmware-workstation-and-device-credential-guard-are-not-compatible
 		# cf https://www.microsoft.com/en-us/download/details.aspx?id=53337
+	}else{
+		reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /f
+		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 0 /f
 	}
 }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
@@ -390,10 +521,10 @@ echo "# Hardening-DisableNetbios"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableNetbios"
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Name "[RemoteRules] NetBios-TCP135" -DisplayName "[RemoteRules] NetBios" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Name "[RemoteRules] NetBios-UDP137" -DisplayName "[RemoteRules] NetBios" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Name "[RemoteRules] NetBios-UDP138" -DisplayName "[RemoteRules] NetBios2" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Name "[RemoteRules] NetBios-TCP139" -DisplayName "[RemoteRules] NetBios3" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP135" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP137" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP138" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios2" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP139" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios3" -ErrorAction Ignore
 set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip* -Name NetbiosOptions -Value 2
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -Completed
 
@@ -415,16 +546,16 @@ Write-Progress -Activity AutoHarden -Status "Hardening-DisableRemoteServiceManag
 
 
 echo "####################################################################################################"
-echo "# Hardening-DisableSMB"
+echo "# Hardening-DisableSMBServer"
 echo "####################################################################################################"
-Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMB" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableSMB"
+Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBServer" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableSMBServer"
 # Désactivation des partages administratifs
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareWks /t REG_DWORD /d 0 /f
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareServer /t REG_DWORD /d 0 /f
 
 sc.exe config lanmanserver start= disabled
-Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMB" -Completed
+Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBServer" -Completed
 
 
 echo "####################################################################################################"
@@ -485,6 +616,10 @@ Dism.exe /online /Cleanup-Image /StartComponentCleanup
 # En appliquant ces deux commandes, vous ne pourrez plus désinstaller les mises à jour Windows.
 Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 Dism.exe /online /Cleanup-Image /SPSuperseded
+
+# Réparation des DLL et drivers
+DISM /Online /Cleanup-image /Restorehealth
+sfc /SCANNOW
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowFolder" -Completed
 
 
@@ -540,6 +675,15 @@ if( !(Test-Path -PathType Container "$env:WINDIR\System32\Tasks\Microsoft\Window
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursStart /d 4 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursEnd /d 23 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v IsActiveHoursEnabled /d 1 /f
+else{
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /t REG_DWORD /v NoAutoRebootWithLoggedOnUsers /d 0 /f
+rmdir $env:WINDIR\System32\Tasks\Microsoft\Windows\UpdateOrchestrator\Reboot
+schtasks /Change /TN "Microsoft\Windows\UpdateOrchestrator\Schedule Scan" /Enable
+schtasks /Change /TN "Microsoft\Windows\UpdateOrchestrator\Reboot" /Enable
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursStart /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursEnd /d 23 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v IsActiveHoursEnabled /d 1 /f
+}
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -Completed
 
 
@@ -567,6 +711,9 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentCo
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
 if( ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+}
+else{
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
 }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
@@ -645,6 +792,15 @@ if( [System.IO.File]::Exists($npp_path) ){
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
 }
 }
+else{
+$npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe")
+if( $npp_path -ne $null ){
+	$npp_path = $npp_path.FullName.Replace('.exe','.vbs')
+	rm $npp_path
+	choco uninstall notepadplusplus.install -y
+	reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /f
+}
+}
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
 
 
@@ -690,79 +846,3 @@ Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
 Stop-Transcript
-
-# SIG # Begin signature block
-# MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
-# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTg898HLg6o9/eRDXZJB8KaGl
-# JJKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
-# AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
-# DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
-# hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
-# l1NergVq/3WmT8LDpaZ0XSpExZ7soHR3gs8eztnfe07r+Fl+W7l6lz3wUGFt52VY
-# 17WCa53tr5dYRPzYt2J6TWT874tqZqlo+lUl8ONK1roAww2flcDajm8VUXM0k0sL
-# M17H9NLykO3DeBuh2PVaXUxGDej+N8PsYF3/7Gv2AW0ZHGflrondcXb2/eh8xwbw
-# RENsGaMXvnGr9RWkufC6bKq31J8BBnP+/65M6541AueBoH8pLbANPZgHKES+8V9U
-# WlYKOeSoeBhtL1k3Rr8tfizRWx1zg/pBNL0WTOLcusmuJkdHkdHbHaW6Jc/vh06C
-# s6xqz9/Dkg+K3BvOmfwZfAjl+qdgzM8dUU8/GWhswngwLAz64nZ82mZv/Iw6egC0
-# rj5MYV0tpEjIgtVVgHavUfyXoIETNXFQR4SoK6PfeVkEzbRh03xhU65MSgBgWVv1
-# YbOtdgXK0MmCs3ngVPJdVaqBjgcrK++X3Kxasb/bOkcfQjff/EK+BPb/xs+pXEqr
-# yYbtbeX0v2rbV9cugPUj+mneucZBLFjuRcXhzVbXLrwXVne7yTD/sIKfe7dztzch
-# g19AY6/qkkRkroaKLASpfCAVx2LuCgeFGn//QaEtCpFxMo2dcnW2a+54pkzrCRTR
-# g1N2wBQFAgMBAAGjYjBgMBMGA1UdJQQMMAoGCCsGAQUFBwMDMEkGA1UdAQRCMECA
-# EPp+TbkVy9u5igk2CqcX2OihGjAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBghBr
-# xVMud93NnE/XjEko2+2HMA0GCSqGSIb3DQEBDQUAA4ICAQAQLtHeMr2qJnfhha2x
-# 2aCIApPjfHiHT4RNPI2Lq71jEbTpzdDFJQkKq4R3brGcpcnuU9VjUwz/BgKer+SF
-# pkwFwTHyJpEFkbGavNo/ez3bqoehvqlTYDJO/i2mK0fvKmShfne6dZT+ftLpZCP4
-# zngcANlp+kHy7mNRMB+LJv+jPc0kJ2oP4nIsLejyfxMj0lXuTJJRhxeZssdh0tq4
-# MZP5MjSeiE5/AMuKT12uJ6klNUFS+OlEpZyHkIpgy4HxflXSvhchJ9U1YXF2IQ47
-# WOrqwCXPUinHKZ8LwB0b0/35IlRCpub5KdRf803+4Okf9fL4rfc1cg9ZbLxuK9ne
-# Fg1+ESL4aPyoV03TbN7Cdsd/sfx4mJ8jXJD+AXZ1ZofAAapYf9J5C71ChCZlhIGB
-# vVc+dTUCWcUYgNOD9Nw+NiV6mARmVHl9SFL7yEtNYFgo0nWiNklqMqBLDxmrrD27
-# sgBpFUwbMZ52truQwaaSHD7hFb4Tb1B0JVaGoog3QfNOXaFeez/fAt5L+yo78cDm
-# 7Q2tXvy2g0xDAL/TXn7bhtDzQunltBzdULrJEQO4zI0h8YgmF88a0zYZ9HRkDUn6
-# dR9+G8TlZuUsWSOdvLdEvad9RqiHKeSrL6qgLBT5kqVt6AFsEtmFNz1s7xpsw/zP
-# ZvIXtQTmb4h+GcE/b2sUFZUkRDCCBRwwggMEoAMCAQICEGvFUy533c2cT9eMSSjb
-# 7YcwDQYJKoZIhvcNAQENBQAwGDEWMBQGA1UEAxMNQXV0b0hhcmRlbi1DQTAeFw0x
-# OTEwMjkyMTU1MDlaFw0zOTEyMzEyMzU5NTlaMBgxFjAUBgNVBAMTDUF1dG9IYXJk
-# ZW4tQ0EwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDZZvLb9iKlWoqy
-# D/dEZyLDZUGDzAL1MEXAujcPtEJb+erVnM7zJfSBdPodr1BefpZ0hJCTBganixWi
-# YEqPZTch3k3446qRHDFQcNZ15elUnzYoqw+3yU5Mmd65etz7DsG31gjw1tQLy7n2
-# IQYooz5StZOESRZIhWW2ZKXucrNLmOEFRY/mU2ltBANDJ3F9mGe++UJ1+xyTtB3z
-# HBxhk8Tj4QKiez6fiAa7O+ZWmgEnpCUk1bm+46rOWngKUJFFoCnpdX5itLQb9+XX
-# hNT+QAV4vip7s1gmQ1PM5yAwJ49as/unNtSiobJRHc2JUUpauJD3BfeuBhAsUbYK
-# tM9ac4Vf1rwSY1ozadxuXvI1H47gINrrRf8Xf4+xjVPL5ZQwFxY5eHM3NbGhmQ3F
-# PGv7msHijI6keFn8lKfx/5geyRSZThwRk0bM1mgFP+BNFfmyAlzSOWroJFdvXItB
-# 6LgRt1hXEIgOavtVNr2P7HFcjD5vGXnAntm/kg/4qT7RbKXDj0rUZuREIC+AlnVa
-# UppvPiUTtDXK0p0LTTwsDwU93OzizsGCwZfFh3CRtcjibULy479ZKDJiZB0dHYzg
-# 8fCIPX6gBSx9HOveBOlSW6Iw1Rqfy0UfS5yZ82JVgGKE90nD0PbnrIK+MfFUp6zO
-# nDBtwEkA/dkVVygg3qf0atvSF7b46QIDAQABo2IwYDATBgNVHSUEDDAKBggrBgEF
-# BQcDAzBJBgNVHQEEQjBAgBD6fk25FcvbuYoJNgqnF9jooRowGDEWMBQGA1UEAxMN
-# QXV0b0hhcmRlbi1DQYIQa8VTLnfdzZxP14xJKNvthzANBgkqhkiG9w0BAQ0FAAOC
-# AgEAwYg8KFYtmIVs5TFExOSR1FFJBpE2jFSn42ARYlB3kECGlLkqt3TET5X6Q0Us
-# 7d01uZn8HD3cMGrRNMXhjd6988kIJ8xBv7zFa8cJIHxXpFWLxOCWuedTEpMAANn7
-# kxxrEQfbRG065Gxq9+W12WMTqRh6WSInxRExQk+qzqYXg3cThFOmMi3iGIBnRgpi
-# krSd10pL6gYe6EOOTNPoql/coyTRqFIPlzC55OCvvu68SJP0hrVAbiKbAd5LJiLF
-# yJnpVMR8N8XupxpJJ3AJvcl+601NTNX6q8WqAYhr8fY5asQ1TCM8w4Gu7ylw7D/4
-# lJm+H3nkyKMu/koKhlrEr0Yi7egOQniEOV2k64Vjfpmxqur7xU2bnLWOi83bn8IZ
-# W2VxZn1Py57EaazNhM2H22vFWZpnzAQaZ2K8Oav93eX/TkpjZEUI7NB31Wm/W+OI
-# VjVHdkCesr4zOYHQd+u3pFWoC6VXW/+JsMyjpbKQ1C0pU+6wHrjnNZ48pbvNKWwR
-# QjYge9gJljW6hCuPBDZaFK++TYbkyie+JZY/jbeoPcw87F7hSAsiSC74BPI3vOxk
-# F6fu9dmkhqiQS4hkxY7kt1HLSfKnZX+c5F8OpjAedvzN0GIOryPtgGEXNhEF0b5v
-# GUpQymInafZmReNxHFxVZLZyvO8fkymFY530xqJny3wF6U4xggLNMIICyQIBATAs
-# MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
-# Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
-# MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFKHCnftGs6K92NTeAaRnvisnvVlcMA0GCSqGSIb3DQEBAQUA
-# BIICAC5uDD5m6eW2ah8BKu9BoPwa4mRTfQBaENykGQZOLyQ4Irq9CDGaKZfxZJ6p
-# 754BHXGtnCZ6X84a14Zs9I1QdMfyTmdhJNB/iYH9VNaqw0fUF579CN1tWNBUXd3O
-# P78zOmpvngaJDXR6LXRJJLy01g20aV/QBoDTTRuJtLqByultJjNRmwc89ruj4MtP
-# v9pZcfjQsadkm8hldwJoQLqm+MLgwy2V0DEJwwtWsicq4N4ggg/iI2IZR7Q3J98S
-# lrIGyR+G1XcnD9cSl9YXB8+d53i6sbjaC9XG5Qg+J5KzVRPtGALUbULWtGFVYdMY
-# uTRBGvD+jFNWejb7Q60xcPrT7ZPm82lqwMVGzxvw4EJkqXQZgerQXIfzRJ3reX4j
-# MDXuJFs1H7Hh+oFGfN+BRU7607TvI7VYZpu1MBrRLsV4XbYK3S+FX8EJ/8Hv0TuR
-# jwyhyr/hjz1MTIrJzWH1kUyIhTkTD8XH8oPmzOhuBduggFQku4QA1HXNHtNFk+5M
-# 5v3MnRtvum5oUXJkmeslms+ZN5jH9KUpLZ7YrR1UWpUyt9CaK5o00635IkCZdTr2
-# 72pkCdjP6ETx1/dBvkPcYlt0bjMOnLULjsJuU2ks9Ykgbeq5YbFwx3awLXB2vOcl
-# dSG95YzZi6vHt7DRemSkCBsKxogHVwTnHQJuksfW6jsEKhSR
-# SIG # End signature block

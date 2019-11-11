@@ -5,3 +5,7 @@ Dism.exe /online /Cleanup-Image /StartComponentCleanup
 # En appliquant ces deux commandes, vous ne pourrez plus désinstaller les mises à jour Windows.
 Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 Dism.exe /online /Cleanup-Image /SPSuperseded
+
+# Réparation des DLL et drivers
+DISM /Online /Cleanup-image /Restorehealth
+sfc /SCANNOW

@@ -1,0 +1,5 @@
+Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] SNMP") } | foreach { 
+	echo ('Cleaning old rules '+$_.Name)
+	$_ | Disable-NetFirewallRule
+	$_ | Remove-NetFirewallRule
+}
