@@ -664,15 +664,6 @@ if( !(Test-Path -PathType Container "$env:WINDIR\System32\Tasks\Microsoft\Window
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursStart /d 4 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursEnd /d 23 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v IsActiveHoursEnabled /d 1 /f
-else{
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /t REG_DWORD /v NoAutoRebootWithLoggedOnUsers /d 0 /f
-rmdir $env:WINDIR\System32\Tasks\Microsoft\Windows\UpdateOrchestrator\Reboot
-schtasks /Change /TN "Microsoft\Windows\UpdateOrchestrator\Schedule Scan" /Enable
-schtasks /Change /TN "Microsoft\Windows\UpdateOrchestrator\Reboot" /Enable
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursStart /d 4 /f
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v ActiveHoursEnd /d 23 /f
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /t REG_DWORD /v IsActiveHoursEnabled /d 1 /f
-}
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoReboot" -Completed
 
 
@@ -839,8 +830,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZXeZ0mQbKZyh0YJqszy7BLYh
-# d5agggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfTTpMihhwY43MsARKWVSelnY
+# oO6gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -898,16 +889,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFJmgo1dnTq3qOe+x3g6BXM7mwYssMA0GCSqGSIb3DQEBAQUA
-# BIICACj9D9t5QrjyjE7cp6GRIAv9pWELY/poMWFTBTeSevPW6rHNJXPL6hoIavTf
-# zI2FG5NckUCuFdVg6QkLBeha3UNgqQ8PQilAteCMFElA0VyH2dijfHB+Ez54h1l+
-# P52mn+uvY0nIBbIj/1GTfm9iceFqEP9rXKwQRVZkJSSLPrFNXo7Pk4BrjFWJ5n1n
-# 4KWGG8dAo/SJHEX3LbgOAZ7n3KepTyBdtU/WeJF+KSkvx8cFikOOUnl9tmklVmCH
-# 0i0y0+970lGXS3iYhVWZZvdyMhTEFNDAjn5L9M/VmsZkshjmmTjX07i0+He57oGn
-# I1mKP3ziCYxL8IplNOzZuo2ZiBzwOSFH11VW28Ox0YnGH1dk51dbCVbPYvfPhr5t
-# pikZRfTgW74iAfbz4zCWSKOtGexO1EfufXdY2jWokCuzwYhtrGI6V4cyxoXGcO4l
-# YhniYl6DrUgxIgsCe9S3oG3jok8QWiLON0SnX6zLag99XSU8eCgnQy/sOa5JT/xb
-# 4Uu4SIGZd9RCkNQjWlEzCqCChcyS7G0uIbd1iEd1Byu/hK4VvwtQX584+4TI6OQo
-# ro4lrdrVGomODlxe0ocKK2vZ4GyweiZMCxws/yHUDu9eWDVQ6B+r03w1wHkBIZrF
-# P/UIzvZH6csj2hZEyupd+XFAj06eogy7h/Iar5oR0i209kCj
+# KoZIhvcNAQkEMRYEFGS3HOzs926WpI8KM+o6GlCYhf3RMA0GCSqGSIb3DQEBAQUA
+# BIICAK3RtsaG3CufuM998e7dltCOEddnIwEEykveSFJg8OvESeCWMofrfkWMT37p
+# Ry0FBzQaEv2gV2jbtu5QFJtkG1jbi0xFtSIfYEBVnNwzn71DduXXrjvChTyru6DM
+# NbPlGyXZyIbnbORCdWSS3fjLT4JjoqZcZWSi+S64znJC+Ab69/a0nUgwzOMuRXPX
+# 1tLxTJ/lYWybZKK0p0m18m9zzzLIARAmFrX+n/aKy69tqFi0butubZW37Njqr+vg
+# miWzAVhbi2s1TU3rm+XkuVCwpvsJNRJhLbQYB4wigoCLo/jj97ObzTPGFOHxyzp9
+# cWEQBXmQfvXJvEAcQPPO0LOsrojvCLV4P7ZbqC8963GkdwvCUU2er4xDxCmwqHgT
+# f2KBMHqxanP3C9SCuN1OwReViUizSwc25UXOkRAZfdf86VGZ12rypF2NdCwKbMPI
+# xVnwRDfKhEiMnSgSyqbWji/cq3mRiJ9+7QHdZ7EVbQMkT7zD7t2cYT2Z050i+nzF
+# BkulicKZVPXvlkRWLluGem84OK1miijsuIP41giXJN19C/2k8Uc/E+4Vnqil0Xqo
+# SKkvZSj7kIfFAYXld03Xyf0RCMUzsG6oTqvtcS011onZlvGKdoI7Rmr+Sh2nV7kF
+# qTv2yETkj9m6JJWUqsj1L1Xoyf8N7d2UwDhaemM+MIqWFwIA
 # SIG # End signature block

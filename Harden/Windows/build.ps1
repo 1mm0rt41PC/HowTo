@@ -122,7 +122,7 @@ Get-ChildItem ${PSScriptRoot}\src\*.ps1 | foreach {
 	if( [System.IO.File]::Exists($_.FullName.Replace('.ps1','.ask')) ){
 		echo '}'
 	}
-	if( [System.IO.File]::Exists($_.FullName.Replace('.ps1','.rollback')) ){
+	if( [System.IO.File]::Exists($_.FullName.Replace('.ps1','.ask')) -and [System.IO.File]::Exists($_.FullName.Replace('.ps1','.rollback')) ){
 		echo 'else{'
 		cat $_.FullName.Replace('.ps1','.rollback')
 		echo '}'
