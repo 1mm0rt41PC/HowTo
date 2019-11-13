@@ -21,7 +21,7 @@ $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 
 $date = Get-Date -Format 'yyyy-MM-dd'
-$output = 'AutoHarden_RELEASE.ps1'
+$output = 'AutoHarden_TEST.ps1'
 
 mkdir -Force "${PSScriptRoot}\cert\" > $null
 if( -not [System.IO.File]::Exists("${PSScriptRoot}\cert\AutoHarden-CA.pvk") -or -not [System.IO.File]::Exists("${PSScriptRoot}\cert\AutoHarden-CA.cer") ){
@@ -133,4 +133,9 @@ Get-ChildItem ${PSScriptRoot}\src\*.ps1 | foreach {
 } >> $output
 echo 'Stop-Transcript' >> $output
 
-Set-AuthenticodeSignature -filepath $output -cert $cert -IncludeChain All
+if( Set-AuthenticodeSignature -filepath $output -cert $cert -IncludeChain All ){
+	Write-Host 'Signature OK'
+	mv -Force $output 'AutoHarden_RELEASE.ps1'
+}else{
+	rm 'AutoHarden_RELEASE.ps1'
+}
