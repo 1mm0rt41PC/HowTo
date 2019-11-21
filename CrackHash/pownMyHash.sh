@@ -257,8 +257,6 @@ fi
 if [ "`which cygpath`" != "" ] ; then
 	#export HC=`cygpath -w $HC 2>/dev/null`
 	export HCB=`cygpath -w $HCB 2>/dev/null`
-	export DICO_PATH=`realpath $DICO_PATH_CYGWIN 2>/dev/null`
-	export DICO_PATH=`dirname $DICO_PATH 2>/dev/null`
 	export DICO_PATH=`cygpath -w $DICO_PATH 2>/dev/null`
 	export SCRIPT_PATH=`cygpath -m $SCRIPT_PATH 2>/dev/null`
 	export HASHES=`cygpath -w $HASHES 2>/dev/null`
@@ -278,6 +276,7 @@ if isProcessHashCat; then
 	[ "${query^}" = "N" ] && exit;
 fi
 
+
 ####################################################################################################
 # MAIN
 ####################################################################################################
@@ -286,7 +285,7 @@ fi
 ([ "${HASH_TYPE^^}" = "NETNTLMV2" ] || [ "${HASH_TYPE^^}" = "NTLMV2" ]) && export HASH_TYPE=5600
 [ "${HASH_TYPE^^}" = "PMKID" ] && export HASH_TYPE=16800
 
-if [ "$HASH_TYPE" -lt 0 ] || [ ! -f "$HASHES" ]; then
+if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_TYPE" ]) || [ ! -f "$HASHES" ]; then
 	echo -e '\033[31m*******************************************************************************'
 	echo -e 'Invalid Argument !\033[0m'
 	echo "Invalid hash type >$HASH_TYPE<"
@@ -301,10 +300,10 @@ if [ "$HASH_TYPE" -lt 0 ] || [ ! -f "$HASHES" ]; then
 fi
 
 
-
 if [ "$HASH_TYPE" = "1000" ]; then
 	if title 'LM attack'; then
 		export HASH_TYPE=3000 # mode LM
+		loopOnPotfile 1
 		hashcat 3 -i '?a?a?a?a?a?a'
 		hashcat 3 '?a?a?a?a?a?a?a'
 		
