@@ -1,5 +1,5 @@
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
-$Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
+$Action  = New-ScheduledTaskAction -Execute "${env:SystemRoot}\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
