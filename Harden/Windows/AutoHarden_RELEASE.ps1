@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-11-13
-$AutoHarden_version="2019-11-13"
+# Update: 2019-11-23
+$AutoHarden_version="2019-11-23"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -73,7 +73,7 @@ Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
 if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
-$Action  = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
+$Action  = New-ScheduledTaskAction -Execute "${env:SystemRoot}\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
@@ -830,8 +830,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfTTpMihhwY43MsARKWVSelnY
-# oO6gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUoZBL86gLHAMbuahvcPWQSs3X
+# Jgqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -889,16 +889,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFGS3HOzs926WpI8KM+o6GlCYhf3RMA0GCSqGSIb3DQEBAQUA
-# BIICAK3RtsaG3CufuM998e7dltCOEddnIwEEykveSFJg8OvESeCWMofrfkWMT37p
-# Ry0FBzQaEv2gV2jbtu5QFJtkG1jbi0xFtSIfYEBVnNwzn71DduXXrjvChTyru6DM
-# NbPlGyXZyIbnbORCdWSS3fjLT4JjoqZcZWSi+S64znJC+Ab69/a0nUgwzOMuRXPX
-# 1tLxTJ/lYWybZKK0p0m18m9zzzLIARAmFrX+n/aKy69tqFi0butubZW37Njqr+vg
-# miWzAVhbi2s1TU3rm+XkuVCwpvsJNRJhLbQYB4wigoCLo/jj97ObzTPGFOHxyzp9
-# cWEQBXmQfvXJvEAcQPPO0LOsrojvCLV4P7ZbqC8963GkdwvCUU2er4xDxCmwqHgT
-# f2KBMHqxanP3C9SCuN1OwReViUizSwc25UXOkRAZfdf86VGZ12rypF2NdCwKbMPI
-# xVnwRDfKhEiMnSgSyqbWji/cq3mRiJ9+7QHdZ7EVbQMkT7zD7t2cYT2Z050i+nzF
-# BkulicKZVPXvlkRWLluGem84OK1miijsuIP41giXJN19C/2k8Uc/E+4Vnqil0Xqo
-# SKkvZSj7kIfFAYXld03Xyf0RCMUzsG6oTqvtcS011onZlvGKdoI7Rmr+Sh2nV7kF
-# qTv2yETkj9m6JJWUqsj1L1Xoyf8N7d2UwDhaemM+MIqWFwIA
+# KoZIhvcNAQkEMRYEFGbDxqQiSJ+qQ95JhscJ0cj+6zX+MA0GCSqGSIb3DQEBAQUA
+# BIICAIN5TWq+L0gLuH3xL4AAzlQ/zKF2wJH9tqq6AmClKqJltCb1qXrHwk4q83MV
+# Qwn+tNeB3SdHwk5EQHxt9LW/V2fpN9RK3o4NlKogIg0XFFk9JoD29CBOXQIN+c/+
+# E01OJNGBeiAAFfoMqxW6MMHxsaUUh14vhZAd/CDcqyzw9R1cZW5X+arBwDlZo/6K
+# IoOggd4di+fipVGVIctsBWmQOqmqQl/Hv9l/Ssrnmcyqu9cTTHTzs0CxalvzLMYd
+# hnvTQjzyCFtsJ11cCz3681hk3vOi+5ICrhWWDHWqFRXWT9/LgEcAdLfmMK3U9uat
+# 1+K5gA6JZG86CEArhFoEuSSIAiBtm/CE2T3UyIeghHoF7ss/4dEeL8qPqWB05f1L
+# rya/bC8vUQPvTBwM3VMyHk5v1JKXKg0oKLGRkNk1r7/RO4u1oVG2GiE+N6d6C81B
+# o1IDfoieQ110cGBghrAY5Z194Ee2VwP3BYKqyPe8QIM7dy+fG/rsOkaq7k5llctw
+# 68KYPeAIw78qETHlF+a90O/sO4iVtf5fp+qUx2DaFttG4m3lF0K9IW8VF+qzkjzT
+# 13cvgn3DmuXZj26ix61WQisoCB8xv78BG4HD1jtt39tFf4cMVVQngmLt9mb5KCjO
+# EPJOhufH+mz/xu4MKzf2S2WOUNdjunz8JQ81mElaayfnAo2L
 # SIG # End signature block
