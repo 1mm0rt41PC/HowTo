@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-11-23
-$AutoHarden_version="2019-11-23"
+# Update: 2019-11-27
+$AutoHarden_version="2019-11-27"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -73,7 +73,7 @@ Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
 if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
-$Action  = New-ScheduledTaskAction -Execute "${env:SystemRoot}\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1"
+$Action  = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "cmd /c `"powershell.exe -exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1`" > C:\Windows\AutoHarden\ScheduledTask.log"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
@@ -579,6 +579,7 @@ echo "# Optimiz-ClasicExplorerConfig"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-ClasicExplorerConfig" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-ClasicExplorerConfig"
+if( ask "Optimiz the Windows GUI" "Optimiz-ClasicExplorerConfig.ask" ){
 # These make "Quick Access" behave much closer to the old "Favorites"
 # Disable Quick Access: Recent Files
 reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v ShowFrequent /t REG_DWORD /d 0 /f
@@ -590,6 +591,7 @@ reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Ad
 reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarGlomLevel /t REG_DWORD /d 1 /f
 # Change Explorer home screen back to "This PC"
 reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v LaunchTo /t REG_DWORD /d 1 /f
+}
 Write-Progress -Activity AutoHarden -Status "Optimiz-ClasicExplorerConfig" -Completed
 
 
@@ -830,8 +832,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUoZBL86gLHAMbuahvcPWQSs3X
-# Jgqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzoFp6XqZKJ3wIHK6f6KztdIP
+# xQ2gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -889,16 +891,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFGbDxqQiSJ+qQ95JhscJ0cj+6zX+MA0GCSqGSIb3DQEBAQUA
-# BIICAIN5TWq+L0gLuH3xL4AAzlQ/zKF2wJH9tqq6AmClKqJltCb1qXrHwk4q83MV
-# Qwn+tNeB3SdHwk5EQHxt9LW/V2fpN9RK3o4NlKogIg0XFFk9JoD29CBOXQIN+c/+
-# E01OJNGBeiAAFfoMqxW6MMHxsaUUh14vhZAd/CDcqyzw9R1cZW5X+arBwDlZo/6K
-# IoOggd4di+fipVGVIctsBWmQOqmqQl/Hv9l/Ssrnmcyqu9cTTHTzs0CxalvzLMYd
-# hnvTQjzyCFtsJ11cCz3681hk3vOi+5ICrhWWDHWqFRXWT9/LgEcAdLfmMK3U9uat
-# 1+K5gA6JZG86CEArhFoEuSSIAiBtm/CE2T3UyIeghHoF7ss/4dEeL8qPqWB05f1L
-# rya/bC8vUQPvTBwM3VMyHk5v1JKXKg0oKLGRkNk1r7/RO4u1oVG2GiE+N6d6C81B
-# o1IDfoieQ110cGBghrAY5Z194Ee2VwP3BYKqyPe8QIM7dy+fG/rsOkaq7k5llctw
-# 68KYPeAIw78qETHlF+a90O/sO4iVtf5fp+qUx2DaFttG4m3lF0K9IW8VF+qzkjzT
-# 13cvgn3DmuXZj26ix61WQisoCB8xv78BG4HD1jtt39tFf4cMVVQngmLt9mb5KCjO
-# EPJOhufH+mz/xu4MKzf2S2WOUNdjunz8JQ81mElaayfnAo2L
+# KoZIhvcNAQkEMRYEFNBWs9LE2p9XIHPO/PSdUE6o6lEcMA0GCSqGSIb3DQEBAQUA
+# BIICAJOf6o6hPrkLNlwp+W1vHyUYppChZ/w0MHO/Y0QZszT5PGGq3NsPCu8NIZ2v
+# swLWmnX6+Wok2jEhGF5TuyeB7mIN0k1Scn9mv2Qdmg73YCSUdMZQA5OqgstoLCyO
+# eVk1/HJjy1VhjP+JCoUvzOFyoIrBk6vhdd6ooxQPju1negAtxhKuLtjRI1lMnVez
+# ZCmKMS2bDBd35vNQQm8vX12SblQwdgxXyFxYXCPGDCt9XlIaLpUnmQxUPX0Hxz7+
+# HXzhOyz1tYuvqC/vRoSE4YRP5z73XhABys5V5fhVPwbGPe7ln+u7EXiZkjdSW+le
+# GhCdA5YVRVoSXgRA1KVY5JrIaXsoY+AmTNMQ6+/X9a8oXomywDK2XT1kZ1AVMyu4
+# +BZePXoEAulfTJQmDp3CwdmFwFDhrORelMaofklJL0m90z65MCEOEEGg5kShbGtz
+# xMs1iDYvzGti3joiqi0mN7YgPSYYrF8TgGXngNXdZGzwbti+dUyUzvcZBmW8csff
+# KCHb+KLQwqETJSSD53ofIhXCnzbERzGqClLAn/JNZHeLMk/rN+m6ztOZ+3TnIYjg
+# 4VKHQf+XrYfAjngC9zfSP7744eCHP7o1fFyOsZ1hdpcUedIjygosSU+DY6we7w/B
+# JiezBZia/ELvmeu/Jr3fh/n0TOtxkzgUTitkIQ/rrKmexmPf
 # SIG # End signature block
