@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-11-27
-$AutoHarden_version="2019-11-27"
+# Update: 2019-11-28
+$AutoHarden_version="2019-11-28"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -97,55 +97,79 @@ Set-NetFirewallProfile -DefaultInboundAction Block
 echo 'Cleaning old rules ...'
 Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | Remove-NetFirewallRule
 
-function blockExe( $name, $exe, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
+# Ref: https://en.wikipedia.org/wiki/Reserved_IP_addresses
+$IPForInternet=@('1.0.0.0-9.255.255.255',
+'11.0.0.0-100.63.255.255',
+'100.128.0.0-126.255.255.255',
+'128.0.0.0-169.253.255.255',
+'169.255.0.0-172.15.255.255',
+'172.32.0.0-191.255.255.255',
+'192.0.1.0-192.0.1.255',
+'192.0.3.0-192.167.255.255',
+'192.169.0.0-198.17.255.255',
+'198.20.0.0-198.51.99.255',
+'198.51.101.0-203.0.112.255',
+'203.0.114.0-255.255.255.254')
+
+function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
 	get-item $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
-			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress "Internet" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
+			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
 		}else{
-			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -Name ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$bin) -ErrorAction Ignore
+			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version] "+$name+" : "+$bin) -ErrorAction Ignore
 		}
 	}
 }
 
 if( (ask "Block communication for evil tools ?" "block-communication-for-powershell,eviltools.ask") -eq $true ){
-	blockExe "Powershell" "C:\Windows\WinSxS\*\powershell.exe" $true
-	blockExe "Powershell" "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" $true
-	blockExe "WScript" "C:\Windows\system32\wscript.exe" $true
-	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe"
-	blockExe "Mshta" "C:\Windows\system32\mshta.exe"
-	blockExe "CertUtil" "C:\Windows\System32\certutil.exe"
+	blockExe "Powershell" "C:\Windows\WinSxS\*\powershell.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "LOLBAS" $true
+	blockExe "WScript" "C:\Windows\system32\wscript.exe" "LOLBAS" $true
+	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe" "LOLBAS" $true
+	blockExe "Mshta" "C:\Windows\system32\mshta.exe" "LOLBAS" $true
+	blockExe "CertUtil" "C:\Windows\System32\certutil.exe" "LOLBAS" $true
+	blockExe "HH" "C:\Windows\*\hh.exe" "LOLBAS" $true
+	blockExe "HH" "C:\Windows\hh.exe" "LOLBAS" $true
+	blockExe "IEexec" "C:\Windows\Microsoft.NET\*\*\ieexec.exe" "LOLBAS" $true
 }else{
-	"Powershell", "WScript", "BitsAdmin", "Mshta", "CertUtil" | foreach {
+	"Powershell", "WScript", "BitsAdmin", "Mshta", "CertUtil", "HH", "IEexec" | foreach {
 		Get-NetFirewallRule -Name ("*AutoHarden*"+$_+"*") | Remove-NetFirewallRule
 	}
 }
 
 if( (ask "Block communication for Word and Excel ?" "block-communication-for-excel,word.ask") -eq $true ){
-	blockExe "Excel" "C:\Program Files*\Microsoft Office*\root\*\EXCEL.EXE" $true
-	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\root\*\EXCEL.EXE" $true
-	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\EXCEL.EXE" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" $true
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\root\*\EXCEL.EXE" "Office" $true
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\root\*\EXCEL.EXE" "Office" $true
+	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\EXCEL.EXE" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
+	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\current\Squirrel.exe" "Office" $true
+	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\update.exe" "Office" $true
 }else{
 	Get-NetFirewallRule -Name '*AutoHarden*Excel*' | Remove-NetFirewallRule
 	Get-NetFirewallRule -Name '*AutoHarden*Word*' | Remove-NetFirewallRule
+	Get-NetFirewallRule -Name '*AutoHarden*PowerPoint*' | Remove-NetFirewallRule
+	Get-NetFirewallRule -Name '*AutoHarden*Teams*' | Remove-NetFirewallRule
 }
 if( (Get-Item "C:\Program Files*\Nmap\nmap.exe") -ne $null ){
 	if( (ask "Allow NMAP to bypass the local firewall ?" "Allow-nmap.ask") -eq $true ){
 		$nmap = (Get-Item "C:\Program Files*\Nmap\nmap.exe").Fullname
-		New-NetFirewallRule -direction Outbound -Action Allow -Program $nmap -Name "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -ErrorAction Ignore
-		New-NetFirewallRule -direction Inbound -Action Allow -Program $nmap -Name "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -ErrorAction Ignore
+		New-NetFirewallRule -direction Outbound -Action Allow -Program $nmap -Group "AutoHarden-NMap" -Name "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] NMAP bypass SNMP & co" -ErrorAction Ignore
+		New-NetFirewallRule -direction Inbound -Action Allow -Program $nmap -Group "AutoHarden-NMap" -Name "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] NMAP bypass SNMP & co" -ErrorAction Ignore
 	}else{
 		Get-NetFirewallRule -Name '*AutoHarden*NMAP*' | Remove-NetFirewallRule
 	}
 }
-if( (Get-Item "C:\Program Files*\VMware\VMware Workstation\vmnat.exe") -ne $null ){
+if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -ne $null ){
 	if( (ask "Allow VMWARE to bypass the local firewall ?" "Allow-vmware.ask") -eq $true ){
-		$vmware = (Get-Item "C:\Program Files*\VMware\VMware Workstation\vmnat.exe").Fullname
-		New-NetFirewallRule -direction Inbound -Action Allow -Program $vmware -Name "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -ErrorAction Ignore
-		New-NetFirewallRule -direction Outbound -Action Allow -Program $vmware -Name "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -ErrorAction Ignore
+		$vmware = (Get-Item "C:\Program Files*\VMware\*\vmnat.exe").Fullname
+		New-NetFirewallRule -direction Inbound -Action Allow -Program $vmware -Group "AutoHarden-VMWare" -Name "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][IN] VMWare bypass SNMP & co" -ErrorAction Ignore
+		New-NetFirewallRule -direction Outbound -Action Allow -Program $vmware -Group "AutoHarden-VMWare" -Name "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -DisplayName "[AutoHarden-$AutoHarden_version][OUT] VMWare bypass SNMP & co" -ErrorAction Ignore
 	}else{
 		Get-NetFirewallRule -Name '*AutoHarden*VMWare*' | Remove-NetFirewallRule
 	}
@@ -343,8 +367,8 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-BlockOutgoingSNMP"
 if( ask "Disable SNMP communication (can break printers)" "Hardening-BlockOutgoingSNMP.ask" ){
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Group AutoHarden-SNMP -Name "[AutoHarden-$AutoHarden_version] SNMP-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Group AutoHarden-SNMP -Name "[AutoHarden-$AutoHarden_version] SNMP-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
 }
 else{
 Get-NetFirewallRule | where { $_.Name.StartsWith("[AutoHarden-$AutoHarden_version] SNMP") } | foreach { 
@@ -421,13 +445,13 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableIPv6"
 # Block IPv6
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 41 -Name "[AutoHarden-$AutoHarden_version] IPv6" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 43 -Name "[AutoHarden-$AutoHarden_version] IPv6-Route" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Route" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 44 -Name "[AutoHarden-$AutoHarden_version] IPv6-Frag" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Frag" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 59 -Name "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 60 -Name "[AutoHarden-$AutoHarden_version] IPv6-Opts" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Opts" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Name "[AutoHarden-$AutoHarden_version] ICMPv6" -DisplayName "[AutoHarden-$AutoHarden_version] ICMPv6" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 41 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 43 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6-Route" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Route" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 44 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6-Frag" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Frag" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 59 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-NoNxt" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 60 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6-Opts" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Opts" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] ICMPv6" -DisplayName "[AutoHarden-$AutoHarden_version] ICMPv6" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
@@ -439,9 +463,9 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Disab
 # Disable LLMNR
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /t REG_DWORD /v EnableMulticast /d 0 /f
 nbtstat.exe /n
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "5355" -Name "[AutoHarden-$AutoHarden_version] LLMNR-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Name "[AutoHarden-$AutoHarden_version] LLMNR-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Name "[AutoHarden-$AutoHarden_version] MBNS" -DisplayName "[AutoHarden-$AutoHarden_version] MBNS" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "5355" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] LLMNR-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] LLMNR-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] MBNS" -DisplayName "[AutoHarden-$AutoHarden_version] MBNS" -ErrorAction Ignore
 
 # Disable wpad
 reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "DefaultConnectionSettings" /f
@@ -502,10 +526,10 @@ echo "# Hardening-DisableNetbios"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableNetbios"
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP135" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP137" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP138" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios2" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP139" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios3" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "135" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP135" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP137" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP138" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios2" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP139" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios3" -ErrorAction Ignore
 set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip* -Name NetbiosOptions -Value 2
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -Completed
 
@@ -832,8 +856,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzoFp6XqZKJ3wIHK6f6KztdIP
-# xQ2gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUFTuOm1b6qV6Aw3ivEPsOavMD
+# 6TGgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -891,16 +915,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFNBWs9LE2p9XIHPO/PSdUE6o6lEcMA0GCSqGSIb3DQEBAQUA
-# BIICAJOf6o6hPrkLNlwp+W1vHyUYppChZ/w0MHO/Y0QZszT5PGGq3NsPCu8NIZ2v
-# swLWmnX6+Wok2jEhGF5TuyeB7mIN0k1Scn9mv2Qdmg73YCSUdMZQA5OqgstoLCyO
-# eVk1/HJjy1VhjP+JCoUvzOFyoIrBk6vhdd6ooxQPju1negAtxhKuLtjRI1lMnVez
-# ZCmKMS2bDBd35vNQQm8vX12SblQwdgxXyFxYXCPGDCt9XlIaLpUnmQxUPX0Hxz7+
-# HXzhOyz1tYuvqC/vRoSE4YRP5z73XhABys5V5fhVPwbGPe7ln+u7EXiZkjdSW+le
-# GhCdA5YVRVoSXgRA1KVY5JrIaXsoY+AmTNMQ6+/X9a8oXomywDK2XT1kZ1AVMyu4
-# +BZePXoEAulfTJQmDp3CwdmFwFDhrORelMaofklJL0m90z65MCEOEEGg5kShbGtz
-# xMs1iDYvzGti3joiqi0mN7YgPSYYrF8TgGXngNXdZGzwbti+dUyUzvcZBmW8csff
-# KCHb+KLQwqETJSSD53ofIhXCnzbERzGqClLAn/JNZHeLMk/rN+m6ztOZ+3TnIYjg
-# 4VKHQf+XrYfAjngC9zfSP7744eCHP7o1fFyOsZ1hdpcUedIjygosSU+DY6we7w/B
-# JiezBZia/ELvmeu/Jr3fh/n0TOtxkzgUTitkIQ/rrKmexmPf
+# KoZIhvcNAQkEMRYEFAxRsR69PvuaPrTr2yTaZCcVlvuFMA0GCSqGSIb3DQEBAQUA
+# BIICAKdZmc0urnGgWSl8CIIu1uVsJs6PLCh/qDEDev66UlicCm8q7YtxCeIYCNe+
+# C6kXzug5txEkAbXjrtPMtuIE8Ie7PM7tTnGqT6/eQz+5FWqEAkk1bewLCJcnKK69
+# eIlolFh0/iaD+V9FfvEZbcrXjNAs7TOuu8zq2k9Ze9O9LD+ZFZvNMSVALrQOAXTT
+# gTSI+qWLwmQ10fpWb1Gc/V9h8WPwUfLehAohV3ESfIXm1bP29lWqjWI3FPfJeAtv
+# kW+12tKkTe09IDIcM8LAjGxKJqABIvAcUpauGiHF7PgOUIzEMK6Cq5D7fMPc7XbL
+# bTD3KJSYOYZ7RU3/IfXwtoU7AldrSXi1lP3/9azoBZUyNb54sIwaoDRujsc7Wryf
+# IyRovya/qWMZ7HossRrBEHfL7hENEXQv1pJGPwf8fAD5BMKs2hEuMlYJENMREO1S
+# AXAA2xPJf1RlgWdWZwefs3QcEdd9GxBqxuGKYmR68G+pjviPYrDUzBHMpotAA55Y
+# 44djeA/Me3RW+WVJMF8//zVeQOFyIjDwAnhyyNqR5F55oiTi/9ZfNmCDCTURuJpl
+# zD96FbVHwbPaBw3/WqsvjxLBH1pngrVMFYYxhG54dG5+JJLDYNmpPEq/gZZUF09V
+# WwbK8wxDeIBxF6xjJ8fDsGHqweW0UN14vFxSWMkz/njoZYcs
 # SIG # End signature block

@@ -1,2 +1,2 @@
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Name "[AutoHarden-$AutoHarden_version] SNMP-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "161" -Group AutoHarden-SNMP -Name "[AutoHarden-$AutoHarden_version] SNMP-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
+New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "161" -Group AutoHarden-SNMP -Name "[AutoHarden-$AutoHarden_version] SNMP-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] SNMP" -ErrorAction Ignore
