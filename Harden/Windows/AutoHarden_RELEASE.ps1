@@ -79,12 +79,13 @@ $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
+	Write-Host "[*] The downloaded PS1 has a valid signature !"
 	move -force C:\Windows\AutoHarden\AutoHarden_temp.ps1 C:\Windows\AutoHarden\AutoHarden.ps1
 }else{
 	Write-Host "[!] The downloaded PS1 has an invalid signature !"
 }
-Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
 else{
 Unregister-ScheduledTask -TaskName "AutoHarden" -Confirm:$False -ErrorAction SilentlyContinue
@@ -863,8 +864,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/hS4wEVdbca//iLATsHRKzN8
-# inWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUlrpSptaP+7X/nxelU3x/7EJG
+# 5xSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -922,16 +923,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFD553mk3o1n00FlVo0YhVovQr9wXMA0GCSqGSIb3DQEBAQUA
-# BIICADSNY39QrYcRUNmDBRw31yBL5tfe5JgGeX4S2wUqP8MHgqtMyLh5rAX32l5s
-# MheAWcn6gkVCZP7gKPmvrBnuxX0HJYoAJcDpQIP/DZG+uU3yvBMPT+CKhEmJDsW3
-# yFa2mhbdO34ioz0BU85ale77Gz8TvOO3+WeU8OYITgQHIzeGL15X6P9lvE5m+pj7
-# lIaENd1LafA35t6dZPEKEdCzRrPvkQcR4uxZS6DrxYRh2yAuTClkd5C1wvTv0Aui
-# e+6Y3udDCjiwBhTFZotCMgU0oCHXd3pSPyidNz0jyPXoqw0l5HodVOuaElw/7RFp
-# BNnpdSfpCCeeRE8vSmbbFkL6GyMQvGJpHgTBt8aHaGSRW86v33MS+howthdbe58T
-# N8B10ECM/c/hGAiPFBmHsBedTPMAJjYk7ITDglYCufbz0Y3cP1FpjoQP/VQrnnix
-# jwFRLlLVakfMAEWO1c/UB3ctmBMVNfoTERisnqwuTsmFZ4pi06l5JjmGM3Vu+LUQ
-# Atly/Ido+Cp3+z6f4IhldXu0+oqkOL614EiHMoY9MOAl6t0dLSoZiKaPBf/NoxVK
-# C3CDfbKhBDuGKORsYkaO4bNRVu/F8aZqNfv65nvyVlVjSfOCaynf7IWbSkEiV0Io
-# gphUWuBKqUjfnddbxYpP9xIAWYmgASzSdT8x+v4Nic3EYknZ
+# KoZIhvcNAQkEMRYEFPEdJ1i7d+ayJLZUcTAU6YdSqloxMA0GCSqGSIb3DQEBAQUA
+# BIICAICAtEgU82f39XjWi5kpjOL2wJgXDCsybxNrEyxZxKZaJov4hLygXglsIh4/
+# V4KwmEuZ7qJojVCmIOYoEQI7YINZR2bBj0rKby2upczjcCTqhdf8gMlKPPGeRos9
+# WIjsypRv7Iv02xhmrnQfqPQaZa/Fsqd5s8q5mIT73yriYCSxBAA68lN+YlHiOXfd
+# ZW/Sk2hEUGKLyc06G/U2C8Omv8Fq4HLkE3OwAVgdNY4ckDjMcj09h5YKPTy2gtfe
+# mJSTbwjd5amh8r7uJLg1Ppzn8Kr16r6ElImwTMXRX6QhD7DlZBEoNgyO/47wrz3i
+# 1fT7Jb/LSO5Dn32lcV2eXKpeH9SfXoUHuaXWDBw896RYn8dklYCUHnX+A7fljpLJ
+# dy3vP8uck8kAQWq14Me25eTH6ZmOGTdamsgweczOcGuUY+Wui++w1MQH9mxzWcTx
+# KfZN7R85i0xZOWtBP4SIxLmo+cjI+YDth7ROMeZ3GXMxc3j6AGrqbuZK+jEoUk4C
+# /kL4o67F2cSJhy8d+O2L27+kjZNR7sNy1puwJC4DMUAiGIvOf3+8ucAHjYN0Spjg
+# dWI3wBawfnDl/ugER7gqb30U13dkEeCQyPAkSCiaU2aImhvxChIaS1LPnro3nepN
+# MoSnfYak9xUVktYH4ZKMuAXbUhLsS62ZOZbZ5Bov2yEAwAOR
 # SIG # End signature block
