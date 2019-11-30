@@ -19,7 +19,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 '203.0.114.0-255.255.255.254')
 
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
-	get-item $exe | foreach {
+	get-item -ErrorAction Ignore $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore

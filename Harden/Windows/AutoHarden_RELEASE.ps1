@@ -118,7 +118,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 '203.0.114.0-255.255.255.254')
 
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
-	get-item $exe | foreach {
+	get-item -ErrorAction Ignore $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
@@ -863,8 +863,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/Gij2NKKiJP89bk+p4pDr4VM
-# l8Sgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXGf8CQ4JDcprLpdADj/jY49B
+# Xcqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -922,16 +922,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFEF9NmVtyzNP2/o5ZsXIFCuV97vIMA0GCSqGSIb3DQEBAQUA
-# BIICAJYsFzLwjeN+fUbrHlJ4i/vfHQD7gwUCVZNdEfhnYfitxoCIwj54rgs8l+Wy
-# +Te2K/ILGqa7IcX6QR5BKqL5dvvqdhbZTKMnGClerdCwHnwydoqC1euAyYzdsRL+
-# Vscc/auaP+O4NJDfSmqRSurSrmsdTlpO7cwqLtkToT0u5x/vlytxpCmVHFJogYN8
-# YSphYMH16vLS9qoCiNZOA9QJZfG5jpVrEGxp+59+OtRsiUMRCScmId3eNYSsBCm1
-# ab+pSVLs/4PPxwbVg3TiNJICoVt2LCUjTZqUnAmfKtZdj3idgFzYb3pCdc4I2+wu
-# QtEAtc3Bn/44ccJU7ALXDe83VeAI/7kcdX8PfaJsaiSkYC1QOxmHkii49x4VD5rB
-# IbgJi10wPrEvkocniiDPW69IHVGOhUdB8lQ5x6ElfzRXXco2P6Wp0B06+Gx1JqqA
-# +hYfFOepnhm3aPFrDFBsYuliTWCz+V1qGoPcXUnAH6/0MD+qMNDSCRfGQEISEbUu
-# utNlEQkafyxE9VmRhc9/q6ji3EzcOf9kWegPiObG4U70+/jvLCKjLsxJz453Trmh
-# XAfDJROMNtw19v4IqLhNaU7103bU/JGCZrzrS7x1mZnAoEbULhLdX7lDLzrDSL6M
-# Vz0T38+4MuYoUh/aiwQN7bG8mSYzfjZRPY+z/FzFlCr9wWHj
+# KoZIhvcNAQkEMRYEFPvkXHhTLv5LQeX11o0rjEAGOJtlMA0GCSqGSIb3DQEBAQUA
+# BIICAG4kX6Rd7GB6wmzxt5G6U9xVhN4QgTnln3qMOGjCRIX5xe32aBxWUiTyAJQV
+# JEeoEyXfVyNxsdW0gZdXe3JNXpxF7DALnO+0VQ7ngAipyziw5MDADXTVsbyZUYeB
+# iDAJ6QG8ZLMLMQrxVJC8yJKYU0V179NcG4qkDusbufcK53tr7vB40F4twfjFA8UO
+# C5rweccMTvRNZMwjX3Ue5/AlbOL/t/2IsQB4b8LMfmuuiSPVpi4ixukbDLp/hJkr
+# NgYI4NtWR7EWOr3VxIwRaya07Io6nLEWIGUm8x58JDCtiv/EBF8ImFAdcRiw2bh6
+# SJ58uFwtmqp7TJ/Lpc/ZIg3ZVrEdKyj8dxnno7h2kNeE4hTjj79G08YXcMMWUVP6
+# qoqjLSySXFdxG6Fv0EWqgG1qd0yokIrjrxUI2YVR17Uk0x4FngeS9tYzwrl01SLT
+# BQwxsOXj+1snFfw09nq5P+RQFkl+eGzne7ecPJXWAgitgAolLBurtSCgIdg74hB7
+# pptP/vMa94Nb26y0/rb+KvyZyhsjjhXJy8v8gKLUJ8LNlb7hr6UbGpoJW5sD6JIm
+# 8oSm3ZtS4weYUBI9h9wLSHd6/naw9VLxduGLJuvyZ0EMzARLanBUDIVldUVMr2zy
+# NEArmKe1AUO6zpSJSFjXDvQEJLl07lVY+iTiQEpqaH3CLs4U
 # SIG # End signature block
