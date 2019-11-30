@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-11-28
-$AutoHarden_version="2019-11-28"
+# Update: 2019-11-30
+$AutoHarden_version="2019-11-30"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -73,11 +73,17 @@ Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
 if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
-$Action  = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "cmd /c `"powershell.exe -exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1`" > C:\Windows\AutoHarden\ScheduledTask.log"
+#$Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
+$Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec ByPass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden.ps1
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
+	move -force C:\Windows\AutoHarden\AutoHarden_temp.ps1 C:\Windows\AutoHarden\AutoHarden.ps1
+}else{
+	Write-Host "[!] The downloaded PS1 has an invalid signature !"
+}
 Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
 else{
@@ -174,6 +180,7 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -ne $null ){
 		Get-NetFirewallRule -Name '*AutoHarden*VMWare*' | Remove-NetFirewallRule
 	}
 }
+New-NetFirewallRule -direction Outbound -Action Block -Protocol tcp -RemotePort 445 -RemoteAddress $IPForInternet -Group "AutoHarden-SMB" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -ErrorAction Ignore
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
 
 
@@ -856,8 +863,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUFTuOm1b6qV6Aw3ivEPsOavMD
-# 6TGgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/Gij2NKKiJP89bk+p4pDr4VM
+# l8Sgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -915,16 +922,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFAxRsR69PvuaPrTr2yTaZCcVlvuFMA0GCSqGSIb3DQEBAQUA
-# BIICAKdZmc0urnGgWSl8CIIu1uVsJs6PLCh/qDEDev66UlicCm8q7YtxCeIYCNe+
-# C6kXzug5txEkAbXjrtPMtuIE8Ie7PM7tTnGqT6/eQz+5FWqEAkk1bewLCJcnKK69
-# eIlolFh0/iaD+V9FfvEZbcrXjNAs7TOuu8zq2k9Ze9O9LD+ZFZvNMSVALrQOAXTT
-# gTSI+qWLwmQ10fpWb1Gc/V9h8WPwUfLehAohV3ESfIXm1bP29lWqjWI3FPfJeAtv
-# kW+12tKkTe09IDIcM8LAjGxKJqABIvAcUpauGiHF7PgOUIzEMK6Cq5D7fMPc7XbL
-# bTD3KJSYOYZ7RU3/IfXwtoU7AldrSXi1lP3/9azoBZUyNb54sIwaoDRujsc7Wryf
-# IyRovya/qWMZ7HossRrBEHfL7hENEXQv1pJGPwf8fAD5BMKs2hEuMlYJENMREO1S
-# AXAA2xPJf1RlgWdWZwefs3QcEdd9GxBqxuGKYmR68G+pjviPYrDUzBHMpotAA55Y
-# 44djeA/Me3RW+WVJMF8//zVeQOFyIjDwAnhyyNqR5F55oiTi/9ZfNmCDCTURuJpl
-# zD96FbVHwbPaBw3/WqsvjxLBH1pngrVMFYYxhG54dG5+JJLDYNmpPEq/gZZUF09V
-# WwbK8wxDeIBxF6xjJ8fDsGHqweW0UN14vFxSWMkz/njoZYcs
+# KoZIhvcNAQkEMRYEFEF9NmVtyzNP2/o5ZsXIFCuV97vIMA0GCSqGSIb3DQEBAQUA
+# BIICAJYsFzLwjeN+fUbrHlJ4i/vfHQD7gwUCVZNdEfhnYfitxoCIwj54rgs8l+Wy
+# +Te2K/ILGqa7IcX6QR5BKqL5dvvqdhbZTKMnGClerdCwHnwydoqC1euAyYzdsRL+
+# Vscc/auaP+O4NJDfSmqRSurSrmsdTlpO7cwqLtkToT0u5x/vlytxpCmVHFJogYN8
+# YSphYMH16vLS9qoCiNZOA9QJZfG5jpVrEGxp+59+OtRsiUMRCScmId3eNYSsBCm1
+# ab+pSVLs/4PPxwbVg3TiNJICoVt2LCUjTZqUnAmfKtZdj3idgFzYb3pCdc4I2+wu
+# QtEAtc3Bn/44ccJU7ALXDe83VeAI/7kcdX8PfaJsaiSkYC1QOxmHkii49x4VD5rB
+# IbgJi10wPrEvkocniiDPW69IHVGOhUdB8lQ5x6ElfzRXXco2P6Wp0B06+Gx1JqqA
+# +hYfFOepnhm3aPFrDFBsYuliTWCz+V1qGoPcXUnAH6/0MD+qMNDSCRfGQEISEbUu
+# utNlEQkafyxE9VmRhc9/q6ji3EzcOf9kWegPiObG4U70+/jvLCKjLsxJz453Trmh
+# XAfDJROMNtw19v4IqLhNaU7103bU/JGCZrzrS7x1mZnAoEbULhLdX7lDLzrDSL6M
+# Vz0T38+4MuYoUh/aiwQN7bG8mSYzfjZRPY+z/FzFlCr9wWHj
 # SIG # End signature block

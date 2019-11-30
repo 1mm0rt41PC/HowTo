@@ -81,3 +81,4 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -ne $null ){
 		Get-NetFirewallRule -Name '*AutoHarden*VMWare*' | Remove-NetFirewallRule
 	}
 }
+New-NetFirewallRule -direction Outbound -Action Block -Protocol tcp -RemotePort 445 -RemoteAddress $IPForInternet -Group "AutoHarden-SMB" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -ErrorAction Ignore
