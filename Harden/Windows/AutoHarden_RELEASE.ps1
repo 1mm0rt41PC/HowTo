@@ -118,7 +118,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 '203.0.114.0-255.255.255.254')
 
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
-	get-item -ErrorAction Ignore $exe | foreach {
+	get-item $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
@@ -154,7 +154,7 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\current\Squirrel.exe" "Office" $true
+	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\*\Squirrel.exe" "Office" $true
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\update.exe" "Office" $true
 }else{
 	Get-NetFirewallRule -Name '*AutoHarden*Excel*' | Remove-NetFirewallRule
@@ -863,8 +863,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXGf8CQ4JDcprLpdADj/jY49B
-# Xcqgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/hS4wEVdbca//iLATsHRKzN8
+# inWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -922,16 +922,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFPvkXHhTLv5LQeX11o0rjEAGOJtlMA0GCSqGSIb3DQEBAQUA
-# BIICAG4kX6Rd7GB6wmzxt5G6U9xVhN4QgTnln3qMOGjCRIX5xe32aBxWUiTyAJQV
-# JEeoEyXfVyNxsdW0gZdXe3JNXpxF7DALnO+0VQ7ngAipyziw5MDADXTVsbyZUYeB
-# iDAJ6QG8ZLMLMQrxVJC8yJKYU0V179NcG4qkDusbufcK53tr7vB40F4twfjFA8UO
-# C5rweccMTvRNZMwjX3Ue5/AlbOL/t/2IsQB4b8LMfmuuiSPVpi4ixukbDLp/hJkr
-# NgYI4NtWR7EWOr3VxIwRaya07Io6nLEWIGUm8x58JDCtiv/EBF8ImFAdcRiw2bh6
-# SJ58uFwtmqp7TJ/Lpc/ZIg3ZVrEdKyj8dxnno7h2kNeE4hTjj79G08YXcMMWUVP6
-# qoqjLSySXFdxG6Fv0EWqgG1qd0yokIrjrxUI2YVR17Uk0x4FngeS9tYzwrl01SLT
-# BQwxsOXj+1snFfw09nq5P+RQFkl+eGzne7ecPJXWAgitgAolLBurtSCgIdg74hB7
-# pptP/vMa94Nb26y0/rb+KvyZyhsjjhXJy8v8gKLUJ8LNlb7hr6UbGpoJW5sD6JIm
-# 8oSm3ZtS4weYUBI9h9wLSHd6/naw9VLxduGLJuvyZ0EMzARLanBUDIVldUVMr2zy
-# NEArmKe1AUO6zpSJSFjXDvQEJLl07lVY+iTiQEpqaH3CLs4U
+# KoZIhvcNAQkEMRYEFD553mk3o1n00FlVo0YhVovQr9wXMA0GCSqGSIb3DQEBAQUA
+# BIICADSNY39QrYcRUNmDBRw31yBL5tfe5JgGeX4S2wUqP8MHgqtMyLh5rAX32l5s
+# MheAWcn6gkVCZP7gKPmvrBnuxX0HJYoAJcDpQIP/DZG+uU3yvBMPT+CKhEmJDsW3
+# yFa2mhbdO34ioz0BU85ale77Gz8TvOO3+WeU8OYITgQHIzeGL15X6P9lvE5m+pj7
+# lIaENd1LafA35t6dZPEKEdCzRrPvkQcR4uxZS6DrxYRh2yAuTClkd5C1wvTv0Aui
+# e+6Y3udDCjiwBhTFZotCMgU0oCHXd3pSPyidNz0jyPXoqw0l5HodVOuaElw/7RFp
+# BNnpdSfpCCeeRE8vSmbbFkL6GyMQvGJpHgTBt8aHaGSRW86v33MS+howthdbe58T
+# N8B10ECM/c/hGAiPFBmHsBedTPMAJjYk7ITDglYCufbz0Y3cP1FpjoQP/VQrnnix
+# jwFRLlLVakfMAEWO1c/UB3ctmBMVNfoTERisnqwuTsmFZ4pi06l5JjmGM3Vu+LUQ
+# Atly/Ido+Cp3+z6f4IhldXu0+oqkOL614EiHMoY9MOAl6t0dLSoZiKaPBf/NoxVK
+# C3CDfbKhBDuGKORsYkaO4bNRVu/F8aZqNfv65nvyVlVjSfOCaynf7IWbSkEiV0Io
+# gphUWuBKqUjfnddbxYpP9xIAWYmgASzSdT8x+v4Nic3EYknZ
 # SIG # End signature block

@@ -19,7 +19,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 '203.0.114.0-255.255.255.254')
 
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
-	get-item -ErrorAction Ignore $exe | foreach {
+	get-item $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
@@ -55,7 +55,7 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\current\Squirrel.exe" "Office" $true
+	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\*\Squirrel.exe" "Office" $true
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\update.exe" "Office" $true
 }else{
 	Get-NetFirewallRule -Name '*AutoHarden*Excel*' | Remove-NetFirewallRule
