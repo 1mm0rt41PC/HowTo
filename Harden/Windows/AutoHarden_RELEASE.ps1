@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-11-30
-$AutoHarden_version="2019-11-30"
+# Update: 2019-12-04
+$AutoHarden_version="2019-12-04"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -119,7 +119,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 '203.0.114.0-255.255.255.254')
 
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
-	get-item $exe | foreach {
+	get-item -ErrorAction Ignore $exe | foreach {
 		$bin=$_.Fullname
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
@@ -443,7 +443,7 @@ zij5S/djgP1rVHH+MkgJcUQ/2km9GC6B6Y3yMGq6XLVjLvi73Ch2G5mUWkeoZibb
 yQSxTBWG6GJjyDY7543ZK3FH4Ctih/nFgXrjuY7Ghrk=
 -----END CERTIFICATE-----
 '@ > $env:temp/Hardening-DisableCABlueCoat.crt
-Import-Certificate -Filepath "${env:temp}/Hardening-DisableCABlueCoat.crt" -CertStoreLocation Cert:\LocalMachine\Disallowed
+Import-Certificate -Filepath "${env:temp}/Hardening-DisableCABlueCoat.crt" -CertStoreLocation Cert:\LocalMachine\Disallowed | out-null
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -Completed
 
 
@@ -501,11 +501,11 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\W
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t REG_DWORD /d 1 /f
 
 if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-DomainCred.ask") -eq $false ){
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f 2>NUL
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f 2>NUL
+}else{
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /t REG_DWORD /d 1 /f
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
-}else{
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f
 }
 
 # This sets up your RDP session to NOT store credentials in the memory of the target host.
@@ -864,8 +864,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUlrpSptaP+7X/nxelU3x/7EJG
-# 5xSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU6MeomV3kKbXLTPfHrGb3Tkmf
+# FhCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -923,16 +923,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFPEdJ1i7d+ayJLZUcTAU6YdSqloxMA0GCSqGSIb3DQEBAQUA
-# BIICAICAtEgU82f39XjWi5kpjOL2wJgXDCsybxNrEyxZxKZaJov4hLygXglsIh4/
-# V4KwmEuZ7qJojVCmIOYoEQI7YINZR2bBj0rKby2upczjcCTqhdf8gMlKPPGeRos9
-# WIjsypRv7Iv02xhmrnQfqPQaZa/Fsqd5s8q5mIT73yriYCSxBAA68lN+YlHiOXfd
-# ZW/Sk2hEUGKLyc06G/U2C8Omv8Fq4HLkE3OwAVgdNY4ckDjMcj09h5YKPTy2gtfe
-# mJSTbwjd5amh8r7uJLg1Ppzn8Kr16r6ElImwTMXRX6QhD7DlZBEoNgyO/47wrz3i
-# 1fT7Jb/LSO5Dn32lcV2eXKpeH9SfXoUHuaXWDBw896RYn8dklYCUHnX+A7fljpLJ
-# dy3vP8uck8kAQWq14Me25eTH6ZmOGTdamsgweczOcGuUY+Wui++w1MQH9mxzWcTx
-# KfZN7R85i0xZOWtBP4SIxLmo+cjI+YDth7ROMeZ3GXMxc3j6AGrqbuZK+jEoUk4C
-# /kL4o67F2cSJhy8d+O2L27+kjZNR7sNy1puwJC4DMUAiGIvOf3+8ucAHjYN0Spjg
-# dWI3wBawfnDl/ugER7gqb30U13dkEeCQyPAkSCiaU2aImhvxChIaS1LPnro3nepN
-# MoSnfYak9xUVktYH4ZKMuAXbUhLsS62ZOZbZ5Bov2yEAwAOR
+# KoZIhvcNAQkEMRYEFOSUmGyRndIURd1BaQkqhcAFJNhbMA0GCSqGSIb3DQEBAQUA
+# BIICAASiHttPVRBsNCpKX/IbdXg/OilO8l5JEsVFn/HtGTbVoq6ZT2FoZnt+yuvg
+# hOeB9AzBKtr1EKMmc0TXzg/6BdnfTKjE2+zrsYWlRr5bd8C8pp3GeNqFZrQhSSgA
+# Qz0P+EQQGoA1cQffcNEI29jaaLik3SvqD4+WiQvLl58zVdo7SFKaDizen0CaiE8C
+# qP1Uzq14W/C7tgfdY0WuuF7eof13jWWzCC9XFNTMJRp3X9/0qo/g31fbIXihUjW9
+# 7Bk5OYyQvhNTUBCv4DceAk/hxmbuv74IvPCw3brA7gjnP/ldfqXe8o96XI7l7bC4
+# 0AUyYzVP1DSt7Chap1b/fMoipJ6sysT5cw5BwFP0JYqTaXK9fzR+pL7B/f5tmUko
+# bi+5ROfLlkg7k6DYN7fqb37N+EEpQ8XT3Q7hRL+1MTUQPC3hMaIx7AmL6cro3jnS
+# a60k3vXTO652HB1gsNReS2Glan1YzU8lMWgVbd6rCceQ8Yvd4fQZVl6Hv4CEn1v8
+# JfqW55pn4H8UMo0G0bQ9tTE8DyONWK+CkZm5xVlb8ieGxt+3FY3kQnpHNfhhvxOV
+# d4fisFa/RFVC9rM21BJPehSkd2g0fc+ECk+aDWwU63oo3QsDGVlPwhkumS6uBgBC
+# ARWLBc18678VGtyXnuhcOk92YY/wqevt5aDOc2d7aaME3gDn
 # SIG # End signature block

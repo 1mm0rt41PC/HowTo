@@ -25,6 +25,7 @@ export DICO_PATH=/opt/dico/
 # List of rules. Expected folder: $HC/rules/
 export RULES='best64.rule d3ad0ne.rule rockyou-30000.rule OneRuleToRuleThemAll.rule hob064.rule d3adhob0.rule'
 
+
 # ONLY IF YOU USE CYGWIN - Folder where hashcat is
 export HC_CYGWIN=./
 # ONLY IF YOU USE CYGWIN - Folder where dico are
@@ -42,6 +43,7 @@ export HASHES=`realpath $2 2>/dev/null`
 export SCRIPT_PATH=`realpath -s $0`
 export SCRIPT_PATH=`dirname $SCRIPT_PATH`
 export FINDINGS=$SCRIPT_PATH/.pownMyHash.dico
+export TRAINING_NTLM=$SCRIPT_PATH/.training_ntlm.txt
 export SESSION_NAME=`echo $HASHES | sed -e 's#[\\/]#_#g'`
 
 ####################################################################################################
@@ -301,6 +303,15 @@ fi
 
 
 if [ "$HASH_TYPE" = "1000" ]; then
+	if title 'Contribute to the local training database'; then
+		export mytmp=`mktemp`
+		cat $TRAINING_NTLM $HASHES | dos2unix | tr '[:upper:]' '[:lower:]' | sed -E 's/^[^\r\n:]+:[0-9]+:/x:42:/g' | sed -E 's/Disabled=[^\r\n:]+//g' | grep -E 'x:42:[a-f0-9]{32}:[a-f0-9]{32}:::' | sort -u > $mytmp
+		mv $mytmp $TRAINING_NTLM
+		grep -E '^[a-fA-F0-9]{32}:' $HC/hashcat.potfile | cut -d : -f 1 > $mytmp
+		export mytmp2=`mktemp`
+		(grep -vf $mytmp $TRAINING_NTLM > $mytmp2 && mv $mytmp2 $TRAINING_NTLM && rm $mytmp) &
+	fi
+
 	if title 'LM attack'; then
 		export HASH_TYPE=3000 # mode LM
 		loopOnPotfile 1
@@ -353,7 +364,7 @@ if title "Using dico"; then
 fi
 
 
-for dico in `echo $DICO_PATH/*_month.dico $DICO_PATH/*city*.dico`; do
+for dico in `echo $FINDINGS; find $DICO_PATH/ -size -15M -type f`; do
 	if title "Brute force password with $dico base"; then	
 		hashcat 6 `absPath $dico` '?a?a?a?a?a'
 		hashcat 6 `absPath $dico` '?d?d?d?d?a?a'
@@ -373,3 +384,12 @@ for dico in `echo $DICO_PATH/*_month.dico $DICO_PATH/*city*.dico`; do
 		done
 	fi
 done
+
+
+if title "Working on the NTLM training"; then
+	export HASHES="$FINDINGS"
+	export HASH_TYPE=3000 # mode LM
+	hashcat 3 -i '?a?a?a?a?a?a?a?a'
+	export HASH_TYPE=1000 # mode NT
+	hashcat 3 -i '?a?a?a?a?a?a?a?a'
+fi
