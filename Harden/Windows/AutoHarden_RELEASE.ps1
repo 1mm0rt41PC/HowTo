@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-12-04
-$AutoHarden_version="2019-12-04"
+# Update: 2019-12-13
+$AutoHarden_version="2019-12-13"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -330,6 +330,86 @@ Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder"
 
 
 echo "####################################################################################################"
+echo "# Harden-WindowsDefender"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-WindowsDefender" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-WindowsDefender"
+if( (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" -eq $false) -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
+	# From https://gist.github.com/decay88/5bd6b2c9ebf681324847e541ba1fb191
+	################################################################################################################
+	# Windows Defender Device Guard - Exploit Guard Policies (Windows 10 Only)
+	# Enable ASR rules in Win10 ExploitGuard (>= 1709) to mitigate Office malspam
+	# Blocks Office childprocs, Office proc injection, Office win32 api calls & executable content creation
+	# Note these only work when Defender is your primary AV
+	# Sources:
+	# https://www.darkoperator.com/blog/2017/11/11/windows-defender-exploit-guard-asr-rules-for-office
+	# https://www.darkoperator.com/blog/2017/11/8/windows-defender-exploit-guard-asr-obfuscated-script-rule
+	# https://www.darkoperator.com/blog/2017/11/6/windows-defender-exploit-guard-asr-vbscriptjs-rule
+	# https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-exploit-guard/enable-attack-surface-reduction
+	# https://demo.wd.microsoft.com/Page/ASR2
+	# https://www.powershellgallery.com/packages/WindowsDefender_InternalEvaluationSettings/1.2/Content/WindowsDefender_InternalEvaluationSettings.ps1
+	# ---------------------
+	#%programfiles%\"Windows Defender"\MpCmdRun.exe -RestoreDefaults
+	#
+	# Block Office applications from creating child processes
+	Add-MpPreference -AttackSurfaceReductionRules_Ids D4F940AB-401B-4EFC-AADC-AD5F3C50688A -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Block Office applications from injecting code into other processes
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 75668C1F-73B5-4CF0-BB93-3ECF5CB7CC84 -AttackSurfaceReductionRules_Actions enable
+	#
+	# Block Win32 API calls from Office macro
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 92E97FA1-2EDF-4476-BDD6-9DD0B4DDDC7B -AttackSurfaceReductionRules_Actions enable
+	#
+	# Block Office applications from creating executable content
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 3B576869-A4EC-4529-8536-B80A7769E899 -AttackSurfaceReductionRules_Actions enable
+	#
+	# Block execution of potentially obfuscated scripts
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5FFC04CC -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Block executable content from email client and webmail
+	Add-MpPreference -AttackSurfaceReductionRules_Ids BE9BA2D9-53EA-4CDC-84E5-9B1EEEE46550 -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Block JavaScript or VBScript from launching downloaded executable content
+	Add-MpPreference -AttackSurfaceReductionRules_Ids D3E037E1-3EB8-44C8-A917-57927947596D -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Block executable files from running unless they meet a prevalence, age, or trusted list criteria
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 01443614-cd74-433a-b99e-2ecdc07bfc25 -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Use advanced protection against ransomware
+	Add-MpPreference -AttackSurfaceReductionRules_Ids C1DB55AB-C21A-4637-BB3F-A12568109D35 -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Block untrusted and unsigned processes that run from USB
+	Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
+	#
+	# Enable Controlled Folder
+	#Set-MpPreference -EnableControlledFolderAccess Enabled
+	#
+	# Enable Cloud functionality of Windows Defender
+	Set-MpPreference -MAPSReporting Advanced
+	Set-MpPreference -SubmitSamplesConsent Always
+	#
+	# Enable Network protection
+	# Enabled - Users will not be able to access malicious IP addresses and domains
+	# Disable (Default) - The Network protection feature will not work. Users will not be blocked from accessing malicious domains
+	# AuditMode - If a user visits a malicious IP address or domain, an event will be recorded in the Windows event log but the user will not be blocked from visiting the address.
+	Set-MpPreference -EnableNetworkProtection Enabled 
+	#
+	################################################################################################################
+	# Enable exploit protection (EMET on Windows 10)
+	# Sources:
+	# https://www.wilderssecurity.com/threads/process-mitigation-management-tool.393096/
+	# https://blogs.windows.com/windowsexperience/2018/03/20/announcing-windows-server-vnext-ltsc-build-17623/
+	# ---------------------
+	netsh advfirewall set AllProfiles state off
+	Invoke-WebRequest -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
+	netsh advfirewall set AllProfiles state on
+	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
+	rm $env:temp\ProcessMitigation.xml
+}
+Write-Progress -Activity AutoHarden -Status "Harden-WindowsDefender" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-AccountRename"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -PercentComplete 0
@@ -460,6 +540,8 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol 59 -Group AutoHa
 New-NetFirewallRule -direction Outbound -Action Block -Protocol 60 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] IPv6-Opts" -DisplayName "[AutoHarden-$AutoHarden_version] IPv6-Opts" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] ICMPv6" -DisplayName "[AutoHarden-$AutoHarden_version] ICMPv6" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
+
+# reg add "HKLM\SYSTEM\CurrentControlSet\services\tcpip6\parameters" /v DisabledComponents /t REG_DWORD /d 0xFF /f
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
@@ -498,14 +580,26 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableMimikatz"
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" /v Negotiate /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t REG_DWORD /d 1 /f
 
 if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-DomainCred.ask") -eq $false ){
 	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f 2>NUL
 	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f 2>NUL
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /f 2>NUL
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /f 2>NUL
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinClientSec /t REG_DWORD /d 0x20000000 /f
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinServerSec /t REG_DWORD /d 0x20000000 /f
 }else{
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /t REG_DWORD /d 1 /f
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /t REG_DWORD /d 30 /f
+	# 'Allow all' = '0'
+	# 'Deny all domain accounts' = '1'
+	# 'Deny all accounts' = '2'
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /t REG_DWORD /d 2 /f
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /t REG_DWORD /d 2 /f
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinClientSec /t REG_DWORD /d 0x20080000 /f
+	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinServerSec /t REG_DWORD /d 0x20080000 /f
 }
 
 # This sets up your RDP session to NOT store credentials in the memory of the target host.
@@ -525,6 +619,13 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
 		reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /f
 		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 0 /f
 	}
+}
+
+
+if( (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender').DisableAntiSpyware -ne 1 ){
+	# Block credential stealing from the Windows local security authority subsystem (lsass.exe)
+	# Require WindowsDefender
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Enabled
 }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
 
@@ -567,6 +668,9 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Disab
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareWks /t REG_DWORD /d 0 /f
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareServer /t REG_DWORD /d 0 /f
 
+#Set-SmbServerConfiguration -AnnounceServer $false -Force
+#Get-SmbServerConfiguration
+
 sc.exe config lanmanserver start= disabled
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBServer" -Completed
 
@@ -582,6 +686,27 @@ reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v Requ
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v EnableSecuritySignature /t REG_DWORD /d 1 /f
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v RequireSecuritySignature /t REG_DWORD /d 1 /f
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBv1" -Completed
+
+
+echo "####################################################################################################"
+echo "# Hardening-DLLHijacking"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-DLLHijacking" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DLLHijacking"
+if( ask "Block DLL from SMB share and WebDav Share" "Hardening-DLLHijacking.ask" ){
+# Prevent (remote) DLL Hijacking
+# Sources:
+# https://www.greyhathacker.net/?p=235
+# https://www.verifyit.nl/wp/?p=175464
+# https://support.microsoft.com/en-us/help/2264107/a-new-cwdillegalindllsearch-registry-entry-is-available-to-control-the
+# The value data can be 0x1, 0x2 or 0xFFFFFFFF. If the value name CWDIllegalInDllSearch does not exist or the value data is 0 then the machine will still be vulnerable to attack.
+# Please be aware that the value 0xFFFFFFFF could break certain applications (also blocks dll loading from USB).
+# Blocks a DLL Load from the current working directory if the current working directory is set to a WebDAV folder  (set it to 0x1)
+# Blocks a DLL Load from the current working directory if the current working directory is set to a remote folder (such as a WebDAV or UNC location) (set it to 0x2)
+# ---------------------
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v CWDIllegalInDllSearch /t REG_DWORD /d 0x2 /f
+}
+Write-Progress -Activity AutoHarden -Status "Hardening-DLLHijacking" -Completed
 
 
 echo "####################################################################################################"
@@ -864,8 +989,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU6MeomV3kKbXLTPfHrGb3Tkmf
-# FhCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUShY8PQ6dUazp9ll57Y6C0DHj
+# origggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -923,16 +1048,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFOSUmGyRndIURd1BaQkqhcAFJNhbMA0GCSqGSIb3DQEBAQUA
-# BIICAASiHttPVRBsNCpKX/IbdXg/OilO8l5JEsVFn/HtGTbVoq6ZT2FoZnt+yuvg
-# hOeB9AzBKtr1EKMmc0TXzg/6BdnfTKjE2+zrsYWlRr5bd8C8pp3GeNqFZrQhSSgA
-# Qz0P+EQQGoA1cQffcNEI29jaaLik3SvqD4+WiQvLl58zVdo7SFKaDizen0CaiE8C
-# qP1Uzq14W/C7tgfdY0WuuF7eof13jWWzCC9XFNTMJRp3X9/0qo/g31fbIXihUjW9
-# 7Bk5OYyQvhNTUBCv4DceAk/hxmbuv74IvPCw3brA7gjnP/ldfqXe8o96XI7l7bC4
-# 0AUyYzVP1DSt7Chap1b/fMoipJ6sysT5cw5BwFP0JYqTaXK9fzR+pL7B/f5tmUko
-# bi+5ROfLlkg7k6DYN7fqb37N+EEpQ8XT3Q7hRL+1MTUQPC3hMaIx7AmL6cro3jnS
-# a60k3vXTO652HB1gsNReS2Glan1YzU8lMWgVbd6rCceQ8Yvd4fQZVl6Hv4CEn1v8
-# JfqW55pn4H8UMo0G0bQ9tTE8DyONWK+CkZm5xVlb8ieGxt+3FY3kQnpHNfhhvxOV
-# d4fisFa/RFVC9rM21BJPehSkd2g0fc+ECk+aDWwU63oo3QsDGVlPwhkumS6uBgBC
-# ARWLBc18678VGtyXnuhcOk92YY/wqevt5aDOc2d7aaME3gDn
+# KoZIhvcNAQkEMRYEFNpNtXzgvPAmrydJE3B80adVpwKPMA0GCSqGSIb3DQEBAQUA
+# BIICAJgMixiqrpb5N4WzDWl4+NBSmWPQyB4xgsNyEEA88DPhSxSMQaZX0TvLeRkc
+# uD6Vs1uMcwunZs8GUuUYuLBfQH4eF08OUDXvwIZJnIVdlqXv1XzXZ7spkzvABvqQ
+# jEICkdv8ctRt3yTRjOu9zp12+GWqERVeZvdGTSmSYkH6jSy9WqVFTIzqsyUrOkwk
+# Aumg/8LL5cyGTMY7sFWRBH4vE+7PI7fJbIF+RqgjZMbyJWFEKUo0jiQuMUDbPtJl
+# pRYGUhBMXyigDAEIn3QaMI/B9iT1muEcx/XuDdaH9jHbyFGqtGO74NKUHYf4YMrG
+# nWPCniyRQyF5mczPQ5/QE7OK+600GwHTj4PSbqwbXWWI8az7xHeTJ4ducD3JRiZT
+# 0xBCvwSqcLV2dxKSnePdrKa5ntSseLGzNOiT6PnY/m6d2/IOhxuVLRsQ8IY/OGL/
+# FvKBKhwK+Mf2pFHfPYcBlsrUW3X8h91YDHYHl9rtyWa/SxiHAKRpSAcbZPJsSU0T
+# GPRd5zRVL2XxsL0RFE0YiwDWjx+En+eJHai0aM9tu1g6tyoJOJExLgqbjGhgEQO9
+# DRUy2nzOVVqxLyMzaDLWUMhU2dAJaFUBWZpz9Pg6StOdKV0d+hfeh4dL740pBm2m
+# YjJuN/t/wZ6MqlVES3qk0doLPMQO8HHdvuVcf5OpLs9YYzra
 # SIG # End signature block
