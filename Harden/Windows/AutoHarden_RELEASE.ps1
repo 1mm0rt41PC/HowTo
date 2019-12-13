@@ -334,7 +334,7 @@ echo "# Harden-WindowsDefender"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Harden-WindowsDefender" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-WindowsDefender"
-if( (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" -eq $false) -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
+if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
 	# From https://gist.github.com/decay88/5bd6b2c9ebf681324847e541ba1fb191
 	################################################################################################################
 	# Windows Defender Device Guard - Exploit Guard Policies (Windows 10 Only)
@@ -989,8 +989,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUShY8PQ6dUazp9ll57Y6C0DHj
-# origggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4bmo8C9SjMBjnDIkorKnoxdz
+# N2Sgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1048,16 +1048,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFNpNtXzgvPAmrydJE3B80adVpwKPMA0GCSqGSIb3DQEBAQUA
-# BIICAJgMixiqrpb5N4WzDWl4+NBSmWPQyB4xgsNyEEA88DPhSxSMQaZX0TvLeRkc
-# uD6Vs1uMcwunZs8GUuUYuLBfQH4eF08OUDXvwIZJnIVdlqXv1XzXZ7spkzvABvqQ
-# jEICkdv8ctRt3yTRjOu9zp12+GWqERVeZvdGTSmSYkH6jSy9WqVFTIzqsyUrOkwk
-# Aumg/8LL5cyGTMY7sFWRBH4vE+7PI7fJbIF+RqgjZMbyJWFEKUo0jiQuMUDbPtJl
-# pRYGUhBMXyigDAEIn3QaMI/B9iT1muEcx/XuDdaH9jHbyFGqtGO74NKUHYf4YMrG
-# nWPCniyRQyF5mczPQ5/QE7OK+600GwHTj4PSbqwbXWWI8az7xHeTJ4ducD3JRiZT
-# 0xBCvwSqcLV2dxKSnePdrKa5ntSseLGzNOiT6PnY/m6d2/IOhxuVLRsQ8IY/OGL/
-# FvKBKhwK+Mf2pFHfPYcBlsrUW3X8h91YDHYHl9rtyWa/SxiHAKRpSAcbZPJsSU0T
-# GPRd5zRVL2XxsL0RFE0YiwDWjx+En+eJHai0aM9tu1g6tyoJOJExLgqbjGhgEQO9
-# DRUy2nzOVVqxLyMzaDLWUMhU2dAJaFUBWZpz9Pg6StOdKV0d+hfeh4dL740pBm2m
-# YjJuN/t/wZ6MqlVES3qk0doLPMQO8HHdvuVcf5OpLs9YYzra
+# KoZIhvcNAQkEMRYEFBg/BqqNZuFq6H+W6Qdv6TkJeePeMA0GCSqGSIb3DQEBAQUA
+# BIICAGYZ3nTn41fwICg82G2WgCEZ7Ny91+5nD/WiR41RUQpTHv3O/bowN5OPZdXI
+# xW7RFNqefw/F5UKWod0m0NWvEuQ40dwsx1VoS5EzNlpdJdX0vJW1B6S9UOhGzw2+
+# j0cMGyNJRQIzNX7QLguJssJlFpPKxX2oWzFmq5OOW13pyk9ICYa/hVW66Lc03l2b
+# GTHK+btcIBU8jMEw2pDGrKMB13zXqSm5W/CC+Y1BnYWDlQmwu0yupau44g431MZw
+# Rj25jZz4owOeQ0n+0YgnFfJovBant85xkZMhybaehZ/dX6R3ahW4YZ6JdHzNd5oy
+# 7FBybcs6/tFiNBqMjvIwYNx6pr6MB9uglo+CFFaiBRUA+H2+cP19AfrUHnt4+pS8
+# YM3nM0ppeobtORgPgnrdXxXeTDxnMpFRvos3EX7h8O8QXRNqH6w3sMsDSWGdsxsq
+# YAOK6xRqm8bn766TcZIlz6eeZ/fH/CmE2fTUh9Wekf+nekU0mG0J6VrFKVvWE2lg
+# SUhCBEhcHheopsVX2v3F3Ob7p7A5T2EMcq8D69yTc0FufbV8H8bFCNTVDLDGum3W
+# hjS2BbwiEe0WS3oqYawp93os/38EpnUiZqrezLNUGi2q97HXznXMgnpmX7bLLmZq
+# PCjNusx/4QOIVIMewobXUUwNFQ1ca74AxjqpyIWjiEZ0Ca9+
 # SIG # End signature block

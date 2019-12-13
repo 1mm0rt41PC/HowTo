@@ -1,4 +1,4 @@
-if( (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" -eq $false) -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
+if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
 	# From https://gist.github.com/decay88/5bd6b2c9ebf681324847e541ba1fb191
 	################################################################################################################
 	# Windows Defender Device Guard - Exploit Guard Policies (Windows 10 Only)
