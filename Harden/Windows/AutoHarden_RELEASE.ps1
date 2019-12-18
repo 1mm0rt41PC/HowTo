@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-12-13
-$AutoHarden_version="2019-12-13"
+# Update: 2019-12-18
+$AutoHarden_version="2019-12-18"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -400,9 +400,9 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	# https://www.wilderssecurity.com/threads/process-mitigation-management-tool.393096/
 	# https://blogs.windows.com/windowsexperience/2018/03/20/announcing-windows-server-vnext-ltsc-build-17623/
 	# ---------------------
-	netsh advfirewall set AllProfiles state off
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
 	Invoke-WebRequest -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
-	netsh advfirewall set AllProfiles state on
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
 	rm $env:temp\ProcessMitigation.xml
 }
@@ -989,8 +989,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4bmo8C9SjMBjnDIkorKnoxdz
-# N2Sgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUY43mJRiw3dU1uRsSJTBfHmQm
+# PeOgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1048,16 +1048,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFBg/BqqNZuFq6H+W6Qdv6TkJeePeMA0GCSqGSIb3DQEBAQUA
-# BIICAGYZ3nTn41fwICg82G2WgCEZ7Ny91+5nD/WiR41RUQpTHv3O/bowN5OPZdXI
-# xW7RFNqefw/F5UKWod0m0NWvEuQ40dwsx1VoS5EzNlpdJdX0vJW1B6S9UOhGzw2+
-# j0cMGyNJRQIzNX7QLguJssJlFpPKxX2oWzFmq5OOW13pyk9ICYa/hVW66Lc03l2b
-# GTHK+btcIBU8jMEw2pDGrKMB13zXqSm5W/CC+Y1BnYWDlQmwu0yupau44g431MZw
-# Rj25jZz4owOeQ0n+0YgnFfJovBant85xkZMhybaehZ/dX6R3ahW4YZ6JdHzNd5oy
-# 7FBybcs6/tFiNBqMjvIwYNx6pr6MB9uglo+CFFaiBRUA+H2+cP19AfrUHnt4+pS8
-# YM3nM0ppeobtORgPgnrdXxXeTDxnMpFRvos3EX7h8O8QXRNqH6w3sMsDSWGdsxsq
-# YAOK6xRqm8bn766TcZIlz6eeZ/fH/CmE2fTUh9Wekf+nekU0mG0J6VrFKVvWE2lg
-# SUhCBEhcHheopsVX2v3F3Ob7p7A5T2EMcq8D69yTc0FufbV8H8bFCNTVDLDGum3W
-# hjS2BbwiEe0WS3oqYawp93os/38EpnUiZqrezLNUGi2q97HXznXMgnpmX7bLLmZq
-# PCjNusx/4QOIVIMewobXUUwNFQ1ca74AxjqpyIWjiEZ0Ca9+
+# KoZIhvcNAQkEMRYEFDWU1E5UugdDt8bjz4e0B6jU4Z97MA0GCSqGSIb3DQEBAQUA
+# BIICACkdOCdFslgOs9NyfNv8Agrnx7Pje9oBj8nNwvPw4AeO6TEiksGA2aJzsvpN
+# JY3/xBlEDym6ctSWiqj0H716Y8tfNvuPxgTe+mhtvKyAv1SwxEKkF+BxupTilCM1
+# OFYyctV9z9Hnf5i29BIc8QVBuTSBCmvAMmvRCMTNKF/dyanWMf7bAJ2Ia/sg/uPb
+# uj/EcaSJaVAsF+rC/BvWBnQWOH81H4HcTCLmMg8lW0VoBTfyH/LRHV/chcaYWdct
+# 3tyKs9FsHRePMyEtiKsomaEC5KT8/WcIol9zzYPmwijCwsm8XnNpjeREYJM5TRwG
+# qWFW3TPVq27iiUsnHpYmZf8eqy1eXEPCyl6CO8ku7ZcxSoAjy5zgpIpeoUc8zoav
+# pPtETJEFTosg0KDBSGSk1rwTT3ux4kJWYvGEoMM/e6sqaUSX5voQbrDhLFCc0WJ9
+# 9MIWqkItUVW0guy8pIG0Q7Vsu87MzSjr+GDeYO2W7jmFp/FnmsOSq9bVDp7KSwcY
+# 6WIYNGWNqbAhMnfgdItB/xCgRnYwo2sSBo0AxiFPXWIIFiCAcNIu5ihMwCRVWk3Z
+# QqMdjNVHnBbDDRpiGK/dlZH65q44AT0EMEDGq+HSUiAmDVduO7YZP5KqA82MUGYA
+# bYFcGXAOxxL5zRM/IzvvPWOJeH0HOBLd2CL/sgd4mgUnYskD
 # SIG # End signature block

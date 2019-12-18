@@ -64,9 +64,9 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	# https://www.wilderssecurity.com/threads/process-mitigation-management-tool.393096/
 	# https://blogs.windows.com/windowsexperience/2018/03/20/announcing-windows-server-vnext-ltsc-build-17623/
 	# ---------------------
-	netsh advfirewall set AllProfiles state off
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
 	Invoke-WebRequest -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
-	netsh advfirewall set AllProfiles state on
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
 	rm $env:temp\ProcessMitigation.xml
 }
