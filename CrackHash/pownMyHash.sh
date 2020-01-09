@@ -23,7 +23,7 @@ export HC=/opt/hashcat-5.1.0/
 # Folder where dico are
 export DICO_PATH=/opt/dico/
 # List of rules. Expected folder: $HC/rules/
-export RULES='best64.rule d3ad0ne.rule rockyou-30000.rule OneRuleToRuleThemAll.rule hob064.rule d3adhob0.rule'
+export RULES='best64.rule d3ad0ne.rule rockyou-30000.rule OneRuleToRuleThemAll.rule hob064.rule d3adhob0.rule combinator.rule'
 
 
 # ONLY IF YOU USE CYGWIN - Folder where hashcat is
@@ -155,10 +155,10 @@ function isProcessHashCat
 function hashcat
 {
 	if [ "`which cygpath`" = "" ] ; then
-		$HCB --force -w 4 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*
+		$HCB -O --force -w 4 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*
 	else
 		export _lastline="`tail -n1 $HC/hashcat.potfile`"
-		cmd /c "start ""$HCB"" --force -w 4 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*"
+		cmd /c "start ""$HCB"" -O --force -w 4 --session=$SESSION_NAME -m $HASH_TYPE $HASHES -a $*"
 		while isProcessHashCat; do
 			sleep 1
 			grep -A1000 -F "$_lastline" "$HC/hashcat.potfile" | grep -vF "$_lastline"
@@ -309,7 +309,7 @@ if [ "$HASH_TYPE" = "1000" ]; then
 		mv $mytmp $TRAINING_NTLM
 		grep -E '^[a-fA-F0-9]{32}:' $HC/hashcat.potfile | cut -d : -f 1 > $mytmp
 		export mytmp2=`mktemp`
-		(grep -vf $mytmp $TRAINING_NTLM > $mytmp2 && mv $mytmp2 $TRAINING_NTLM && rm $mytmp) &
+		(grep -vFif $mytmp $TRAINING_NTLM > $mytmp2 && mv $mytmp2 $TRAINING_NTLM && rm $mytmp) &
 	fi
 
 	if title 'LM attack'; then
@@ -355,7 +355,7 @@ if title "Using dico"; then
 			loopOnPotfile
 			for rule in $RULES; do
 				if title "Using dico $dico with rule $rule"; then
-					hashcat 0 `absPath $dico` `absPath $HC/rules/$rule`
+					hashcat 0 `absPath $dico` -r `absPath $HC/rules/$rule`
 					loopOnPotfile
 				fi
 			done

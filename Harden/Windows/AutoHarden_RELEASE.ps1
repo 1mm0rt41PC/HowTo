@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2019-12-18
-$AutoHarden_version="2019-12-18"
+# Update: 2020-01-09
+$AutoHarden_version="2020-01-09"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -379,14 +379,14 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	Add-MpPreference -AttackSurfaceReductionRules_Ids C1DB55AB-C21A-4637-BB3F-A12568109D35 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block untrusted and unsigned processes that run from USB
-	Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
+	#A TEST#########Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Enable Controlled Folder
 	#Set-MpPreference -EnableControlledFolderAccess Enabled
 	#
 	# Enable Cloud functionality of Windows Defender
-	Set-MpPreference -MAPSReporting Advanced
-	Set-MpPreference -SubmitSamplesConsent Always
+	#A TEST#########Set-MpPreference -MAPSReporting Advanced
+	#A TEST#########Set-MpPreference -SubmitSamplesConsent Always
 	#
 	# Enable Network protection
 	# Enabled - Users will not be able to access malicious IP addresses and domains
@@ -596,10 +596,10 @@ if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-Domain
 	# 'Allow all' = '0'
 	# 'Deny all domain accounts' = '1'
 	# 'Deny all accounts' = '2'
-	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /t REG_DWORD /d 2 /f
-	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /t REG_DWORD /d 2 /f
-	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinClientSec /t REG_DWORD /d 0x20080000 /f
-	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinServerSec /t REG_DWORD /d 0x20080000 /f
+	#A TEST#######reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /t REG_DWORD /d 2 /f
+	#A TEST#######reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /t REG_DWORD /d 2 /f
+	#A TEST#######reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinClientSec /t REG_DWORD /d 0x20080000 /f
+	#A TEST#######reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinServerSec /t REG_DWORD /d 0x20080000 /f
 }
 
 # This sets up your RDP session to NOT store credentials in the memory of the target host.
@@ -989,8 +989,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUY43mJRiw3dU1uRsSJTBfHmQm
-# PeOgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUHuFe1wFj5IAqc7XRQI03EbBL
+# +RCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1048,16 +1048,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFDWU1E5UugdDt8bjz4e0B6jU4Z97MA0GCSqGSIb3DQEBAQUA
-# BIICACkdOCdFslgOs9NyfNv8Agrnx7Pje9oBj8nNwvPw4AeO6TEiksGA2aJzsvpN
-# JY3/xBlEDym6ctSWiqj0H716Y8tfNvuPxgTe+mhtvKyAv1SwxEKkF+BxupTilCM1
-# OFYyctV9z9Hnf5i29BIc8QVBuTSBCmvAMmvRCMTNKF/dyanWMf7bAJ2Ia/sg/uPb
-# uj/EcaSJaVAsF+rC/BvWBnQWOH81H4HcTCLmMg8lW0VoBTfyH/LRHV/chcaYWdct
-# 3tyKs9FsHRePMyEtiKsomaEC5KT8/WcIol9zzYPmwijCwsm8XnNpjeREYJM5TRwG
-# qWFW3TPVq27iiUsnHpYmZf8eqy1eXEPCyl6CO8ku7ZcxSoAjy5zgpIpeoUc8zoav
-# pPtETJEFTosg0KDBSGSk1rwTT3ux4kJWYvGEoMM/e6sqaUSX5voQbrDhLFCc0WJ9
-# 9MIWqkItUVW0guy8pIG0Q7Vsu87MzSjr+GDeYO2W7jmFp/FnmsOSq9bVDp7KSwcY
-# 6WIYNGWNqbAhMnfgdItB/xCgRnYwo2sSBo0AxiFPXWIIFiCAcNIu5ihMwCRVWk3Z
-# QqMdjNVHnBbDDRpiGK/dlZH65q44AT0EMEDGq+HSUiAmDVduO7YZP5KqA82MUGYA
-# bYFcGXAOxxL5zRM/IzvvPWOJeH0HOBLd2CL/sgd4mgUnYskD
+# KoZIhvcNAQkEMRYEFPOPfWP6UPCnPqwRSkJqsZqMHE4JMA0GCSqGSIb3DQEBAQUA
+# BIICAG+N6UYcGt50um9WjFdk+i78USMwa2PjxtJdb3I17wNFWYDrfqT+0+ZjUdaW
+# ThYxRkGSNL5qRdiipNixZUhutxpGK/sL+HI0fMY8t0+VMqlBUan1BxoyQ+ADZXpH
+# NVhIaGjnkoG50i4PlvnslmIFjWBGMxwo/C3qHu/TsUPTO4WXGugETx6fu5UWMQtI
+# HI8VOlfynr7xAqIvD0ySeaMyOsfbhVa+HJchjub0e29lzOU513nT/H4gdMJiDJs4
+# stp0uSOFUO1bTZUduKSQsSsGrbmV5Ofn9eITtHWI2Nu7kzTpRJ4KFkP5CGFjU6mh
+# RNA2kAThUfyrtqrcX0iUdM+BcQ5+nJrE6xYfTIqxlmdwCbrFPFiY3GQV55g+gpMF
+# q+OVyZFPbkZNQ71f9fcq8GG8gxV//mgKBKlWH/pWfWbRziEhLCM8Lwqgbqy+J/JS
+# oZxZOgDvFoGhfMU9ypm+yuklnYAebBzsn5u4jqrvVOzbGyQWmyDalTItzC9NfCQY
+# wvDHu2bIoi9c58kPJs4L7g7+xGUMk8PY05Xogf5UO6nx9QbZvzQrMoOZ2P+uZGAi
+# XhR4gup7xIFXiTe2wkRpU13JpmKpJQKJv3oXhcJXYY9vrZAIz4lvPuCffjGpweMh
+# 7RYPZI/yTYD+1Pweq5bLDmmdM+eHdefbAELNFPisKGm5cgZv
 # SIG # End signature block

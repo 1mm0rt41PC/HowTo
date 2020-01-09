@@ -43,14 +43,14 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	Add-MpPreference -AttackSurfaceReductionRules_Ids C1DB55AB-C21A-4637-BB3F-A12568109D35 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block untrusted and unsigned processes that run from USB
-	Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
+	#A TEST#########Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Enable Controlled Folder
 	#Set-MpPreference -EnableControlledFolderAccess Enabled
 	#
 	# Enable Cloud functionality of Windows Defender
-	Set-MpPreference -MAPSReporting Advanced
-	Set-MpPreference -SubmitSamplesConsent Always
+	#A TEST#########Set-MpPreference -MAPSReporting Advanced
+	#A TEST#########Set-MpPreference -SubmitSamplesConsent Always
 	#
 	# Enable Network protection
 	# Enabled - Users will not be able to access malicious IP addresses and domains
