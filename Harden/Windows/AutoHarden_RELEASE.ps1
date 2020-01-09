@@ -149,12 +149,15 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\root\*\EXCEL.EXE" "Office" $true
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\root\*\EXCEL.EXE" "Office" $true
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\EXCEL.EXE" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
+	
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\winword.exe" "Office" $true
+	
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\Powerpnt.exe" "Office" $true
+	
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\*\Squirrel.exe" "Office" $true
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\update.exe" "Office" $true
 }else{
@@ -989,8 +992,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUHuFe1wFj5IAqc7XRQI03EbBL
-# +RCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNvbCyMvhT4cjsueoyZm7UVK5
+# lU+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1048,16 +1051,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFPOPfWP6UPCnPqwRSkJqsZqMHE4JMA0GCSqGSIb3DQEBAQUA
-# BIICAG+N6UYcGt50um9WjFdk+i78USMwa2PjxtJdb3I17wNFWYDrfqT+0+ZjUdaW
-# ThYxRkGSNL5qRdiipNixZUhutxpGK/sL+HI0fMY8t0+VMqlBUan1BxoyQ+ADZXpH
-# NVhIaGjnkoG50i4PlvnslmIFjWBGMxwo/C3qHu/TsUPTO4WXGugETx6fu5UWMQtI
-# HI8VOlfynr7xAqIvD0ySeaMyOsfbhVa+HJchjub0e29lzOU513nT/H4gdMJiDJs4
-# stp0uSOFUO1bTZUduKSQsSsGrbmV5Ofn9eITtHWI2Nu7kzTpRJ4KFkP5CGFjU6mh
-# RNA2kAThUfyrtqrcX0iUdM+BcQ5+nJrE6xYfTIqxlmdwCbrFPFiY3GQV55g+gpMF
-# q+OVyZFPbkZNQ71f9fcq8GG8gxV//mgKBKlWH/pWfWbRziEhLCM8Lwqgbqy+J/JS
-# oZxZOgDvFoGhfMU9ypm+yuklnYAebBzsn5u4jqrvVOzbGyQWmyDalTItzC9NfCQY
-# wvDHu2bIoi9c58kPJs4L7g7+xGUMk8PY05Xogf5UO6nx9QbZvzQrMoOZ2P+uZGAi
-# XhR4gup7xIFXiTe2wkRpU13JpmKpJQKJv3oXhcJXYY9vrZAIz4lvPuCffjGpweMh
-# 7RYPZI/yTYD+1Pweq5bLDmmdM+eHdefbAELNFPisKGm5cgZv
+# KoZIhvcNAQkEMRYEFN5ufq08+eeIvuUhG7DwFNPzG9GDMA0GCSqGSIb3DQEBAQUA
+# BIICACmwlimabzqcB0LBOziKMxm2sctGdBJlZTFuV2MVu/6tgEh678+Sh4mcfJ2r
+# F+6AtFn+jP6VPNTz5o43dLGp21N1aBhL4O3f9ztUmt2kpN6G+eWuWKhDtRAaFr/6
+# jm+GpSZhj3+4W17WpBE4q9BdGztMuy9fU2AUWYclSorZdbu4KRm4VpLggpLjUM4V
+# TyS1jZfwDL0EQYNzOZq3VUOqgvmh63fz+qDgM85xsN0TetcCiol526rOKUme+v4A
+# 1TAOeWOHT6uaH9XS124FSjW4RsQTSBlZc0fQtJHgPlH4bStunMHoqBkMnPVTQc5I
+# BgWnht4mdxlHtQxkb+o6vR23THWGjYJAX6wWTj3RAK2BkLWcPvGMBDyASj5P4PWl
+# EoVwQakyuNHEuVGlGnUKyQDRNwHdYK/oIs6qrwSo/czGOmtQyWrOKneyhGc5NWTa
+# Ezk27Y0MrjbnqKzfWfzQTWpgf06pgsv41VWlWLtSMugok5rJn3Q7MmpdtQAnyCcW
+# IOoCkqkmyYnz9/LB5oAZ6X/CfvMbbOY5SuRbaEctGccQlulyZJJFhpNaK+hw5Dm6
+# FeqVapH2qlSntU7yR5y0kpYbdr4vANzBSfrJbN0RjX4xqCFmGEQIOPNywTtRrhTb
+# Ag5ZYd2cig5GrsD5pe5OHh4nWXibEs0FkYEy7aLBywUoSMAI
 # SIG # End signature block
