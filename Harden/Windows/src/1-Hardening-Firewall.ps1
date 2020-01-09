@@ -49,12 +49,15 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\root\*\EXCEL.EXE" "Office" $true
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\root\*\EXCEL.EXE" "Office" $true
 	blockExe "Excel" "C:\Program Files*\Microsoft Office*\*\EXCEL.EXE" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "Word" "C:\Program Files*\Microsoft Office\root\*\winword.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
-	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office\root\*\Powerpnt.exe" "Office" $true
+	
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\root\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\winword.exe" "Office" $true
+	
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\root\*\Powerpnt.exe" "Office" $true
+	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\Powerpnt.exe" "Office" $true
+	
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\*\Squirrel.exe" "Office" $true
 	blockExe "Teams" "${env:localappdata}\Microsoft\Teams\update.exe" "Office" $true
 }else{
