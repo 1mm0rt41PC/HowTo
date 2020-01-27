@@ -66,6 +66,13 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	Get-NetFirewallRule -Name '*AutoHarden*PowerPoint*' | Remove-NetFirewallRule
 	Get-NetFirewallRule -Name '*AutoHarden*Teams*' | Remove-NetFirewallRule
 }
+
+if( (ask "Block communication for InternetExplorer ?" "block-communication-for-InternetExplorer.ask") -eq $true ){
+	blockExe "InternetExplorer" "C:\Program Files*\Internet Explorer\iexplore.exe" "InternetExplorer" $true
+}else{
+	Get-NetFirewallRule -Name '*AutoHarden*InternetExplorer*' | Remove-NetFirewallRule
+}
+
 if( (Get-Item "C:\Program Files*\Nmap\nmap.exe") -ne $null ){
 	if( (ask "Allow NMAP to bypass the local firewall ?" "Allow-nmap.ask") -eq $true ){
 		$nmap = (Get-Item "C:\Program Files*\Nmap\nmap.exe").Fullname

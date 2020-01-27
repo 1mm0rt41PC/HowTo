@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-01-09
-$AutoHarden_version="2020-01-09"
+# Update: 2020-01-27
+$AutoHarden_version="2020-01-27"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -166,6 +166,13 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	Get-NetFirewallRule -Name '*AutoHarden*PowerPoint*' | Remove-NetFirewallRule
 	Get-NetFirewallRule -Name '*AutoHarden*Teams*' | Remove-NetFirewallRule
 }
+
+if( (ask "Block communication for InternetExplorer ?" "block-communication-for-InternetExplorer.ask") -eq $true ){
+	blockExe "InternetExplorer" "C:\Program Files*\Internet Explorer\iexplore.exe" "InternetExplorer" $true
+}else{
+	Get-NetFirewallRule -Name '*AutoHarden*InternetExplorer*' | Remove-NetFirewallRule
+}
+
 if( (Get-Item "C:\Program Files*\Nmap\nmap.exe") -ne $null ){
 	if( (ask "Allow NMAP to bypass the local firewall ?" "Allow-nmap.ask") -eq $true ){
 		$nmap = (Get-Item "C:\Program Files*\Nmap\nmap.exe").Fullname
@@ -992,8 +999,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNvbCyMvhT4cjsueoyZm7UVK5
-# lU+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqAzmLeKwZ6eFdifLMSlzt4W7
+# Xumgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1051,16 +1058,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFN5ufq08+eeIvuUhG7DwFNPzG9GDMA0GCSqGSIb3DQEBAQUA
-# BIICACmwlimabzqcB0LBOziKMxm2sctGdBJlZTFuV2MVu/6tgEh678+Sh4mcfJ2r
-# F+6AtFn+jP6VPNTz5o43dLGp21N1aBhL4O3f9ztUmt2kpN6G+eWuWKhDtRAaFr/6
-# jm+GpSZhj3+4W17WpBE4q9BdGztMuy9fU2AUWYclSorZdbu4KRm4VpLggpLjUM4V
-# TyS1jZfwDL0EQYNzOZq3VUOqgvmh63fz+qDgM85xsN0TetcCiol526rOKUme+v4A
-# 1TAOeWOHT6uaH9XS124FSjW4RsQTSBlZc0fQtJHgPlH4bStunMHoqBkMnPVTQc5I
-# BgWnht4mdxlHtQxkb+o6vR23THWGjYJAX6wWTj3RAK2BkLWcPvGMBDyASj5P4PWl
-# EoVwQakyuNHEuVGlGnUKyQDRNwHdYK/oIs6qrwSo/czGOmtQyWrOKneyhGc5NWTa
-# Ezk27Y0MrjbnqKzfWfzQTWpgf06pgsv41VWlWLtSMugok5rJn3Q7MmpdtQAnyCcW
-# IOoCkqkmyYnz9/LB5oAZ6X/CfvMbbOY5SuRbaEctGccQlulyZJJFhpNaK+hw5Dm6
-# FeqVapH2qlSntU7yR5y0kpYbdr4vANzBSfrJbN0RjX4xqCFmGEQIOPNywTtRrhTb
-# Ag5ZYd2cig5GrsD5pe5OHh4nWXibEs0FkYEy7aLBywUoSMAI
+# KoZIhvcNAQkEMRYEFLjaP4vZw//BvEDkgVWf181xBZ3zMA0GCSqGSIb3DQEBAQUA
+# BIICAG7Wq0D/CxBD2OZYZWYf4iA2NhmfviICbQDbxwqhk6M0xZFjWUI5TWUs8Tv4
+# eBRWslXToXqyZWY9pmtJPogEYbeLggQx5TeYwUNjwecm33Ly0cmzpGGCoGA4yLGP
+# ALx0SnlKY76xPW0Qy7+mY0ww6JWa/AItQLIlqyoAkrdQF6lfioXMUAJr+tuzaacW
+# pCojm5Wat+rbUz5RShFnfnCN7KleA6hHDhM4zT94pSBUXHmPgBKIdsY0iFsqredy
+# 7gDmBQmogj3igRqqv+qAtFgj13sK4GV6es6QB8E9p/gglNT2oIWArhvL1QzlrpY5
+# ZfGHf3/Qjo8TLmbXxJ/uqb2t1rUQIvj5UFJPObws70RxOa4ecv2PAQPS0yX1B9fL
+# lp/4d74Vt64BXmy5AW29MM5VCkAWGoqu6gbNlsJ2p7TP9F+5nhQzedSfDNYkSKA4
+# i3qucZCX+3j9Mq8vEwX9XunqTm9XmbjpTx9DdhjZHncyOA3dl7qilziSmk9eAXaK
+# wgBcGBubHG7mWR/U28/tgJjh+UAemNveTpCMzxWmUvYdQr4M1IFVLglWNHWX7AmB
+# zQUyG7D8v8n65zXfvM4yD05W+2UeMI1XjifCPTpuhJliQel/F53xjvWEHCDs0gIM
+# xXCzJkyhhH3Vgs7+fapav8acr8H6ZmtQhbdloJ+8RHXJgLep
 # SIG # End signature block
