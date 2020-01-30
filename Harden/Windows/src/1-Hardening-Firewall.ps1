@@ -31,7 +31,10 @@ function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonR
 
 if( (ask "Block communication for evil tools ?" "block-communication-for-powershell,eviltools.ask") -eq $true ){
 	blockExe "Powershell" "C:\Windows\WinSxS\*\powershell.exe" "LOLBAS" $true
-	blockExe "Powershell" "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\WinSxS\*\PowerShell_ISE.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\powershell.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\PowerShell_ISE.exe" "LOLBAS" $true
+	
 	blockExe "WScript" "C:\Windows\system32\wscript.exe" "LOLBAS" $true
 	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe" "LOLBAS" $true
 	blockExe "Mshta" "C:\Windows\system32\mshta.exe" "LOLBAS" $true

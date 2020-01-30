@@ -4,7 +4,9 @@
 if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
 	echo "==============================================================================="
 	echo "Install: choco"
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
     iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
 ################################################################################
 # Installation des soft de base

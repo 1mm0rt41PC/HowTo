@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-01-27
-$AutoHarden_version="2020-01-27"
+# Update: 2020-01-30
+$AutoHarden_version="2020-01-30"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -131,7 +131,10 @@ function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonR
 
 if( (ask "Block communication for evil tools ?" "block-communication-for-powershell,eviltools.ask") -eq $true ){
 	blockExe "Powershell" "C:\Windows\WinSxS\*\powershell.exe" "LOLBAS" $true
-	blockExe "Powershell" "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\WinSxS\*\PowerShell_ISE.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\powershell.exe" "LOLBAS" $true
+	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\PowerShell_ISE.exe" "LOLBAS" $true
+	
 	blockExe "WScript" "C:\Windows\system32\wscript.exe" "LOLBAS" $true
 	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe" "LOLBAS" $true
 	blockExe "Mshta" "C:\Windows\system32\mshta.exe" "LOLBAS" $true
@@ -879,7 +882,9 @@ if( ask "Replace notepad with notepad++" "Software-install-notepad++.ask" ){
 if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
 	echo "==============================================================================="
 	echo "Install: choco"
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
     iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
 ################################################################################
 # Installation des soft de base
@@ -964,7 +969,9 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-instal
 if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
 	echo "==============================================================================="
 	echo "Install: choco"
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
     iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
 
 ################################################################################
@@ -999,8 +1006,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqAzmLeKwZ6eFdifLMSlzt4W7
-# Xumgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTm57wPQIYG45p59KWhyH9l9P
+# DJ2gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1058,16 +1065,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFLjaP4vZw//BvEDkgVWf181xBZ3zMA0GCSqGSIb3DQEBAQUA
-# BIICAG7Wq0D/CxBD2OZYZWYf4iA2NhmfviICbQDbxwqhk6M0xZFjWUI5TWUs8Tv4
-# eBRWslXToXqyZWY9pmtJPogEYbeLggQx5TeYwUNjwecm33Ly0cmzpGGCoGA4yLGP
-# ALx0SnlKY76xPW0Qy7+mY0ww6JWa/AItQLIlqyoAkrdQF6lfioXMUAJr+tuzaacW
-# pCojm5Wat+rbUz5RShFnfnCN7KleA6hHDhM4zT94pSBUXHmPgBKIdsY0iFsqredy
-# 7gDmBQmogj3igRqqv+qAtFgj13sK4GV6es6QB8E9p/gglNT2oIWArhvL1QzlrpY5
-# ZfGHf3/Qjo8TLmbXxJ/uqb2t1rUQIvj5UFJPObws70RxOa4ecv2PAQPS0yX1B9fL
-# lp/4d74Vt64BXmy5AW29MM5VCkAWGoqu6gbNlsJ2p7TP9F+5nhQzedSfDNYkSKA4
-# i3qucZCX+3j9Mq8vEwX9XunqTm9XmbjpTx9DdhjZHncyOA3dl7qilziSmk9eAXaK
-# wgBcGBubHG7mWR/U28/tgJjh+UAemNveTpCMzxWmUvYdQr4M1IFVLglWNHWX7AmB
-# zQUyG7D8v8n65zXfvM4yD05W+2UeMI1XjifCPTpuhJliQel/F53xjvWEHCDs0gIM
-# xXCzJkyhhH3Vgs7+fapav8acr8H6ZmtQhbdloJ+8RHXJgLep
+# KoZIhvcNAQkEMRYEFKGVprs1eKafXArnq7E7ryNyJgbfMA0GCSqGSIb3DQEBAQUA
+# BIICAEGUnAI02w2daJH7/0cEmxlNzKOlRXZUcFTCB7esQJz9a9lZXRvtXHWm0i+c
+# 6kl3MQBxzTkqLOdgUghsFdmLlNQywcTDMo12YeEe1CGqjz4i+cmlgCo3dGNvXHce
+# HMPMCWSAtdx22nD6zja89nQCkjeXbpaDqNDr4MAWfzq7a/nR0ZbW4/BubbJaVqUc
+# XVCPrZJVVhPL9nrMHzG5AqoH5ghNONS2Agqv5lcReqkKztTwUU8BdsAGjhp9Xi3N
+# 87dWB2gQLCfRf2HouozxvzKXBTXr4YZnHA41Yc35BaC50NXS4LrjTaqs6JUezUpO
+# JGauvjkxhCwRCp0cKfvdLdDAXuHRuqwwTISBpV5N0ybgT4OJHRW0iVBA0HBS7BFy
+# yHIn99MRJncHB3F4PEdf6YgLXYFYrZUvgzApjqvotAwm8FaguC9rV4d082L5Ly5s
+# YTgSoHc9uwVz+/QMNw/tjLtbF3s9lgg0/ZAFGyJ9mPgbh7Fl3KWk/f4yP8al47cV
+# SxNDYK05OyTxN2OheoFWrew2wM1RFZ8luL4/OiadL4c3yrtmwkOj67fU261/kNUd
+# W/xfiUM/n6BYg1F7Na/zSTl1cHEmWcF4Q1TDjqqJot2nVleCVQGHaVMfpvxS1hjN
+# BONIwpZgXJ+5c5/O/p0sQWi0BhWBfcC5QvW+ADJXHu3Iphfa
 # SIG # End signature block
