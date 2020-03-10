@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-01-30
-$AutoHarden_version="2020-01-30"
+# Update: 2020-03-10
+$AutoHarden_version="2020-03-10"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -226,6 +226,34 @@ Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -C
 
 
 echo "####################################################################################################"
+echo "# Crapware-Cortana"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Crapware-Cortana" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Cortana"
+if( ask "Disable Cortana in Windows search bar" "Crapware-Cortana.ask" ){
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowSearchToUseLocation /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortanaAboveLock /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v DisableWebSearch /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v ConnectedSearchUseWeb /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search" /t REG_DWORD /v BingSearchEnabled /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v PublishUserActivities /d 0 /f
+}
+else{
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowSearchToUseLocation /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortanaAboveLock /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v DisableWebSearch /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v ConnectedSearchUseWeb /d 1 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search" /t REG_DWORD /v BingSearchEnabled /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v PublishUserActivities /d 1 /f
+}
+Write-Progress -Activity AutoHarden -Status "Crapware-Cortana" -Completed
+
+
+echo "####################################################################################################"
 echo "# Crapware-DisableExplorerAdsense"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableExplorerAdsense" -PercentComplete 0
@@ -255,6 +283,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enab
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SystemPaneSuggestionsEnabled /t REG_DWORD /d 0 /f
 # Start Menu: Disable Bing Search Results
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v CortanaConsent /t REG_DWORD /d 0 /f
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -Completed
 
 
@@ -340,6 +369,24 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-Window
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue 'C:\$Windows.~BT'
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue 'C:\Windows.old'
 Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder" -Completed
+
+
+echo "####################################################################################################"
+echo "# Harden-VoiceControl"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-VoiceControl" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-VoiceControl"
+if( ask "Disable voice control" "Harden-VoiceControl.ask" ){
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /t REG_DWORD /v AgentActivationEnabled /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /t REG_DWORD /v AgentActivationOnLockScreenEnabled /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\InputPersonalization" /t REG_DWORD /v AllowInputPersonalization /d 0 /f
+}
+else{
+reg delete "HKEY_CURRENT_USER\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v AgentActivationEnabled /f
+reg delete "HKEY_CURRENT_USER\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v AgentActivationOnLockScreenEnabled /f
+reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\InputPersonalization" /v AllowInputPersonalization /f
+}
+Write-Progress -Activity AutoHarden -Status "Harden-VoiceControl" -Completed
 
 
 echo "####################################################################################################"
@@ -733,6 +780,42 @@ Write-Progress -Activity AutoHarden -Status "Hardening-DNSCache" -Completed
 
 
 echo "####################################################################################################"
+echo "# Hardening-FileExtension"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-FileExtension" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-FileExtension"
+# assoc .txt
+cmd /c ftype  JSFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype VBEFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype VBSFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype JSEFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype WSFFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype WSHFile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype regfile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype inffile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype scriptletfile="C:\Windows\notepad.exe" "%1"
+cmd /c ftype Microsoft.PowerShellScript.1="C:\Windows\notepad.exe" "%1"
+cmd /c ftype Microsoft.PowerShellXMLData.1="C:\Windows\notepad.exe" "%1"
+cmd /c ftype Microsoft.PowerShellConsole.1="C:\Windows\notepad.exe" "%1"
+cmd /c ftype "XML Script Engine"="C:\Windows\notepad.exe" "%1"
+Write-Progress -Activity AutoHarden -Status "Hardening-FileExtension" -Completed
+
+
+echo "####################################################################################################"
+echo "# Hardening-RemoteAssistance"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-RemoteAssistance" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-RemoteAssistance"
+if( ask "Disable RDP server on this computer" "Hardening-RemoteAssistance.ask" ){
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Remote Assistance" /t REG_DWORD /v fAllowToGetHelp /d 0 /f
+}
+else{
+reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v fAllowToGetHelp /f
+}
+Write-Progress -Activity AutoHarden -Status "Hardening-RemoteAssistance" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-Wifi"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi" -PercentComplete 0
@@ -863,9 +946,11 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentCo
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
 if( ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 4 /f
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 2 /f
 }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
@@ -1006,8 +1091,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTm57wPQIYG45p59KWhyH9l9P
-# DJ2gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUALQx/obHAJ4WIDNDbhPba20K
+# Ib6gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1065,16 +1150,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFKGVprs1eKafXArnq7E7ryNyJgbfMA0GCSqGSIb3DQEBAQUA
-# BIICAEGUnAI02w2daJH7/0cEmxlNzKOlRXZUcFTCB7esQJz9a9lZXRvtXHWm0i+c
-# 6kl3MQBxzTkqLOdgUghsFdmLlNQywcTDMo12YeEe1CGqjz4i+cmlgCo3dGNvXHce
-# HMPMCWSAtdx22nD6zja89nQCkjeXbpaDqNDr4MAWfzq7a/nR0ZbW4/BubbJaVqUc
-# XVCPrZJVVhPL9nrMHzG5AqoH5ghNONS2Agqv5lcReqkKztTwUU8BdsAGjhp9Xi3N
-# 87dWB2gQLCfRf2HouozxvzKXBTXr4YZnHA41Yc35BaC50NXS4LrjTaqs6JUezUpO
-# JGauvjkxhCwRCp0cKfvdLdDAXuHRuqwwTISBpV5N0ybgT4OJHRW0iVBA0HBS7BFy
-# yHIn99MRJncHB3F4PEdf6YgLXYFYrZUvgzApjqvotAwm8FaguC9rV4d082L5Ly5s
-# YTgSoHc9uwVz+/QMNw/tjLtbF3s9lgg0/ZAFGyJ9mPgbh7Fl3KWk/f4yP8al47cV
-# SxNDYK05OyTxN2OheoFWrew2wM1RFZ8luL4/OiadL4c3yrtmwkOj67fU261/kNUd
-# W/xfiUM/n6BYg1F7Na/zSTl1cHEmWcF4Q1TDjqqJot2nVleCVQGHaVMfpvxS1hjN
-# BONIwpZgXJ+5c5/O/p0sQWi0BhWBfcC5QvW+ADJXHu3Iphfa
+# KoZIhvcNAQkEMRYEFNlRW3eqwqsbfTqX2XGk0nL5yo+4MA0GCSqGSIb3DQEBAQUA
+# BIICAI6tr4+OdzWfHLhEWk7/esXiwRdxIpmN3CVvg+HbRTs+EsGE7cqZvfK4tuWv
+# Wq5zPJ/Voc+ewHM9e66yryrA7T/gFGjOvL8Z0GLe+0xNmpWgpuEw33swTTTfBg7Z
+# 7da88CufZUOyjvawoko/r50qtyKZu0feYnZz3LVKSWFJqOgcTpUAxa6dWy7CPRjn
+# A6ocjEhFjYDFDTI8sVntJQ3eKkgmkqbXJPDS0Gdw4tW6AxDonCV8flOlOjV51iw3
+# rKbULxMEyILOkExPiKA0Sw67iQ0ISJoo2Kf1JBmZWnQ05n5MC2HR0YHZSD1XZyR/
+# P7q3VjZ+yiL2Y6J84F9d+6ZHB7pMSkE+VlEXH/izj5iaAvzYoL4DZ6fL1bJwa0Xi
+# jKfzOji0JZWa/Xi2wLyt2bZMeutS+AM/HeXcnQlLlqQ9Sc/UxmGx0V6EKlcGf1Mz
+# WTkZDosrVqJLM+nMQaGy8fR7UxWmcBkrAaa5zfT5PRCcdwhIxYTZafjA3YxzMEes
+# YK8v1vUKiRoJfoD9gSAKEXf4ccfKpbZZmD68p3fvSwBoaBnPAI+hQiZAb8eTc43v
+# pWPEVQyBHgmGM8KwXrHAfM6wWvA+ifxE7rLxBrIujDQP1JorblCP00dyKFiL6/SD
+# 8gneVrZtwkVNicNwMksrNc2XuLgdFGf2lNCLCx1bvM5pN4Q1
 # SIG # End signature block
