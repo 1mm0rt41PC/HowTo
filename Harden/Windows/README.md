@@ -18,7 +18,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/1mm0rt41PC/HowTo/tree/master/Harden/Windows">
-    <img src="images/logo.png" alt="Logo" width="80" height="80" alt="Icon from https://www.flaticon.com/free-icon/pixels_423099?term=protect&page=1&position=23">
+    <img src="logo.png" alt="Logo" width="80" height="80" alt="Icon from https://www.flaticon.com/free-icon/pixels_423099?term=protect&page=1&position=23">
   </a>
 
   <h3 align="center">AutoHarden</h3>
@@ -74,7 +74,7 @@ A list of commonly used resources that I find helpful are listed in the acknowle
 
 1. Open a CMD.exe (or a powershell.exe) with administrator privileges
 2. Run the following command
-````ps1
+```ps1
 powershell.exe -exec bypass -C "IEX (New-Object Net.WebClient).DownloadString('https://github.com/1mm0rt41PC/HowTo/raw/master/Harden/Windows/AutoHarden_RELEASE.ps1');"
 ```
 3. Answers to a few parameterization questions
@@ -85,7 +85,7 @@ powershell.exe -exec bypass -C "IEX (New-Object Net.WebClient).DownloadString('h
 ## Build
 To merge all ps1 into `AutoHarden_RELEASE.ps1`, use the `build.ps1`
 This script will create your own CA for script security
-````ps1
+```ps1
 powershell -exec bypass -nop -File .\build.ps1
 ```
 
@@ -94,9 +94,9 @@ powershell -exec bypass -nop -File .\build.ps1
 <!-- ROADMAP -->
 ## Roadmap
 
-[ ] Block auto rules in the Windows firewall
-[ ] Check writable path in `$path` and in `C:\Program Files`
-[ ] Check writable services and tasks
+- [ ] Block auto rules in the Windows firewall
+- [ ] Check writable path in `$path` and in `C:\Program Files`
+- [ ] Check writable services and tasks
 
 
 
