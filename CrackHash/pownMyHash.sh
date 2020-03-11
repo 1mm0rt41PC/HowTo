@@ -18,6 +18,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+umask 0022
+
 # Folder where hashcat is
 export HC=/opt/hashcat-5.1.0/
 # Folder where dico are
@@ -45,6 +47,7 @@ export SCRIPT_PATH=`dirname $SCRIPT_PATH`
 export FINDINGS=$SCRIPT_PATH/.pownMyHash.dico
 export TRAINING_NTLM=$SCRIPT_PATH/.training_ntlm.txt
 export SESSION_NAME=`echo $HASHES | sed -e 's#[\\/ ]#_#g'`
+export STATS_DIR=$SCRIPT_PATH/stats/
 
 ####################################################################################################
 # FUNCTIONS
@@ -190,8 +193,8 @@ function absPath
 function stats_on
 {
 	export _on="$1"
-	export _on=`echo $_on | sed -e 's#[\\/ ]#_#g'`
-	export _statsFile="$DICO_PATH/${_on}.stats"
+	export _on=`echo $_on | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`
+	export _statsFile="$STATS_DIR/${_on}"
 	export _on="/tmp/.pownMyHash.stats.`$_on`.$$"
 	if [ -f $_on ]; then # If the stats file exist, merge all stats
 		_nb=`cat -- $_on`
@@ -324,6 +327,17 @@ if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_
 	exit
 fi
 
+# Building rank
+mkdir -p $STATS_DIR
+if ! isProcessHashCat; then
+	rm -f -- $DICO_PATH/*.rank
+	export _listDico=`mktemp`
+	find $DICO_PATH -name '*.dico' | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g' > $_listDico
+	cat $_listDico | xargs -I '{}' /bin/bash -c '[ ! -f "$STATS_DIR/{}" ] && echo -n 0 > "$STATS_DIR/{}"'
+	cat $_listDico | xargs -I '{}' /bin/bash -c 'ln -s "${DICO_PATH}/{}" "$DICO_PATH`cat ${STATS_DIR}/{}`_{}.rank"'
+	rm -f -- "$_listDico"
+fi
+
 
 if [ "$HASH_TYPE" = "1000" ]; then
 	if title 'Contribute to the local training database'; then
@@ -374,16 +388,16 @@ fi
 found2dict
 loopOnPotfile 1
 if title "Using dico"; then
-	for dico in `echo $DICO_PATH/*.dico`; do
+	for dico in `echo $DICO_PATH/*.rank`; do
 		if title "Using dico $dico"; then
 			stats_on $dico
 			hashcat 0 `absPath $dico`
 			loopOnPotfile
 			for rule in $RULES; do
 				if title "Using dico $dico with rule $rule"; then
-					stats_on "$dico$rule"
+					stats_on "$dico@$rule"
 					hashcat 0 `absPath $dico` -r `absPath $HC/rules/$rule`
-					stats_on "$dico$rule"
+					stats_on "$dico@$rule"
 					loopOnPotfile
 				fi
 			done
@@ -393,7 +407,7 @@ if title "Using dico"; then
 fi
 
 
-for dico in `echo $FINDINGS; find $DICO_PATH/ -size -15M -type f`; do
+for dico in `echo $FINDINGS; find $DICO_PATH/ -name '*.rank' -size -15M -type f`; do
 	if title "Brute force password with $dico base"; then
 		stats_on "BRUTEFORCE_$dico"
 		hashcat 6 `absPath $dico` '?a?a?a?a?a'
