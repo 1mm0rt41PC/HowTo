@@ -44,7 +44,7 @@ export SCRIPT_PATH=`realpath -s $0`
 export SCRIPT_PATH=`dirname $SCRIPT_PATH`
 export FINDINGS=$SCRIPT_PATH/.pownMyHash.dico
 export TRAINING_NTLM=$SCRIPT_PATH/.training_ntlm.txt
-export SESSION_NAME=`echo $HASHES | sed -e 's#[\\/]#_#g'`
+export SESSION_NAME=`echo $HASHES | sed -e 's#[\\/ ]#_#g'`
 
 ####################################################################################################
 # FUNCTIONS
@@ -106,6 +106,7 @@ function found2dict
 	echo "[*] AFTER: $found2dict_a"
 	rm $T1 $T1.2
 	chmod ugo=rw -- "$FINDINGS"
+	ls -lta $FINDINGS.* | tail -n +3 | cut -d '/' -f2-10 | xargs -I '{}' rm -- "/{}"
 }
 
 
@@ -181,6 +182,28 @@ function absPath
 	fi
 }
 
+
+####################################################################################################
+# Make stats for dico
+# @param[in] $1 {string} The stats name
+# @return [NONE]
+function stats_on
+{
+	export _on="$1"
+	export _on=`echo $_on | sed -e 's#[\\/ ]#_#g'`
+	export _statsFile="$DICO_PATH/${_on}.stats"
+	export _on="/tmp/.pownMyHash.stats.`$_on`.$$"
+	if [ -f $_on ]; then # If the stats file exist, merge all stats
+		_nb=`cat -- $_on`
+		_nbpot=`cat $HC/hashcat.potfile | wc -l`
+		_nb=`expr $_nbpot '-' $_nb`
+		_nbpot=`cat -- $_statsFile`
+		expr $_nbpot '+' $_nb > $_statsFile
+		rm -f -- "$_on"
+	else
+		cat $HC/hashcat.potfile | wc -l > $_on
+	fi
+}
 
 
 ####################################################################################################
@@ -315,8 +338,10 @@ if [ "$HASH_TYPE" = "1000" ]; then
 	if title 'LM attack'; then
 		export HASH_TYPE=3000 # mode LM
 		loopOnPotfile 1
+		stats_on LM
 		hashcat 3 -i '?a?a?a?a?a?a'
 		hashcat 3 '?a?a?a?a?a?a?a'
+		stats_on LM
 		
 		export T1="`mktemp`"
 		grep -E '^[A-Fa-f0-9]{16}:[^:\r\n]+$' $HC/hashcat.potfile | grep -vE '^$' > $T1
@@ -351,21 +376,26 @@ loopOnPotfile 1
 if title "Using dico"; then
 	for dico in `echo $DICO_PATH/*.dico`; do
 		if title "Using dico $dico"; then
+			stats_on $dico
 			hashcat 0 `absPath $dico`
 			loopOnPotfile
 			for rule in $RULES; do
 				if title "Using dico $dico with rule $rule"; then
+					stats_on "$dico$rule"
 					hashcat 0 `absPath $dico` -r `absPath $HC/rules/$rule`
+					stats_on "$dico$rule"
 					loopOnPotfile
 				fi
 			done
+			stats_on $dico
 		fi
 	done
 fi
 
 
 for dico in `echo $FINDINGS; find $DICO_PATH/ -size -15M -type f`; do
-	if title "Brute force password with $dico base"; then	
+	if title "Brute force password with $dico base"; then
+		stats_on "BRUTEFORCE_$dico"
 		hashcat 6 `absPath $dico` '?a?a?a?a?a'
 		hashcat 6 `absPath $dico` '?d?d?d?d?a?a'
 		
@@ -382,6 +412,7 @@ for dico in `echo $FINDINGS; find $DICO_PATH/ -size -15M -type f`; do
 			hashcat 3 "?d?d${month^^}?d?d?d?d?a?a"
 			hashcat 3 "?a?a${month^^}?a?a?a"
 		done
+		stats_on "BRUTEFORCE_$dico"
 	fi
 done
 
