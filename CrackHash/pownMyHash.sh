@@ -388,7 +388,7 @@ fi
 found2dict
 loopOnPotfile 1
 if title "Using dico"; then
-	for dico in `echo $DICO_PATH/*.rank`; do
+	for dico in `echo $DICO_PATH/*.rank | sort -n -r`; do
 		if title "Using dico $dico"; then
 			stats_on $dico
 			hashcat 0 `absPath $dico`
