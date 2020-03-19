@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-03-10
-$AutoHarden_version="2020-03-10"
+# Update: 2020-03-19
+$AutoHarden_version="2020-03-19"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -71,20 +71,22 @@ echo "# 0-AutoUpdate"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "0-AutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running 0-AutoUpdate"
-if( ask "Auto update AutoHarden and execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
+if( ask "Execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
 #$Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
 $Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec ByPass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
 $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
-Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
-Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
-if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
-	Write-Host "[*] The downloaded PS1 has a valid signature !"
-	move -force C:\Windows\AutoHarden\AutoHarden_temp.ps1 C:\Windows\AutoHarden\AutoHarden.ps1
-}else{
-	Write-Host "[!] The downloaded PS1 has an invalid signature !"
+if( ask "Auto update AutoHarden every day at 08h00 AM" "0-AutoUpdateFromWeb.ask" ){
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
+	Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
+	if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
+		Write-Host "[*] The downloaded PS1 has a valid signature !"
+		move -force C:\Windows\AutoHarden\AutoHarden_temp.ps1 C:\Windows\AutoHarden\AutoHarden.ps1
+	}else{
+		Write-Warning "[!] The downloaded PS1 has an invalid signature !"
+	}
 }
 }
 else{
@@ -103,6 +105,7 @@ netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
 echo 'Cleaning old rules ...'
 Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | Remove-NetFirewallRule
+Get-NetFirewallRule -Name '*AutoHarden*' | Enable-NetFirewallRule
 
 # Ref: https://en.wikipedia.org/wiki/Reserved_IP_addresses
 $IPForInternet=@('1.0.0.0-9.255.255.255',
@@ -785,18 +788,37 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-FileExtension" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-FileExtension"
 # assoc .txt
+# .hta
+cmd /c ftype  htafile="C:\Windows\notepad.exe" "%1"
+# .js
 cmd /c ftype  JSFile="C:\Windows\notepad.exe" "%1"
+# .jse
+cmd /c ftype  JSEFile="C:\Windows\notepad.exe" "%1"
+# .vbe
 cmd /c ftype VBEFile="C:\Windows\notepad.exe" "%1"
+# .vbs
 cmd /c ftype VBSFile="C:\Windows\notepad.exe" "%1"
-cmd /c ftype JSEFile="C:\Windows\notepad.exe" "%1"
+# .wsf
 cmd /c ftype WSFFile="C:\Windows\notepad.exe" "%1"
+# .wsh
 cmd /c ftype WSHFile="C:\Windows\notepad.exe" "%1"
+# .reg
 cmd /c ftype regfile="C:\Windows\notepad.exe" "%1"
+# .inf
 cmd /c ftype inffile="C:\Windows\notepad.exe" "%1"
+# .scf 
+cmd /c ftype SHCmdFile="C:\Windows\notepad.exe" "%1"
+# .wsc
 cmd /c ftype scriptletfile="C:\Windows\notepad.exe" "%1"
+# .scr
+cmd /c ftype scrfile="C:\Windows\notepad.exe" "%1"
+# .pif
+cmd /c ftype piffile="C:\Windows\notepad.exe" "%1"
+# .ps1
 cmd /c ftype Microsoft.PowerShellScript.1="C:\Windows\notepad.exe" "%1"
 cmd /c ftype Microsoft.PowerShellXMLData.1="C:\Windows\notepad.exe" "%1"
 cmd /c ftype Microsoft.PowerShellConsole.1="C:\Windows\notepad.exe" "%1"
+# .xml
 cmd /c ftype "XML Script Engine"="C:\Windows\notepad.exe" "%1"
 Write-Progress -Activity AutoHarden -Status "Hardening-FileExtension" -Completed
 
@@ -1091,8 +1113,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUALQx/obHAJ4WIDNDbhPba20K
-# Ib6gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU0aXEkGM77pLOGjAEPbYvQ4KJ
+# Ayugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1150,16 +1172,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFNlRW3eqwqsbfTqX2XGk0nL5yo+4MA0GCSqGSIb3DQEBAQUA
-# BIICAI6tr4+OdzWfHLhEWk7/esXiwRdxIpmN3CVvg+HbRTs+EsGE7cqZvfK4tuWv
-# Wq5zPJ/Voc+ewHM9e66yryrA7T/gFGjOvL8Z0GLe+0xNmpWgpuEw33swTTTfBg7Z
-# 7da88CufZUOyjvawoko/r50qtyKZu0feYnZz3LVKSWFJqOgcTpUAxa6dWy7CPRjn
-# A6ocjEhFjYDFDTI8sVntJQ3eKkgmkqbXJPDS0Gdw4tW6AxDonCV8flOlOjV51iw3
-# rKbULxMEyILOkExPiKA0Sw67iQ0ISJoo2Kf1JBmZWnQ05n5MC2HR0YHZSD1XZyR/
-# P7q3VjZ+yiL2Y6J84F9d+6ZHB7pMSkE+VlEXH/izj5iaAvzYoL4DZ6fL1bJwa0Xi
-# jKfzOji0JZWa/Xi2wLyt2bZMeutS+AM/HeXcnQlLlqQ9Sc/UxmGx0V6EKlcGf1Mz
-# WTkZDosrVqJLM+nMQaGy8fR7UxWmcBkrAaa5zfT5PRCcdwhIxYTZafjA3YxzMEes
-# YK8v1vUKiRoJfoD9gSAKEXf4ccfKpbZZmD68p3fvSwBoaBnPAI+hQiZAb8eTc43v
-# pWPEVQyBHgmGM8KwXrHAfM6wWvA+ifxE7rLxBrIujDQP1JorblCP00dyKFiL6/SD
-# 8gneVrZtwkVNicNwMksrNc2XuLgdFGf2lNCLCx1bvM5pN4Q1
+# KoZIhvcNAQkEMRYEFOJ7XYRasgkwFfJ338m9ZVwYX76IMA0GCSqGSIb3DQEBAQUA
+# BIICABcue8sJbrsQQzxr63l41iJ/TdtmtALOlYGm5CCxtOOzdLrlkrZBTQZcPZKG
+# uWh+znqaStC3S2eBmeSG3oG719q/ZGhvi5NwZVnGr+GUOYCBvJrs47NegUOXaPid
+# WgA99kWIXtTrOx2/HyKAUx/MYEfuIMPiIgvjuS9tAr1w+TZoZDKZCndM+aH5EZCr
+# coQAWhg0Bxgbw8whuyUdQK3Wa3HCn1pQeAMQ256A9gg5GFV9cuxTZIbJDREqZXBw
+# fjJbI0jw5EGCAIsjaHa5Jsy2Lr6yQLf4wI9LAkIUsgnHStgzs3d0exlsuCRwAlOw
+# 35mvIYZZnjr0YT2KBjCTr2AYfDAk3+03QABgBtrQAo8vM7FBxbD/M+RGCMRVWqmz
+# 46jYBz/NZ+2LH5piqxls3uvSzapPsiJ31LVeZR0xLUtgAoI9tr02e8yHZ4V7GHcV
+# FR0F8A/Lrt7yspL0hVnmtFro3wIcZqRWYXBW0FPdBgxTBdTjrGyt1v75YEB3XCKP
+# QWJsCv5q5LC7JQaP5l2NDOjU4YMrATX4wjnlLcoQS0GO8iwGCU3DTeGLCYjI1wuz
+# tcvnFHZvcmQmQA4e5L8JQ3mOqAwTu/VPuZVXE4QwGDyXSJ5g/+GYiJdbyUScgKv6
+# 0v0Iz+BZs2r44xtEA9DZmRtzXVUAaGXFqcpWMMFy/wPBoJui
 # SIG # End signature block

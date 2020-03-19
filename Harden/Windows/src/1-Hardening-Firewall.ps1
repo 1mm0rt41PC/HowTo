@@ -3,6 +3,7 @@ netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
 echo 'Cleaning old rules ...'
 Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | Remove-NetFirewallRule
+Get-NetFirewallRule -Name '*AutoHarden*' | Enable-NetFirewallRule
 
 # Ref: https://en.wikipedia.org/wiki/Reserved_IP_addresses
 $IPForInternet=@('1.0.0.0-9.255.255.255',
