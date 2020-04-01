@@ -193,7 +193,10 @@ function absPath
 function stats_on
 {
 	export _on="$1"
-	export _on=`echo $_on | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`
+	export _on=`realpath $_on | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`
+	if [ "$2" != "" ]; then
+		export _on="$_on@`;echo $2 | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`"
+	fi
 	export _statsFile="$STATS_DIR/${_on}"
 	export _on="/tmp/.pownMyHash.stats.`$_on`.$$"
 	if [ -f $_on ]; then # If the stats file exist, merge all stats
@@ -395,9 +398,9 @@ if title "Using dico"; then
 			loopOnPotfile
 			for rule in $RULES; do
 				if title "Using dico $dico with rule $rule"; then
-					stats_on "$dico@$rule"
+					stats_on $dico $rule
 					hashcat 0 `absPath $dico` -r `absPath $HC/rules/$rule`
-					stats_on "$dico@$rule"
+					stats_on $dico $rule
 					loopOnPotfile
 				fi
 			done
@@ -409,7 +412,7 @@ fi
 
 for dico in `echo $FINDINGS; find $DICO_PATH/ -name '*.rank' -size -15M -type f`; do
 	if title "Brute force password with $dico base"; then
-		stats_on "BRUTEFORCE_$dico"
+		stats_on $dico "BRUTEFORCE"
 		hashcat 6 `absPath $dico` '?a?a?a?a?a'
 		hashcat 6 `absPath $dico` '?d?d?d?d?a?a'
 		
@@ -426,7 +429,7 @@ for dico in `echo $FINDINGS; find $DICO_PATH/ -name '*.rank' -size -15M -type f`
 			hashcat 3 "?d?d${month^^}?d?d?d?d?a?a"
 			hashcat 3 "?a?a${month^^}?a?a?a"
 		done
-		stats_on "BRUTEFORCE_$dico"
+		stats_on $dico "BRUTEFORCE"
 	fi
 done
 
