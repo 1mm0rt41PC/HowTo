@@ -67,14 +67,14 @@ echo 'Add-Type -AssemblyName System.Windows.Forms' >> $output
 echo 'function ask( $query, $config ){' >> $output
 echo '	$config="C:\Windows\AutoHarden\${config}";' >> $output
 echo '	$ret=cat $config -ErrorAction Ignore;' >> $output
-echo '	echo "# ASK..."' >> $output
+echo '	Write-Host "# ASK..."' >> $output
 echo '	try{' >> $output
 echo '		if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("${query}?","${query}?", "YesNo" , "Question" ) -eq "Yes") ){' >> $output
 echo '			[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));' >> $output
-echo '			echo "# ASK... => YES!"' >> $output
+echo '			Write-Host "# ASK... => YES!"' >> $output
 echo '			return $true;' >> $output
 echo '		}else{' >> $output
-echo '			echo "# ASK... => NO :-("' >> $output
+echo '			Write-Host "# ASK... => NO :-("' >> $output
 echo '			[System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False));' >> $output
 echo '			return $false;' >> $output
 echo '		}' >> $output

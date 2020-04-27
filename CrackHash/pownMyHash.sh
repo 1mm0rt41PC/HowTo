@@ -64,7 +64,7 @@ function title
 	if [ "$2" = "" ]; then
 		echo "[?] Press any key to bypass this test (autostart in 4sec)"
 		read -t 4 -n 1 query >/dev/null
-		if [ "${query}" = "" ]; then
+		if [ "${query}" = "" ] || [ "${query}" = "y" ] || [ "${query}" = "Y" ] || [ "${query}" = "o" ] || [ "${query}" = "O" ]; then
 			echo '[*] Running the job'
 			return 0 # Do the job
 		else
@@ -195,7 +195,7 @@ function stats_on
 	export _on="$1"
 	export _on=`realpath $_on | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`
 	if [ "$2" != "" ]; then
-		export _on="$_on@`;echo $2 | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`"
+		export _on="${_on}@`echo $2 | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`"
 	fi
 	export _statsFile="$STATS_DIR/${_on}"
 	export _on="/tmp/.pownMyHash.stats.`$_on`.$$"

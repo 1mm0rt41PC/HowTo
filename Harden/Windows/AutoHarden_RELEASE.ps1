@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-03-19
-$AutoHarden_version="2020-03-19"
+# Update: 2020-04-27
+$AutoHarden_version="2020-04-27"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -27,14 +27,14 @@ Add-Type -AssemblyName System.Windows.Forms
 function ask( $query, $config ){
 	$config="C:\Windows\AutoHarden\${config}";
 	$ret=cat $config -ErrorAction Ignore;
-	echo "# ASK..."
+	Write-Host "# ASK..."
 	try{
 		if( "$ret" -eq "Yes" -Or ([string]::IsNullOrEmpty($ret) -And [System.Windows.Forms.MessageBox]::Show("${query}?","${query}?", "YesNo" , "Question" ) -eq "Yes") ){
 			[System.IO.File]::WriteAllLines($config, "Yes", (New-Object System.Text.UTF8Encoding $False));
-			echo "# ASK... => YES!"
+			Write-Host "# ASK... => YES!"
 			return $true;
 		}else{
-			echo "# ASK... => NO :-("
+			Write-Host "# ASK... => NO :-("
 			[System.IO.File]::WriteAllLines($config, "No", (New-Object System.Text.UTF8Encoding $False));
 			return $false;
 		}
@@ -225,6 +225,10 @@ try{
 	}
 }
 }
+else{
+Disable-BitLocker -MountPoint 'C:'
+manage-bde -off C:
+}
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
 
 
@@ -277,7 +281,18 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableTelemetry"
 # Disable Windows telemetry
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v AITEnable /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WMI\Autologger\AutoLogger-Diagtrack-Listener" /v Start /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowDeviceNameInTelemetry /t REG_DWORD /d 0 /f
+schtasks.exe /Change /TN "\Microsoft\Windows\Device Information\Device" /Disable
+
+sc.exe stop DiagTrack
+sc.exe config DiagTrack "start=" disabled
+sc.exe stop dmwappushservice
+sc.exe config DiagTrack "start=" dmwappushservice
+
 # Disable Wifi sense telemetry
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v AutoConnectAllowedOEM /t REG_DWORD /d 0 /f
 
@@ -769,6 +784,9 @@ if( ask "Block DLL from SMB share and WebDav Share" "Hardening-DLLHijacking.ask"
 # ---------------------
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v CWDIllegalInDllSearch /t REG_DWORD /d 0x2 /f
 }
+else{
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v CWDIllegalInDllSearch /t REG_DWORD /d 0x0 /f
+}
 Write-Progress -Activity AutoHarden -Status "Hardening-DLLHijacking" -Completed
 
 
@@ -968,7 +986,9 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -PercentCo
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableDefender"
 if( ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" /v DisableRealtimeMonitoring /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthService" /v Start /t REG_DWORD /d 4 /f
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
@@ -1113,8 +1133,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU0aXEkGM77pLOGjAEPbYvQ4KJ
-# Ayugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUnro2fudjvhasHUFN6f78aOzl
+# iHKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1172,16 +1192,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFOJ7XYRasgkwFfJ338m9ZVwYX76IMA0GCSqGSIb3DQEBAQUA
-# BIICABcue8sJbrsQQzxr63l41iJ/TdtmtALOlYGm5CCxtOOzdLrlkrZBTQZcPZKG
-# uWh+znqaStC3S2eBmeSG3oG719q/ZGhvi5NwZVnGr+GUOYCBvJrs47NegUOXaPid
-# WgA99kWIXtTrOx2/HyKAUx/MYEfuIMPiIgvjuS9tAr1w+TZoZDKZCndM+aH5EZCr
-# coQAWhg0Bxgbw8whuyUdQK3Wa3HCn1pQeAMQ256A9gg5GFV9cuxTZIbJDREqZXBw
-# fjJbI0jw5EGCAIsjaHa5Jsy2Lr6yQLf4wI9LAkIUsgnHStgzs3d0exlsuCRwAlOw
-# 35mvIYZZnjr0YT2KBjCTr2AYfDAk3+03QABgBtrQAo8vM7FBxbD/M+RGCMRVWqmz
-# 46jYBz/NZ+2LH5piqxls3uvSzapPsiJ31LVeZR0xLUtgAoI9tr02e8yHZ4V7GHcV
-# FR0F8A/Lrt7yspL0hVnmtFro3wIcZqRWYXBW0FPdBgxTBdTjrGyt1v75YEB3XCKP
-# QWJsCv5q5LC7JQaP5l2NDOjU4YMrATX4wjnlLcoQS0GO8iwGCU3DTeGLCYjI1wuz
-# tcvnFHZvcmQmQA4e5L8JQ3mOqAwTu/VPuZVXE4QwGDyXSJ5g/+GYiJdbyUScgKv6
-# 0v0Iz+BZs2r44xtEA9DZmRtzXVUAaGXFqcpWMMFy/wPBoJui
+# KoZIhvcNAQkEMRYEFPCLSOFnrj7c9t2UfEop2enf1iDWMA0GCSqGSIb3DQEBAQUA
+# BIICAAW+DPbZ7fsohhbHqstRokc0o7vlfp1BkkW/8fALQNDsF2PSYiQGAOItxP0a
+# DY7DqpooYWuxrMq8UCTxou8zHmo7self2RqF4GH4+U8+WlBKhns1JEEYDYU1PChF
+# A+OH0G2/m0QGepd0HRMWdEqtOPa+WGmA1X1/0K9uBBqvsYpWDuq693M/QDTx8HNN
+# shBA5OQhbZ52PMBc6Puyd8/7rI5vr/H1U3VDbj/l2gPgl2QGrL8BbLrBuEN2atG8
+# 7J36b5Ad0tLjI167omX1wJTMu1wNfEksNNQhBmHiqrtkk8Z4wyKG0jMe/fGQM26g
+# F6xzefmI8OljNdhkPf8waulnvexUt0gVPM0uk7qIYqGrT7+DkGEhphAw73hlMARV
+# kc/Tv/5VH2Qkk+6ugKnx8/0zXp8i3JCIfrjQLzRfzmyKNW/onx00f7fJUXLjYbPZ
+# KxBRx6pOEk40Yojj8NdamZ2GidUNQU7n1z1hwuAJPv3tG1HSSWCgVURozlGTCDGG
+# GX1igLFiM5Y8JfMPzSJ/OeiNsfTgJDCXDk67fBUH71rkH+AB4jbB/vGLPDNqlcaW
+# fdBFGhqGBoQVF37IB7Zew37imhUnjR1BpgyQD5dM7L+uXHoHHhF+qMXtaTYpqAYq
+# 2PqmXZVVwAu14vPpSTk+MUeQAk9iQNuZlPTdeWi0Y46l1lTC
 # SIG # End signature block
