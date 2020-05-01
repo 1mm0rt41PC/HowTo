@@ -44,5 +44,6 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
 if( (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender').DisableAntiSpyware -ne 1 ){
 	# Block credential stealing from the Windows local security authority subsystem (lsass.exe)
 	# Require WindowsDefender
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Enabled
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Disabled
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2
 }

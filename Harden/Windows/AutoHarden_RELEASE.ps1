@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-04-27
-$AutoHarden_version="2020-04-27"
+# Update: 2020-05-02
+$AutoHarden_version="2020-05-02"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -703,7 +703,8 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
 if( (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender').DisableAntiSpyware -ne 1 ){
 	# Block credential stealing from the Windows local security authority subsystem (lsass.exe)
 	# Require WindowsDefender
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Enabled
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Disabled
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2
 }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
 
@@ -1133,8 +1134,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUnro2fudjvhasHUFN6f78aOzl
-# iHKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUA/5wORIrx/8CHSdNSLHCuOVy
+# c3igggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1192,16 +1193,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFPCLSOFnrj7c9t2UfEop2enf1iDWMA0GCSqGSIb3DQEBAQUA
-# BIICAAW+DPbZ7fsohhbHqstRokc0o7vlfp1BkkW/8fALQNDsF2PSYiQGAOItxP0a
-# DY7DqpooYWuxrMq8UCTxou8zHmo7self2RqF4GH4+U8+WlBKhns1JEEYDYU1PChF
-# A+OH0G2/m0QGepd0HRMWdEqtOPa+WGmA1X1/0K9uBBqvsYpWDuq693M/QDTx8HNN
-# shBA5OQhbZ52PMBc6Puyd8/7rI5vr/H1U3VDbj/l2gPgl2QGrL8BbLrBuEN2atG8
-# 7J36b5Ad0tLjI167omX1wJTMu1wNfEksNNQhBmHiqrtkk8Z4wyKG0jMe/fGQM26g
-# F6xzefmI8OljNdhkPf8waulnvexUt0gVPM0uk7qIYqGrT7+DkGEhphAw73hlMARV
-# kc/Tv/5VH2Qkk+6ugKnx8/0zXp8i3JCIfrjQLzRfzmyKNW/onx00f7fJUXLjYbPZ
-# KxBRx6pOEk40Yojj8NdamZ2GidUNQU7n1z1hwuAJPv3tG1HSSWCgVURozlGTCDGG
-# GX1igLFiM5Y8JfMPzSJ/OeiNsfTgJDCXDk67fBUH71rkH+AB4jbB/vGLPDNqlcaW
-# fdBFGhqGBoQVF37IB7Zew37imhUnjR1BpgyQD5dM7L+uXHoHHhF+qMXtaTYpqAYq
-# 2PqmXZVVwAu14vPpSTk+MUeQAk9iQNuZlPTdeWi0Y46l1lTC
+# KoZIhvcNAQkEMRYEFBxZL8npWLQVYlioTPNNN3qp6SvbMA0GCSqGSIb3DQEBAQUA
+# BIICAACNoPlkMZIx8x+n5YxTlZjCs3aefvSBAg7ciAv3A943JYYXTpTdRf7nuE5+
+# Kz0EfZ102M9JJAgkBBbP2MyZZmg+gwEBVCdK3Jx2pHapuKEJ7HrSQz01gPb4IhlO
+# a7XTyBGsNP1QUmWdkgnNmO2b588fVM38q95iToMfLwTsgE9Yyma42QkP/ebug5O4
+# uhXO1MR8l3/BcZOD2mZJBC2HlLwgTp06kFBKH6d/keMRX0gAWV2o9Qz1onWqsGVf
+# IFwXj4K5t+WDA94ngOZ1RDh9aDRZPrmjUAE8JegA8a+FyyUSCvFWEmQJYv4+yhm8
+# X8dmVzY1CZ/zgCNw5p0guHKtoYAvb4pUdGUwnqv1lSJMnjDD1MHLv1CdwE4JIsWL
+# D4GpEVDBGHYSBnPyDJA7X8SN+6du0iecdMQvXBuMjJTH6gV0TmfCbqpt/v4J0t9F
+# gbS8Q4F12uEV6QTA6/AIRYkBpXfHNMSt7h9EoiJWVmkdtDKLYjRKuEAedRHxXTOd
+# /q1H9oQUnNgWYCF2oXYsBGScGCoPpPLyytq+ZA1d8gC8y21lHb7E2bR7pJEBiK/f
+# f0VA1QjMNCHPmIERel9omZrGnIn/lPoV3Qsm1ntXejm26k35XU+ffVVynr41R3SK
+# pD02DooJuRt+QN4aXHuadewuD8ZHSIjNQaljpVJPpZtvbgez
 # SIG # End signature block
