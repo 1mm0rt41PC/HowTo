@@ -213,7 +213,7 @@ function stats_on
 		export _on="${_on}@`echo $2 | rev | cut -d / -f1 | rev | sed -e 's#[\\/ ]#_#g'`"
 	fi
 	export _statsFile="$STATS_DIR/${_on}"
-	export _on="/tmp/.pownMyHash.stats.`$_on`.$$"
+	export _on="/tmp/.pownMyHash.stats.${_on}.$$"
 	if [ -f $_on ]; then # If the stats file exist, merge all stats
 		_nb=`cat -- $_on`
 		_nbpot=`cat $HC/hashcat.potfile | wc -l`
