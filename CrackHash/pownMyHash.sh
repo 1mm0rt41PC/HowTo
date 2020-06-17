@@ -21,7 +21,7 @@
 umask 0022
 
 # Folder where hashcat is
-export HC=/opt/hashcat-5.1.0/
+export HC=/opt/hashcat/
 # Folder where dico are
 export DICO_PATH=/opt/dico/
 # List of rules. Expected folder: $HC/rules/
@@ -39,7 +39,7 @@ export DICO_PATH_CYGWIN=./dico/
 
 ####################################################################################################
 
-export HCB=$HC/hashcat64.bin
+export HCB=$HC/hashcat.bin
 export HASH_TYPE=$1
 export HASHES=`realpath $2 2>/dev/null`
 export SCRIPT_PATH=`realpath -s $0`
@@ -93,23 +93,38 @@ function found2dict
 	fi
 	
 	touch $FINDINGS
+	chown root:root $FINDINGS
+	chmod u=rw,go=r $FINDINGS
 	
 	export T1=`mktemp`
-	echo "[*] Extracting password from potfile"
-	cat $HC/hashcat.potfile | sort -u | rev | cut -d ':' -f 1 | rev > $T1
-	echo '[*] CONVERTING $HEX'
-	cat $T1 | grep -F '$HEX' | sed -e 's/\$HEX\[//g' | sed -e 's/\]//g' | xargs -I TTT bash -c 'echo TTT | xxd -r -p; echo -n -e "\n"' | iconv -f cp1252 -t utf8 > $T1.2
-	echo '[*] MERGING all password found into dico'
-	cp -f $FINDINGS $FINDINGS.`date '+%s'`
-	export found2dict_b=`cat $FINDINGS | wc -l`
-	echo "[*] BEFORE: $found2dict_b"
-	cat $T1 $T1.2 $FINDINGS* | grep -vF '$HEX' | dos2unix | sort -u > $T1.3
-	mv -f $T1.3 $FINDINGS
-	export found2dict_a=`cat $FINDINGS | wc -l`
-	echo "[*] AFTER: $found2dict_a"
-	rm $T1 $T1.2
-	chmod ugo=rw -- "$FINDINGS"
-	ls -lta $FINDINGS.* | tail -n +3 | cut -d '/' -f2-10 | xargs -I '{}' rm -- "/{}"
+	cat <<'EOD' | python3
+import os,re;
+data = None;
+print('[*] Extracting password from potfile');
+with open(os.environ['HC']+'/hashcat.potfile', 'r') as fp:
+	data = re.findall(r':([^:\r\n]+)[ \r\n]+', fp.read());
+
+print('[*] CONVERTING $HEX');
+for i in range(0,len(data)):
+	line=data[i];
+	if '$HEX' in line:
+		line = line.split('$HEX[')[1].strip('\t\r\n ]')
+		line = bytes.fromhex(line);
+		try:
+			data[i]=line.decode('latin-1');
+		except:
+			data[i]=line.decode('utf8', errors='ignore');
+
+print('[*] MERGING all password found into dico');
+for line in open(os.environ['FINDINGS'], 'r'):
+	data.append(line.strip('\r\n'));
+	
+with open(os.environ['FINDINGS']+'.new', 'w') as fp:
+	fp.write('\n'.join(sorted(set(data))));
+EOD
+	echo "[*] BEFORE: `cat $FINDINGS | wc -l`"
+	mv -f $FINDINGS.new $FINDINGS
+	echo "[*] AFTER: `cat $FINDINGS | wc -l`"
 }
 
 
@@ -218,7 +233,7 @@ function stats_on
 # For Cygwin
 if [ "`which cygpath`" != "" ] ; then
 	export HC=`realpath $HC_CYGWIN 2>/dev/null`
-	export HCB=$HC/hashcat64.exe
+	export HCB=$HC/hashcat.exe
 	export DICO_PATH=`realpath $DICO_PATH_CYGWIN 2>/dev/null`
 fi
 
@@ -228,19 +243,22 @@ if [ "`which dos2unix`" == "" ] ; then
 fi
 
 if [ ! -f "$HCB" ]; then
-	export HCB=`find . -maxdepth 3 -name 'hashcat64.*' -type f 2>/dev/null | head -n1`
+	export HCB=`find . -maxdepth 3 -name 'hashcat.bin' -type f 2>/dev/null | head -n1`
 	if [ ! -f "$HCB" ]; then
-		echo "[!] Hashcat64 not found !"
-		echo "[!] Please put this script either in the same folder as hashcat or a parent folder to hashcat."
-		exit 1
+		export HCB=`find . -maxdepth 3 -name 'hashcat.exe' -type f 2>/dev/null | head -n1`
+		if [ ! -f "$HCB" ]; then
+			echo "[!] hashcat not found !"
+			echo "[!] Please put this script either in the same folder as hashcat or a parent folder to hashcat."
+			exit 1
+		fi
 	fi
 	export HC=`realpath $HCB`
 	export HC=`dirname $HC`
-	echo "[*] Hashcat64 found at \"$HC\""
+	echo "[*] hashcat found at \"$HC\""
 	if [ "`which cygpath`" != "" ] ; then
-		export HCB=$HC/hashcat64.exe
+		export HCB=$HC/hashcat.exe
 	else
-		export HCB=$HC/hashcat64.bin
+		export HCB=$HC/hashcat.bin
 	fi
 fi
 
