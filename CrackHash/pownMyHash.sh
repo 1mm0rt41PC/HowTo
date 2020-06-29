@@ -406,6 +406,10 @@ EOD
 	fi
 fi
 
+if title "Brute force password with max len 7"; then
+	hashcat 3 -i '?a?a?a?a?a?a?a'
+fi
+
 found2dict
 loopOnPotfile 1
 if title "Using dico"; then
@@ -427,6 +431,9 @@ if title "Using dico"; then
 	done
 fi
 
+if title "Brute force password with len=8"; then
+	hashcat 3 '?a?a?a?a?a?a?a?a'
+fi
 
 for dico in `echo $FINDINGS; find $DICO_PATH/ -name '*.rank' -size -15M -type f`; do
 	if title "Brute force password with $dico base"; then
