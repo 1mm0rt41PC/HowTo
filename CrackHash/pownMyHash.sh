@@ -431,9 +431,15 @@ if title "Using dico"; then
 	done
 fi
 
+if title "Brute force password with len=8 with automask"; then
+	hashcat 3 --increment --increment-min 8 --increment-max 10
+fi
+
 if title "Brute force password with len=8"; then
 	hashcat 3 '?a?a?a?a?a?a?a?a'
 fi
+
+loopOnPotfile
 
 for dico in `echo $FINDINGS; find $DICO_PATH/ -name '*.rank' -size -15M -type f`; do
 	if title "Brute force password with $dico base"; then
