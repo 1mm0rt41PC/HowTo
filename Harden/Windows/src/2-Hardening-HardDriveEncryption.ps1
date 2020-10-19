@@ -5,9 +5,12 @@ try{
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector |foreach {
 		Write-Host ("C: is protected with: "+$_.KeyProtectorType)
 	}
+	# Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -RecoveryKeyProtector -RecoveryKeyPath "C:\"
 }catch{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -ErrorAction Continue
-	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
+	if( ((Get-BitLockerVolume -MountPoint 'C:').KeyProtector | where { $_.KeyProtectorType -eq "RecoveryPassword" }).Count -eq 0 ){
+		Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
+	}
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector | foreach {
 		if( -not [string]::IsNullOrEmpty($_.RecoveryPassword) ){
 			Add-Type -AssemblyName System.Windows.Forms

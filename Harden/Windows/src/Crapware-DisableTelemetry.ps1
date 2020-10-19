@@ -9,7 +9,7 @@ schtasks.exe /Change /TN "\Microsoft\Windows\Device Information\Device" /Disable
 sc.exe stop DiagTrack
 sc.exe config DiagTrack "start=" disabled
 sc.exe stop dmwappushservice
-sc.exe config DiagTrack "start=" dmwappushservice
+sc.exe config dmwappushservice "start=" disabled
 
 # Disable Wifi sense telemetry
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v AutoConnectAllowedOEM /t REG_DWORD /d 0 /f

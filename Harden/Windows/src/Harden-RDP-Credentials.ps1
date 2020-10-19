@@ -1,0 +1,1 @@
+remove-item "HKCU:\Software\Microsoft\Terminal Server Client\Servers\*" -Force -Recurse

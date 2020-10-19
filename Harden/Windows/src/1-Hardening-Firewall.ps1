@@ -1,7 +1,7 @@
 # Cleaning firewall rules
 netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
-echo 'Cleaning old rules ...'
+Write-Host '[*] Cleaning old rules ...'
 Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | Remove-NetFirewallRule
 Get-NetFirewallRule -Name '*AutoHarden*' | Enable-NetFirewallRule
 
@@ -22,6 +22,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
 	get-item -ErrorAction Ignore $exe | foreach {
 		$bin=$_.Fullname
+		Write-Host "[*] Block $bin"
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
 		}else{
@@ -37,16 +38,19 @@ if( (ask "Block communication for evil tools ?" "block-communication-for-powersh
 	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\PowerShell_ISE.exe" "LOLBAS" $true
 	
 	blockExe "WScript" "C:\Windows\system32\wscript.exe" "LOLBAS" $true
+	blockExe "CScript" "C:\Windows\system32\cscript.exe" "LOLBAS" $true
 	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe" "LOLBAS" $true
 	blockExe "Mshta" "C:\Windows\system32\mshta.exe" "LOLBAS" $true
 	blockExe "CertUtil" "C:\Windows\System32\certutil.exe" "LOLBAS" $true
 	blockExe "HH" "C:\Windows\*\hh.exe" "LOLBAS" $true
 	blockExe "HH" "C:\Windows\hh.exe" "LOLBAS" $true
 	blockExe "IEexec" "C:\Windows\Microsoft.NET\*\*\ieexec.exe" "LOLBAS" $true
+	blockExe "Dfsvc" "C:\Windows\Microsoft.NET\*\*\Dfsvc.exe" "LOLBAS" $true
+	blockExe "Presentationhost" "C:\Windows\System32\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Presentationhost" "C:\Windows\SysWOW64\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true
 }else{
-	"Powershell", "WScript", "BitsAdmin", "Mshta", "CertUtil", "HH", "IEexec" | foreach {
-		Get-NetFirewallRule -Name ("*AutoHarden*"+$_+"*") | Remove-NetFirewallRule
-	}
+	Get-NetFirewallRule -Group "AutoHarden-LOLBAS" | Remove-NetFirewallRule
 }
 
 if( (ask "Block communication for Word and Excel ?" "block-communication-for-excel,word.ask") -eq $true ){

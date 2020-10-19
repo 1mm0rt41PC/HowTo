@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-05-02
-$AutoHarden_version="2020-05-02"
+# Update: 2020-10-19
+$AutoHarden_version="2020-10-19"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -103,7 +103,7 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-Hardening-Fir
 # Cleaning firewall rules
 netsh advfirewall set AllProfiles state on
 Set-NetFirewallProfile -DefaultInboundAction Block
-echo 'Cleaning old rules ...'
+Write-Host '[*] Cleaning old rules ...'
 Get-NetFirewallRule | where { -not $_.Name.StartsWith("[AutoHarden-$AutoHarden_version]") -and -not $_.Name.StartsWith("[AutoHarden]") } | Remove-NetFirewallRule
 Get-NetFirewallRule -Name '*AutoHarden*' | Enable-NetFirewallRule
 
@@ -124,6 +124,7 @@ $IPForInternet=@('1.0.0.0-9.255.255.255',
 function blockExe( $name, $exe, $group, [Parameter(Mandatory=$false)] $allowNonRoutableIP=$false ){
 	get-item -ErrorAction Ignore $exe | foreach {
 		$bin=$_.Fullname
+		Write-Host "[*] Block $bin"
 		if( $allowNonRoutableIP ){	
 			New-NetFirewallRule -direction Outbound -Action Block -Program $bin -RemoteAddress $IPForInternet -Group "AutoHarden-$group" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] "+$name+" : "+$bin) -ErrorAction Ignore
 		}else{
@@ -139,16 +140,19 @@ if( (ask "Block communication for evil tools ?" "block-communication-for-powersh
 	blockExe "Powershell" "C:\Windows\*\WindowsPowerShell\v1.0\PowerShell_ISE.exe" "LOLBAS" $true
 	
 	blockExe "WScript" "C:\Windows\system32\wscript.exe" "LOLBAS" $true
+	blockExe "CScript" "C:\Windows\system32\cscript.exe" "LOLBAS" $true
 	blockExe "BitsAdmin" "C:\Windows\system32\BitsAdmin.exe" "LOLBAS" $true
 	blockExe "Mshta" "C:\Windows\system32\mshta.exe" "LOLBAS" $true
 	blockExe "CertUtil" "C:\Windows\System32\certutil.exe" "LOLBAS" $true
 	blockExe "HH" "C:\Windows\*\hh.exe" "LOLBAS" $true
 	blockExe "HH" "C:\Windows\hh.exe" "LOLBAS" $true
 	blockExe "IEexec" "C:\Windows\Microsoft.NET\*\*\ieexec.exe" "LOLBAS" $true
+	blockExe "Dfsvc" "C:\Windows\Microsoft.NET\*\*\Dfsvc.exe" "LOLBAS" $true
+	blockExe "Presentationhost" "C:\Windows\System32\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Presentationhost" "C:\Windows\SysWOW64\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true
 }else{
-	"Powershell", "WScript", "BitsAdmin", "Mshta", "CertUtil", "HH", "IEexec" | foreach {
-		Get-NetFirewallRule -Name ("*AutoHarden*"+$_+"*") | Remove-NetFirewallRule
-	}
+	Get-NetFirewallRule -Group "AutoHarden-LOLBAS" | Remove-NetFirewallRule
 }
 
 if( (ask "Block communication for Word and Excel ?" "block-communication-for-excel,word.ask") -eq $true ){
@@ -214,9 +218,12 @@ try{
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector |foreach {
 		Write-Host ("C: is protected with: "+$_.KeyProtectorType)
 	}
+	# Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -RecoveryKeyProtector -RecoveryKeyPath "C:\"
 }catch{
 	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -TpmProtector -ErrorAction Continue
-	Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
+	if( ((Get-BitLockerVolume -MountPoint 'C:').KeyProtector | where { $_.KeyProtectorType -eq "RecoveryPassword" }).Count -eq 0 ){
+		Enable-BitLocker -MountPoint 'C:' -EncryptionMethod Aes256 -UsedSpaceOnly -RecoveryPasswordProtector -ErrorAction Continue
+	}
 	(Get-BitLockerVolume -MountPoint 'C:').KeyProtector | foreach {
 		if( -not [string]::IsNullOrEmpty($_.RecoveryPassword) ){
 			Add-Type -AssemblyName System.Windows.Forms
@@ -291,7 +298,7 @@ schtasks.exe /Change /TN "\Microsoft\Windows\Device Information\Device" /Disable
 sc.exe stop DiagTrack
 sc.exe config DiagTrack "start=" disabled
 sc.exe stop dmwappushservice
-sc.exe config DiagTrack "start=" dmwappushservice
+sc.exe config dmwappushservice "start=" disabled
 
 # Disable Wifi sense telemetry
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v AutoConnectAllowedOEM /t REG_DWORD /d 0 /f
@@ -390,6 +397,24 @@ Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder"
 
 
 echo "####################################################################################################"
+echo "# Harden-DisableShortPath"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-DisableShortPath" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-DisableShortPath"
+fsutil.exe 8dot3name set 1
+Write-Progress -Activity AutoHarden -Status "Harden-DisableShortPath" -Completed
+
+
+echo "####################################################################################################"
+echo "# Harden-RDP-Credentials"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-RDP-Credentials" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-RDP-Credentials"
+remove-item "HKCU:\Software\Microsoft\Terminal Server Client\Servers\*" -Force -Recurse
+Write-Progress -Activity AutoHarden -Status "Harden-RDP-Credentials" -Completed
+
+
+echo "####################################################################################################"
 echo "# Harden-VoiceControl"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Harden-VoiceControl" -PercentComplete 0
@@ -414,6 +439,7 @@ Write-Progress -Activity AutoHarden -Status "Harden-WindowsDefender" -PercentCom
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-WindowsDefender"
 if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask "Harden Windows Defender" "Harden-WindowsDefender.ask") ){
 	# From https://gist.github.com/decay88/5bd6b2c9ebf681324847e541ba1fb191
+	# From https://docs.microsoft.com/en-us/windows/security/threat-protection/microsoft-defender-atp/attack-surface-reduction
 	################################################################################################################
 	# Windows Defender Device Guard - Exploit Guard Policies (Windows 10 Only)
 	# Enable ASR rules in Win10 ExploitGuard (>= 1709) to mitigate Office malspam
@@ -433,13 +459,13 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	Add-MpPreference -AttackSurfaceReductionRules_Ids D4F940AB-401B-4EFC-AADC-AD5F3C50688A -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block Office applications from injecting code into other processes
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 75668C1F-73B5-4CF0-BB93-3ECF5CB7CC84 -AttackSurfaceReductionRules_Actions enable
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 75668C1F-73B5-4CF0-BB93-3ECF5CB7CC84 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block Win32 API calls from Office macro
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 92E97FA1-2EDF-4476-BDD6-9DD0B4DDDC7B -AttackSurfaceReductionRules_Actions enable
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 92E97FA1-2EDF-4476-BDD6-9DD0B4DDDC7B -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block Office applications from creating executable content
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 3B576869-A4EC-4529-8536-B80A7769E899 -AttackSurfaceReductionRules_Actions enable
+	Add-MpPreference -AttackSurfaceReductionRules_Ids 3B576869-A4EC-4529-8536-B80A7769E899 -AttackSurfaceReductionRules_Actions Enabled
 	#
 	# Block execution of potentially obfuscated scripts
 	Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5FFC04CC -AttackSurfaceReductionRules_Actions Enabled
@@ -455,6 +481,13 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	#
 	# Use advanced protection against ransomware
 	Add-MpPreference -AttackSurfaceReductionRules_Ids C1DB55AB-C21A-4637-BB3F-A12568109D35 -AttackSurfaceReductionRules_Actions Enabled
+	
+	if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
+		# Block credential stealing from the Windows local security authority subsystem (lsass.exe)
+		Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Enabled
+	}else{
+		Remove-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2
+	}
 	#
 	# Block untrusted and unsigned processes that run from USB
 	#A TEST#########Add-MpPreference -AttackSurfaceReductionRules_Ids B2B3F03D-6A65-4F7B-A9C7-1C7EF74A9BA4 -AttackSurfaceReductionRules_Actions Enabled
@@ -483,6 +516,18 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
 	rm $env:temp\ProcessMitigation.xml
+}else{
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids D4F940AB-401B-4EFC-AADC-AD5F3C50688A 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 75668C1F-73B5-4CF0-BB93-3ECF5CB7CC84 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 92E97FA1-2EDF-4476-BDD6-9DD0B4DDDC7B 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 3B576869-A4EC-4529-8536-B80A7769E899 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5FFC04CC 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids BE9BA2D9-53EA-4CDC-84E5-9B1EEEE46550 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids D3E037E1-3EB8-44C8-A917-57927947596D 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids 01443614-cd74-433a-b99e-2ecdc07bfc25 2>$null
+	Remove-MpPreference -AttackSurfaceReductionRules_Ids C1DB55AB-C21A-4637-BB3F-A12568109D35 2>$null
+	Set-MpPreference -EnableNetworkProtection Disabled 2>$null
 }
 Write-Progress -Activity AutoHarden -Status "Harden-WindowsDefender" -Completed
 
@@ -620,6 +665,11 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Group AutoHa
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
 
 # reg add "HKLM\SYSTEM\CurrentControlSet\services\tcpip6\parameters" /v DisabledComponents /t REG_DWORD /d 0xFF /f
+# Netsh int ipv6 set int 12 routerdiscovery=disabled
+# Netsh int ipv6 set int 12 managedaddress=disabled
+
+# Protection against CVE-2020-16898: “Bad Neighbor”
+netsh int ipv6 show int | foreach { $p=$_.trim().split(' ')[0]; [int]::TryParse($p,[ref]$null) -and (netsh int ipv6 set int $p rabaseddnsconfig=disable) -and (write-host "int >$p<") }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
@@ -631,7 +681,6 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Disab
 # Disable LLMNR
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /t REG_DWORD /v EnableMulticast /d 0 /f
 nbtstat.exe /n
-New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "5355" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] LLMNR-TCP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] LLMNR-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] MBNS" -DisplayName "[AutoHarden-$AutoHarden_version] MBNS" -ErrorAction Ignore
 
@@ -662,10 +711,10 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\W
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v RunAsPPL /t REG_DWORD /d 1 /f
 
 if( (ask "Is this computer is a laptop connected to a domain ?" "Mimikatz-DomainCred.ask") -eq $false ){
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f 2>NUL
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f 2>NUL
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /f 2>NUL
-	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /f 2>NUL
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableDomainCreds /f 2>$null
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" /v TokenLeakDetectDelaySecs /f 2>$null
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictReceivingNTLMTraffic /f 2>$null
+	reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v RestrictSendingNTLMTraffic /f 2>$null
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinClientSec /t REG_DWORD /d 0x20000000 /f
 	reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" /v NTLMMinServerSec /t REG_DWORD /d 0x20000000 /f
 }else{
@@ -697,14 +746,6 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -eq $null ){
 		reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlags /f
 		reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA" /v LsaCfgFlagsDefault /t REG_DWORD /d 0 /f
 	}
-}
-
-
-if( (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender').DisableAntiSpyware -ne 1 ){
-	# Block credential stealing from the Windows local security authority subsystem (lsass.exe)
-	# Require WindowsDefender
-	Add-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2 -AttackSurfaceReductionRules_Actions Disabled
-	Remove-MpPreference -AttackSurfaceReductionRules_Ids 9E6C4E1F-7D60-472F-BA1A-A39EF669E4B2
 }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableMimikatz" -Completed
 
@@ -857,6 +898,25 @@ Write-Progress -Activity AutoHarden -Status "Hardening-RemoteAssistance" -Comple
 
 
 echo "####################################################################################################"
+echo "# Hardening-Wifi-RemoveOpenProfile"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-Wifi-RemoveOpenProfile" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Wifi-RemoveOpenProfile"
+netsh wlan export profile folder=C:\Windows\Temp
+get-item C:\Windows\temp\Wi-Fi-*.xml | foreach {
+	$xml=[xml] (cat $_.FullName)
+	Write-Host "[*] Lecture du profile wifi $($_.Name)"
+	if( $xml.WLANProfile.MSM.security.authEncryption.authentication.ToLower() -eq "open" ){
+		$p=$xml.WLANProfile.SSIDConfig.SSID.name.Replace('"','')
+		Write-Host "[*] Suppression du profile wifi $p"		
+		netsh wlan delete profile name="$p" interface=*
+	}
+}
+rm C:\Windows\temp\Wi-Fi-*.xml
+Write-Progress -Activity AutoHarden -Status "Hardening-Wifi-RemoveOpenProfile" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-Wifi"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi" -PercentComplete 0
@@ -866,6 +926,38 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_D
 # WiFi Sense: Shared HotSpot Auto-Connect: Disable
 reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /t REG_DWORD /v value /d 0 /f
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi" -Completed
+
+
+echo "####################################################################################################"
+echo "# Log-Activity"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Log-Activity" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Log-Activity"
+# Log process activity
+reg.exe add "hklm\software\microsoft\windows\currentversion\policies\system\audit" /v ProcessCreationIncludeCmdLine_Enabled /t REG_DWORD /d 1 /f
+
+# Log powershell activity
+# https://static1.squarespace.com/static/552092d5e4b0661088167e5c/t/5ba3dc87e79c703f9bfff29a/1537465479833/Windows+PowerShell+Logging+Cheat+Sheet+ver+Sept+2018+v2.2.pdf
+# https://www.malwarearchaeology.com/cheat-sheets
+reg add HKLM\Software\Policies\Microsoft\Windows\PowerShell\ModuleLogging /v EnableModuleLogging /t REG_DWORD /d 1 /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableTranscripting /t REG_DWORD /d 1 /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableInvocationHeader /t REG_DWORD /d 1 /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v OutputDirectory /t REG_SZ /d "C:\Windows\AutoHarden\Powershell.log" /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockLogging /t REG_DWORD /d 1 /f
+# This is VERY noisy, do not set in most environments, or seriously test first (4105 & 4106)
+#reg query HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockInvocationLogging
+#WevtUtil gl "Windows PowerShell"
+#WevtUtil gl "Microsoft-Windows-PowerShell/Operational"
+
+# Log DHCP
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-Dhcp-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
+
+# Log DHCPv6
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-Dhcpv6-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
+
+# Log DNS
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
+Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
 
 
 echo "####################################################################################################"
@@ -968,7 +1060,7 @@ echo "# Optimiz-DisableAutoUpdate"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableAutoUpdate" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableAutoUpdate"
-if( ask "Disable auto update" "Optimiz-DisableAutoUpdate.ask" ){
+if( ask "Disable auto Windows Update during work time ?" "Optimiz-DisableAutoUpdate.ask" ){
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoRebootWithLoggedOnUsers /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 0 /f
@@ -990,10 +1082,17 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v Dis
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" /v DisableRealtimeMonitoring /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 4 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthService" /v Start /t REG_DWORD /d 4 /f
+# https://twitter.com/jonasLyk/status/1293815234805760000?s=20
+Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
+fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
+cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 2 /f
+# https://twitter.com/jonasLyk/status/1293815234805760000?s=20
+Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
+fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
 }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
@@ -1134,8 +1233,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUA/5wORIrx/8CHSdNSLHCuOVy
-# c3igggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUy0DFeP51VHfAYQXNVVzenZ6F
+# IRSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1193,16 +1292,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFBxZL8npWLQVYlioTPNNN3qp6SvbMA0GCSqGSIb3DQEBAQUA
-# BIICAACNoPlkMZIx8x+n5YxTlZjCs3aefvSBAg7ciAv3A943JYYXTpTdRf7nuE5+
-# Kz0EfZ102M9JJAgkBBbP2MyZZmg+gwEBVCdK3Jx2pHapuKEJ7HrSQz01gPb4IhlO
-# a7XTyBGsNP1QUmWdkgnNmO2b588fVM38q95iToMfLwTsgE9Yyma42QkP/ebug5O4
-# uhXO1MR8l3/BcZOD2mZJBC2HlLwgTp06kFBKH6d/keMRX0gAWV2o9Qz1onWqsGVf
-# IFwXj4K5t+WDA94ngOZ1RDh9aDRZPrmjUAE8JegA8a+FyyUSCvFWEmQJYv4+yhm8
-# X8dmVzY1CZ/zgCNw5p0guHKtoYAvb4pUdGUwnqv1lSJMnjDD1MHLv1CdwE4JIsWL
-# D4GpEVDBGHYSBnPyDJA7X8SN+6du0iecdMQvXBuMjJTH6gV0TmfCbqpt/v4J0t9F
-# gbS8Q4F12uEV6QTA6/AIRYkBpXfHNMSt7h9EoiJWVmkdtDKLYjRKuEAedRHxXTOd
-# /q1H9oQUnNgWYCF2oXYsBGScGCoPpPLyytq+ZA1d8gC8y21lHb7E2bR7pJEBiK/f
-# f0VA1QjMNCHPmIERel9omZrGnIn/lPoV3Qsm1ntXejm26k35XU+ffVVynr41R3SK
-# pD02DooJuRt+QN4aXHuadewuD8ZHSIjNQaljpVJPpZtvbgez
+# KoZIhvcNAQkEMRYEFKj2/UPzStEiaApTx1VyASGt2rwfMA0GCSqGSIb3DQEBAQUA
+# BIICAFGw/s4raKbJZhASyNRMx/R08Wttym+/ONu7bHKDH8dt9xJDbiOdLl5nlEv9
+# 7QYQ0g6YxH8ewtj0sTL0TLgi1G2mFJdPylnmbmnAHMb8FkiQT0V33bua1P2gXKEQ
+# uMobTe8H9YHCVbq71maizpa1dCHzgcmTtGpZGUSxweeON/WQaHJPpigSZ/vR6Txm
+# kipddn6AGzwQDvhjdbH5yGLiW3zFZwmjXvcuX9F1oipWkxJOgB0S9hXdTEuJSOaY
+# 7sXCLVSuV/PR+NtxU1hXz+f431LjA8OgvAP6e97OkUQnmWgnA4U2hP3zk8JakC0j
+# 5UA5T/dAA9caz5STvfjqRVQHBDCEjZrCVCK04Fs8XYVEp/kDsEscDImO3rvIPpJy
+# tw/whwBXcjZu1nzV9r7/uGs7qso2/GOy5cpbOBn8dKzllO11z6EmK+1cyShPFK4f
+# 0HuHWUWjMMjM3Lb37CIDlvEStu+sj53riiBSMk4XjN4XvOP85VRUYwse4B/6ankh
+# gk35s8bv3nOngry1va4OYOfQeX5m58D3BNt4jyPX40zmAIebr/BKG89Hkfxd+JY8
+# H+QTOzW9l4W/0YBxd512sHt1FE8iUBHPjQX7UTr6V3NLfBl7zVbv0fMqHUzCmOKy
+# iM1/xVZ5/jl/VFU8EqpknuKttIxI4spfL2xhXClkcmNNUPOw
 # SIG # End signature block

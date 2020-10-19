@@ -8,3 +8,8 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol 58 -Group AutoHa
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "547" -Group AutoHarden-IPv6 -Name "[AutoHarden-$AutoHarden_version] DHCPv6" -DisplayName "[AutoHarden-$AutoHarden_version] DHCPv6" -ErrorAction Ignore
 
 # reg add "HKLM\SYSTEM\CurrentControlSet\services\tcpip6\parameters" /v DisabledComponents /t REG_DWORD /d 0xFF /f
+# Netsh int ipv6 set int 12 routerdiscovery=disabled
+# Netsh int ipv6 set int 12 managedaddress=disabled
+
+# Protection against CVE-2020-16898: “Bad Neighbor”
+netsh int ipv6 show int | foreach { $p=$_.trim().split(' ')[0]; [int]::TryParse($p,[ref]$null) -and (netsh int ipv6 set int $p rabaseddnsconfig=disable) -and (write-host "int >$p<") }
