@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-10-19
-$AutoHarden_version="2020-10-19"
+# Update: 2020-10-23
+$AutoHarden_version="2020-10-23"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -202,6 +202,8 @@ if( (Get-Item "C:\Program Files*\VMware\*\vmnat.exe") -ne $null ){
 	}
 }
 New-NetFirewallRule -direction Outbound -Action Block -Protocol tcp -RemotePort 445 -RemoteAddress $IPForInternet -Group "AutoHarden-SMB" -Name ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -DisplayName ("[AutoHarden-$AutoHarden_version][Except Intranet] SMB") -ErrorAction Ignore
+# Note about 135/TCP => https://superuser.com/questions/669199/how-to-stop-listening-at-port-135/1012382#1012382
+# Port 135/TCP can be killed in 100% of server and workstation if CreateObject("Excel.Application", RemoteMachine) is not used
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
 
 
@@ -309,6 +311,9 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 # Start Menu: Disable Bing Search Results
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEnabled /t REG_DWORD /d 0 /f
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v CortanaConsent /t REG_DWORD /d 0 /f
+
+
+#https://github.com/crazy-max/WindowsSpyBlocker/raw/master/data/hosts/spy.txt
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -Completed
 
 
@@ -1085,7 +1090,8 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthServ
 # https://twitter.com/jonasLyk/status/1293815234805760000?s=20
 Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
 fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
-cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
+# Can crash WINDOWS. This part will be removed in december 2020 !!!!
+#cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
@@ -1233,8 +1239,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUy0DFeP51VHfAYQXNVVzenZ6F
-# IRSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4paAa4FG2NgK+IvKtmSQugeD
+# RXOgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1292,16 +1298,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFKj2/UPzStEiaApTx1VyASGt2rwfMA0GCSqGSIb3DQEBAQUA
-# BIICAFGw/s4raKbJZhASyNRMx/R08Wttym+/ONu7bHKDH8dt9xJDbiOdLl5nlEv9
-# 7QYQ0g6YxH8ewtj0sTL0TLgi1G2mFJdPylnmbmnAHMb8FkiQT0V33bua1P2gXKEQ
-# uMobTe8H9YHCVbq71maizpa1dCHzgcmTtGpZGUSxweeON/WQaHJPpigSZ/vR6Txm
-# kipddn6AGzwQDvhjdbH5yGLiW3zFZwmjXvcuX9F1oipWkxJOgB0S9hXdTEuJSOaY
-# 7sXCLVSuV/PR+NtxU1hXz+f431LjA8OgvAP6e97OkUQnmWgnA4U2hP3zk8JakC0j
-# 5UA5T/dAA9caz5STvfjqRVQHBDCEjZrCVCK04Fs8XYVEp/kDsEscDImO3rvIPpJy
-# tw/whwBXcjZu1nzV9r7/uGs7qso2/GOy5cpbOBn8dKzllO11z6EmK+1cyShPFK4f
-# 0HuHWUWjMMjM3Lb37CIDlvEStu+sj53riiBSMk4XjN4XvOP85VRUYwse4B/6ankh
-# gk35s8bv3nOngry1va4OYOfQeX5m58D3BNt4jyPX40zmAIebr/BKG89Hkfxd+JY8
-# H+QTOzW9l4W/0YBxd512sHt1FE8iUBHPjQX7UTr6V3NLfBl7zVbv0fMqHUzCmOKy
-# iM1/xVZ5/jl/VFU8EqpknuKttIxI4spfL2xhXClkcmNNUPOw
+# KoZIhvcNAQkEMRYEFOMrLRAVA5gjJWN3bXnt2wSJe/VVMA0GCSqGSIb3DQEBAQUA
+# BIICAA6nbmicz7OCUL/fTNLHI0UsRr3A09Ej2Z2CC932FlmH+vAuMw5wrnrHzizC
+# K+0p2uiQQ+OSBraL3uHrsO+pId/XcVUftaMTgwZ+hmmS0pNmWEQpZyAAnGSIW0qJ
+# Vj36hp2EWuRgbnCOkCmWj3q6aOCFQRxNa6xKcN5gAQ9HcJTVC7/YeNuYHp90A9Np
+# oROw64kcGTW6qZ3nk+xYjiuv6o4k1Pq5a6JpkKzbtHlhZ8UEzcECYBTmQXm52X8M
+# uHIeM5byPY5nBvmt4QnpoDAMlnZqwiTN0kmfe5IA47qtnPK8YshZH+wNOwQ22KNG
+# EQFh3fFKb6nD1Bn8FUJmU7hdyaHdDuhOlaeb61F57Oiywo6IP+0dCEqkFh/j38tQ
+# KfwFhyEWHZvIGiTqy2vqeiVZ+x+Or9zGET9GFdhsxvizb6ZoC+RkCz2CVyTgE3en
+# ZuEht3RJdx4TDxy+VAc5LidBqpQeFIlII+lth88KZ1O3SwsWSDOpiOOc0FqnmwJf
+# 7qRgfQG/md9F5BaUYJceTpJS081vd/FB/bOsEVkKz0TUYoNVhd1Nj0JK9pPBzxPe
+# 29Gg0yJcqdn2aZDb+11heEtEUGah7M8Z0VjB1RzhmmHvUGXCyYD+jj/JJsqeycTg
+# CF+KcPlX75HuP59zuteW9/7hWgs2Vi6liCLUcaSG0aA/SLpa
 # SIG # End signature block

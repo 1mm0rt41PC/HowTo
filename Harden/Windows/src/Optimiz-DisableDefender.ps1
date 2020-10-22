@@ -5,4 +5,5 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthServ
 # https://twitter.com/jonasLyk/status/1293815234805760000?s=20
 Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
 fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
-cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
+# Can crash WINDOWS. This part will be removed in december 2020 !!!!
+#cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
