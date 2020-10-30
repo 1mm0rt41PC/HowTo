@@ -313,17 +313,17 @@ if [ "`which cygpath`" != "" ] ; then
 	cd "$HC"
 fi
 
-if isProcessHashCat; then
-	echo '[!] Hashcat is already running'
-	[ "`ps a | grep -E '[p]ownMyHash' | wc -l`" = "0" ] && exit
-	export query='?'
-	while [ "$query" != "" ] && [ "$query" != "y" ] && [ "$query" != "n" ]; do
-		echo "[?] Split the workspace with \"`ps a | grep -E '[p]ownMyHash' | awk -F '/bin/bash ' '{print $2}'`\" ? [Y/n]"
-		read -n 1 query >/dev/null
-		export query
-	done
-	[ "${query^}" = "N" ] && exit;
-fi
+#if isProcessHashCat; then
+#	echo '[!] Hashcat is already running'
+#	[ "`ps a | grep -E '[p]ownMyHash' | wc -l`" = "0" ] && exit
+#	export query='?'
+#	while [ "$query" != "" ] && [ "$query" != "y" ] && [ "$query" != "n" ]; do
+#		echo "[?] Split the workspace with \"`ps a | grep -E '[p]ownMyHash' | awk -F '/bin/bash ' '{print $2}'`\" ? [Y/n]"
+#		read -n 1 query >/dev/null
+#		export query
+#	done
+#	[ "${query^}" = "N" ] && exit;
+#fi
 
 
 ####################################################################################################
@@ -363,11 +363,15 @@ fi
 if [ "$HASH_TYPE" = "1000" ]; then
 	if title 'Contribute to the local training database'; then
 		export mytmp=`mktemp`
-		cat $TRAINING_NTLM $HASHES | dos2unix | tr '[:upper:]' '[:lower:]' | sed -E 's/^[^\r\n:]+:[0-9]+:/x:42:/g' | sed -E 's/Disabled=[^\r\n:]+//g' | grep -E 'x:42:[a-f0-9]{32}:[a-f0-9]{32}:::' | sort -u > $mytmp
+		# Compte machine => xxxx$:
+		# Compte Guest => :501:
+		# Compte krbtgt => :502:
+		# Compte DefaultAccount => :503:
+		cat $TRAINING_NTLM $HASHES | grep -vF '$:' | grep -vE ':(501|502|503):' |grep -vFi 'HealthMailbox' | dos2unix | tr '[:upper:]' '[:lower:]' | sed -E 's/^[^\r\n:]+:[0-9]+:/x:42:/g' | sed -E 's/:::[^\r\n]+/:::/g' | grep -E 'x:42:[a-f0-9]{32}:[a-f0-9]{32}:::' | sort -u > $mytmp
 		mv $mytmp $TRAINING_NTLM
-		grep -E '^[a-fA-F0-9]{32}:' $HC/hashcat.potfile | cut -d : -f 1 > $mytmp
+		grep -E '^[a-fA-F0-9]{32}:' $HC/hashcat.potfile | cut -d : -f 1 | tr '[:upper:]' '[:lower:]' > $mytmp
 		export mytmp2=`mktemp`
-		(grep -vFif $mytmp $TRAINING_NTLM > $mytmp2 && mv $mytmp2 $TRAINING_NTLM && rm $mytmp) &
+		(grep -vFf $mytmp $TRAINING_NTLM > $mytmp2 && mv $mytmp2 $TRAINING_NTLM && rm $mytmp) &
 	fi
 
 	if title 'LM attack'; then
