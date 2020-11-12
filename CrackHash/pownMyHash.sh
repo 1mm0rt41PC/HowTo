@@ -279,7 +279,7 @@ if [ "$1" = "" ] || [ "$HASHES" = "" ]; then
 	echo "  $0 <hash-type> <hash-file>"
 	echo ''
 	echo 'With:'
-	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
+	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2, JWT). See hashcat --help'
 	echo '  <hash-file>: The file that contains the hashed passwords'
 	#$HCB --force --example-hashes
 	exit
@@ -333,6 +333,7 @@ fi
 ([ "${HASH_TYPE^^}" = "NETNTLMV1" ] || [ "${HASH_TYPE^^}" = "NTLMV1" ]) && export HASH_TYPE=5500
 ([ "${HASH_TYPE^^}" = "NETNTLMV2" ] || [ "${HASH_TYPE^^}" = "NTLMV2" ]) && export HASH_TYPE=5600
 [ "${HASH_TYPE^^}" = "PMKID" ] && export HASH_TYPE=16800
+[ "${HASH_TYPE^^}" = "JWT" ] && export HASH_TYPE=16500
 
 if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_TYPE" ]) || [ ! -f "$HASHES" ]; then
 	echo -e '\033[31m*******************************************************************************'
@@ -367,7 +368,7 @@ if [ "$HASH_TYPE" = "1000" ]; then
 		# Compte Guest => :501:
 		# Compte krbtgt => :502:
 		# Compte DefaultAccount => :503:
-		cat $TRAINING_NTLM $HASHES | grep -vF '$:' | grep -vE ':(501|502|503):' |grep -vFi 'HealthMailbox' | dos2unix | tr '[:upper:]' '[:lower:]' | sed -E 's/^[^\r\n:]+:[0-9]+:/x:42:/g' | sed -E 's/:::[^\r\n]+/:::/g' | grep -E 'x:42:[a-f0-9]{32}:[a-f0-9]{32}:::' | sort -u > $mytmp
+		cat $TRAINING_NTLM $HASHES | grep -vF '$:' | grep -vE ':(501|502|503):' | tr '[:upper:]' '[:lower:]' | grep -vF 'healthmailbox' | dos2unix | sed -E 's/^[^\r\n:]+:[0-9]+:/x:42:/g' | sed -E 's/:::[^\r\n]+/:::/g' | grep -E 'x:42:[a-f0-9]{32}:[a-f0-9]{32}:::' | sort -u > $mytmp
 		mv $mytmp $TRAINING_NTLM
 		grep -E '^[a-fA-F0-9]{32}:' $HC/hashcat.potfile | cut -d : -f 1 | tr '[:upper:]' '[:lower:]' > $mytmp
 		export mytmp2=`mktemp`

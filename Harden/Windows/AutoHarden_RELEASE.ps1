@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-10-23
-$AutoHarden_version="2020-10-23"
+# Update: 2020-11-12
+$AutoHarden_version="2020-11-12"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -313,6 +313,17 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEna
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v CortanaConsent /t REG_DWORD /d 0 /f
 
 
+# Privacy - Disable Microsoft Help feedback.
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Assistance\Client\1.0" /v "NoExplicitFeedback" /t REG_DWORD /d 1 /f
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Assistance\Client\1.0" /v "NoImplicitFeedback" /t REG_DWORD /d 1 /f
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Assistance\Client\1.0" /v "NoOnlineAssist" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Assistance\Client\1.0" /v "NoActiveHelp" /t REG_DWORD /d 1 /f
+
+# Privacy - Disable feedback in Office.
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\office\16.0\common\feedback" /v "enabled" /t REG_DWORD /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\office\16.0\common\feedback" /v "includescreenshot" /t REG_DWORD /d 0 /f
+
+
 #https://github.com/crazy-max/WindowsSpyBlocker/raw/master/data/hosts/spy.txt
 Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -Completed
 
@@ -417,6 +428,16 @@ Write-Progress -Activity AutoHarden -Status "Harden-RDP-Credentials" -PercentCom
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-RDP-Credentials"
 remove-item "HKCU:\Software\Microsoft\Terminal Server Client\Servers\*" -Force -Recurse
 Write-Progress -Activity AutoHarden -Status "Harden-RDP-Credentials" -Completed
+
+
+echo "####################################################################################################"
+echo "# Harden-VMWareWorkstation"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-VMWareWorkstation" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-VMWareWorkstation"
+# Disable VM Sharing (free the port 443/TCP)
+sc.exe config VMwareHostd start= disabled
+Write-Progress -Activity AutoHarden -Status "Harden-VMWareWorkstation" -Completed
 
 
 echo "####################################################################################################"
@@ -938,9 +959,6 @@ echo "# Log-Activity"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Log-Activity"
-# Log process activity
-reg.exe add "hklm\software\microsoft\windows\currentversion\policies\system\audit" /v ProcessCreationIncludeCmdLine_Enabled /t REG_DWORD /d 1 /f
-
 # Log powershell activity
 # https://static1.squarespace.com/static/552092d5e4b0661088167e5c/t/5ba3dc87e79c703f9bfff29a/1537465479833/Windows+PowerShell+Logging+Cheat+Sheet+ver+Sept+2018+v2.2.pdf
 # https://www.malwarearchaeology.com/cheat-sheets
@@ -962,6 +980,152 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Cha
 
 # Log DNS
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
+
+if( -not [System.IO.File]::Exists("C:\Windows\AutoHarden\AuditPol_BEFORE.txt") ){
+	Auditpol /get /category:* > C:\Windows\AutoHarden\AuditPol_BEFORE.txt
+}
+
+# From
+#	https://github.com/rkovar/PowerShell/blob/master/audit.bat
+#	https://forensixchange.com/posts/19_05_07_dns_investigation/
+
+# SET THE LOG SIZE - What local size they will be
+# ---------------------
+#
+# 540100100 will give you 7 days of local Event Logs with everything logging (Security and Sysmon)
+# 1023934464 will give you 14 days of local Event Logs with everything logging (Security and Sysmon)
+# Other logs do not create as much quantity, so lower numbers are fine
+#
+wevtutil sl Security /ms:540100100
+wevtutil sl Application /ms:256000100
+wevtutil sl Setup /ms:256000100
+wevtutil sl System /ms:256000100
+wevtutil sl "Windows Powershell" /ms:256000100
+wevtutil sl "Microsoft-Windows-Sysmon/Operational" /ms:540100100
+
+
+# PS C:\> auditpol /list /subcategory:* /r
+#
+# Catégorie/Sous-catégorie,GUID
+# Système,{69979848-797A-11D9-BED3-505054503030}
+#   Modification de l’état de la sécurité,{0CCE9210-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9210-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Extension système de sécurité,{0CCE9211-69AE-11D9-BED3-505054503030}
+#   Intégrité du système,{0CCE9212-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9212-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Pilote IPSEC,{0CCE9213-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9213-69AE-11D9-BED3-505054503030}" /success:disable /failure:disable
+#   Autres événements système,{0CCE9214-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9214-69AE-11D9-BED3-505054503030}" /success:disable /failure:enable
+# Ouverture/Fermeture de session,{69979849-797A-11D9-BED3-505054503030}
+#   Ouvrir la session,{0CCE9215-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9215-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Fermer la session,{0CCE9216-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9216-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Verrouillage du compte,{0CCE9217-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9217-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Mode principal IPsec,{0CCE9218-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9218-69AE-11D9-BED3-505054503030}" /success:disable /failure:disable
+#   Mode rapide IPsec,{0CCE9219-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9219-69AE-11D9-BED3-505054503030}" /success:disable /failure:disable
+#   Mode étendu IPsec,{0CCE921A-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921A-69AE-11D9-BED3-505054503030}" /success:disable /failure:disable
+#   Ouverture de session spéciale,{0CCE921B-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921B-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Autres événements d’ouverture/fermeture de session,{0CCE921C-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921C-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Serveur NPS,{0CCE9243-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9243-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Revendications utilisateur/de périphérique,{0CCE9247-69AE-11D9-BED3-505054503030}
+#   Appartenance à un groupe,{0CCE9249-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9249-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+# Accès aux objets,{6997984A-797A-11D9-BED3-505054503030}
+#   Système de fichiers,{0CCE921D-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921D-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Registre,{0CCE921E-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921E-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Objet de noyau,{0CCE921F-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE921F-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   SAM,{0CCE9220-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9220-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Services de certification,{0CCE9221-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9221-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Généré par application,{0CCE9222-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9222-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Manipulation de handle,{0CCE9223-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9223-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Partage de fichiers,{0CCE9224-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9224-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030}
+#   Autres événements d’accès à l’objet,{0CCE9227-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9227-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Partage de fichiers détaillé,{0CCE9244-69AE-11D9-BED3-505054503030}
+#   Stockage amovible,{0CCE9245-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9245-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Stratégie centralisée intermédiaire,{0CCE9246-69AE-11D9-BED3-505054503030}
+# Utilisation de privilège,{6997984B-797A-11D9-BED3-505054503030}
+#   Utilisation de privilèges sensibles,{0CCE9228-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9228-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Utilisation de privilèges non sensibles,{0CCE9229-69AE-11D9-BED3-505054503030}
+#   Autres événements d’utilisation de privilèges,{0CCE922A-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922A-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+# Suivi détaillé,{6997984C-797A-11D9-BED3-505054503030}
+#   Création du processus,{0CCE922B-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922B-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+# Log process activity
+reg.exe add "hklm\software\microsoft\windows\currentversion\policies\system\audit" /v ProcessCreationIncludeCmdLine_Enabled /t REG_DWORD /d 1 /f
+#   Fin du processus,{0CCE922C-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922C-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Activité DPAPI,{0CCE922D-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922D-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Événements RPC,{0CCE922E-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922E-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Événements Plug-and-Play,{0CCE9248-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9248-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Événements de jeton ajustés à droite,{0CCE924A-69AE-11D9-BED3-505054503030}
+# Changement de stratégie,{6997984D-797A-11D9-BED3-505054503030}
+#   Modification de la stratégie d’audit,{0CCE922F-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE922F-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Modification de la stratégie d’authentification,{0CCE9230-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9230-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Modification de la stratégie d’autorisation,{0CCE9231-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9231-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Modification de la stratégie de niveau règle MPSSVC,{0CCE9232-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9232-69AE-11D9-BED3-505054503030}" /success:disable /failure:disable
+#   Modification de la stratégie de plateforme de filtrage,{0CCE9233-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9233-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+#   Autres événements de modification de stratégie,{0CCE9234-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9234-69AE-11D9-BED3-505054503030}" /success:disable /failure:enable
+# Gestion des comptes,{6997984E-797A-11D9-BED3-505054503030}
+#   Gestion des comptes d’utilisateur,{0CCE9235-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9235-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Gestion des comptes d’ordinateur,{0CCE9236-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9236-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Gestion des groupes de sécurité,{0CCE9237-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9237-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Gestion des groupes de distribution,{0CCE9238-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9238-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Gestion des groupes d’applications,{0CCE9239-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9239-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Autres événements de gestion des comptes,{0CCE923A-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE923A-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+# Accès DS,{6997984F-797A-11D9-BED3-505054503030}
+#   Accès au service d’annuaire,{0CCE923B-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE923B-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Modification du service d’annuaire,{0CCE923C-69AE-11D9-BED3-505054503030}
+#   Réplication du service d’annuaire,{0CCE923D-69AE-11D9-BED3-505054503030}
+#   Réplication du service d’annuaire détaillé,{0CCE923E-69AE-11D9-BED3-505054503030}
+# Connexion de compte,{69979850-797A-11D9-BED3-505054503030}
+#   Validation des informations d’identification,{0CCE923F-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE923F-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Opérations de ticket du service Kerberos,{0CCE9240-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9240-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Autres événements d’ouverture de session,{0CCE9241-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+#   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
+auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
 
 
@@ -1239,8 +1403,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4paAa4FG2NgK+IvKtmSQugeD
-# RXOgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1ZRvECf6vJNToD6EIvf6ccL0
+# 4ESgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1298,16 +1462,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFOMrLRAVA5gjJWN3bXnt2wSJe/VVMA0GCSqGSIb3DQEBAQUA
-# BIICAA6nbmicz7OCUL/fTNLHI0UsRr3A09Ej2Z2CC932FlmH+vAuMw5wrnrHzizC
-# K+0p2uiQQ+OSBraL3uHrsO+pId/XcVUftaMTgwZ+hmmS0pNmWEQpZyAAnGSIW0qJ
-# Vj36hp2EWuRgbnCOkCmWj3q6aOCFQRxNa6xKcN5gAQ9HcJTVC7/YeNuYHp90A9Np
-# oROw64kcGTW6qZ3nk+xYjiuv6o4k1Pq5a6JpkKzbtHlhZ8UEzcECYBTmQXm52X8M
-# uHIeM5byPY5nBvmt4QnpoDAMlnZqwiTN0kmfe5IA47qtnPK8YshZH+wNOwQ22KNG
-# EQFh3fFKb6nD1Bn8FUJmU7hdyaHdDuhOlaeb61F57Oiywo6IP+0dCEqkFh/j38tQ
-# KfwFhyEWHZvIGiTqy2vqeiVZ+x+Or9zGET9GFdhsxvizb6ZoC+RkCz2CVyTgE3en
-# ZuEht3RJdx4TDxy+VAc5LidBqpQeFIlII+lth88KZ1O3SwsWSDOpiOOc0FqnmwJf
-# 7qRgfQG/md9F5BaUYJceTpJS081vd/FB/bOsEVkKz0TUYoNVhd1Nj0JK9pPBzxPe
-# 29Gg0yJcqdn2aZDb+11heEtEUGah7M8Z0VjB1RzhmmHvUGXCyYD+jj/JJsqeycTg
-# CF+KcPlX75HuP59zuteW9/7hWgs2Vi6liCLUcaSG0aA/SLpa
+# KoZIhvcNAQkEMRYEFCj0b/F63kfmkuxelMNI95r8D8pLMA0GCSqGSIb3DQEBAQUA
+# BIICAB05sav1xs0yQPpraUWo2x3pZWkkMaFymOINmgYYs+Mtj4lpgYiVJVbjMXZM
+# 7KLPf1bcepNVvZ/PaWy4E2iUJBSzuFld5mxL9/xv7QDZ4xgJM1sWQO0FTgjZX79Z
+# e9kz1T4Qui+xhZFm+NpnrjTBgkTzCxCW6TJVOHG6tITOfkGLccxaKl6UIpsIftSB
+# dQBljh510cB9muXta7F2/FqvmqIKU6D0gR+z61/xq+/kJ5DNmzEDFFYbosdiwbjv
+# yLIccLjWViXH0WlJIdkeD5m2IpNPEtd5Lnoha+n1OSdv5DneuQfPR+vCxkAnbA7M
+# LW5GkJPoPqFoQwPhPlrelF9wG1N5ZLAtdGzAx1KC+8US4v8l2IIpemnguLPi6LEl
+# bq8lpkC6TPo1mC22w7v3c/yHtIyDXddRfwBT9IwI/VjBGRo9WE5/hL7U8Zcjtg1W
+# 4SC4KchZzaPY51iGCkRr3zSZjPeTZX6fPDfzcjJoGrKndRPjJA0QadQnqlRqMxuZ
+# wt6MC6dIc8oyxNFBXXz82i77EU9YSYcuYbATee69S88oMBdVJKuX41Nky4J95Uy/
+# /Whj3ChMlNt6yU06rZI7cCL2uuj755N54amCAeFrJfQZocklJTAVCC3kgGh/V5cZ
+# HQ4/hrRfYP6O51DuNSwh2X9shlf0fsn7hFLYcZakaIxIExJy
 # SIG # End signature block
