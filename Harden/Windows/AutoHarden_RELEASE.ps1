@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-11-12
-$AutoHarden_version="2020-11-12"
+# Update: 2020-11-14
+$AutoHarden_version="2020-11-14"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -255,6 +255,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" 
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v ConnectedSearchUseWeb /d 0 /f
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search" /t REG_DWORD /v BingSearchEnabled /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v PublishUserActivities /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer" /t REG_DWORD /v DisableSearchBoxSuggestions /d 1 /f
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 1 /f
@@ -265,6 +266,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" 
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v ConnectedSearchUseWeb /d 1 /f
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search" /t REG_DWORD /v BingSearchEnabled /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v PublishUserActivities /d 1 /f
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer" /t REG_DWORD /v DisableSearchBoxSuggestions /d 0 /f
 }
 Write-Progress -Activity AutoHarden -Status "Crapware-Cortana" -Completed
 
@@ -1403,8 +1405,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1ZRvECf6vJNToD6EIvf6ccL0
-# 4ESgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUuXN8UBrODB/ZH9qG06mDVanK
+# jqCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1462,16 +1464,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFCj0b/F63kfmkuxelMNI95r8D8pLMA0GCSqGSIb3DQEBAQUA
-# BIICAB05sav1xs0yQPpraUWo2x3pZWkkMaFymOINmgYYs+Mtj4lpgYiVJVbjMXZM
-# 7KLPf1bcepNVvZ/PaWy4E2iUJBSzuFld5mxL9/xv7QDZ4xgJM1sWQO0FTgjZX79Z
-# e9kz1T4Qui+xhZFm+NpnrjTBgkTzCxCW6TJVOHG6tITOfkGLccxaKl6UIpsIftSB
-# dQBljh510cB9muXta7F2/FqvmqIKU6D0gR+z61/xq+/kJ5DNmzEDFFYbosdiwbjv
-# yLIccLjWViXH0WlJIdkeD5m2IpNPEtd5Lnoha+n1OSdv5DneuQfPR+vCxkAnbA7M
-# LW5GkJPoPqFoQwPhPlrelF9wG1N5ZLAtdGzAx1KC+8US4v8l2IIpemnguLPi6LEl
-# bq8lpkC6TPo1mC22w7v3c/yHtIyDXddRfwBT9IwI/VjBGRo9WE5/hL7U8Zcjtg1W
-# 4SC4KchZzaPY51iGCkRr3zSZjPeTZX6fPDfzcjJoGrKndRPjJA0QadQnqlRqMxuZ
-# wt6MC6dIc8oyxNFBXXz82i77EU9YSYcuYbATee69S88oMBdVJKuX41Nky4J95Uy/
-# /Whj3ChMlNt6yU06rZI7cCL2uuj755N54amCAeFrJfQZocklJTAVCC3kgGh/V5cZ
-# HQ4/hrRfYP6O51DuNSwh2X9shlf0fsn7hFLYcZakaIxIExJy
+# KoZIhvcNAQkEMRYEFBlXx80DZW4I0VcnBTQTajwl8hKVMA0GCSqGSIb3DQEBAQUA
+# BIICAGANBxauyqPHyCOKSGGVK4tj3OyZWohCfTjE761us65OS0V+kCjZp/X+EAQX
+# JBrQjuwmLUjk+yTSc3tx2t1tWws+MJf7s/rVoO0ZyR+IUB4Dr9BBGtxsi9V/dNIt
+# xYWlrRq11/b0vwJzcp2CydWWZk8kfCKCPMG35USyY2bWnXelmxMG+SErJcVNQ7KB
+# 1CLIeVIUik8i4SnQAlil728ffeHd9D5a4jT0YUSZg/rG8SGtDJ1woELsH6nVSjbE
+# kdVtyLtBhA19Wgqm1RtCczIaHYr/gPtuQbxcaqEbNfokKgc2x253gDB5GZIkpOe8
+# tI9kov9KmSEC45fr4f1eWOQQoeLGfCofMU7TIGZKYQUN4qbATLcjjFRUqSi4Ia81
+# gfv7FJXpeRyPCRAWiE3j49B5YeZOc74hrdIgJTTpJwM6qCXHtfxFBJPpqrVd8niw
+# KT7c+PEVNSY7YGnPph02yKGrxTsjhwoAlR3sD95qC4LaJpGRlciq85P9TqNG7ROb
+# ho3lREYaoj1U50Laobg5tvsZp8zoHN/+F+UDwgUneuDMjCPHXQal1N1d9kHWp7dA
+# pdlduCBnPxsrB/nYM5eAnyBOUZBriQK/nBzab1cYICVf1Rdz1YFPitepQVOXqaYk
+# LdRNI8e4YKC6vV6Me6nRWyHOQV2dTPAX5uoleHnqsUWuWp0x
 # SIG # End signature block
