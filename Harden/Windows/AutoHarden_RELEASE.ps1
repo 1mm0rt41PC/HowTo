@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-11-14
-$AutoHarden_version="2020-11-14"
+# Update: 2020-11-16
+$AutoHarden_version="2020-11-16"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -255,6 +255,8 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" 
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v ConnectedSearchUseWeb /d 0 /f
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search" /t REG_DWORD /v BingSearchEnabled /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_DWORD /v PublishUserActivities /d 0 /f
+# From: Fireice
+# https://www.winhelponline.com/blog/disable-web-results-windows-10-start-menu/
 reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer" /t REG_DWORD /v DisableSearchBoxSuggestions /d 1 /f
 }
 else{
@@ -711,21 +713,6 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /t
 nbtstat.exe /n
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5355" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] LLMNR-UDP" -DisplayName "[AutoHarden-$AutoHarden_version] LLMNR" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "5353" -Group AutoHarden-LLMNR -Name "[AutoHarden-$AutoHarden_version] MBNS" -DisplayName "[AutoHarden-$AutoHarden_version] MBNS" -ErrorAction Ignore
-
-# Disable wpad
-reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "DefaultConnectionSettings" /f
-reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "SavedLegacySettings" /f
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /t REG_DWORD /v WpadOverride /d 0 /f
-RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
-ipconfig /flushdns
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
-if( [string]::IsNullOrEmpty($_wpad) ){
-	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
-}
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
-if( [string]::IsNullOrEmpty($_wpad) ){
-	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
-}
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableLLMNR" -Completed
 
 
@@ -834,6 +821,30 @@ reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v Requ
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v EnableSecuritySignature /t REG_DWORD /d 1 /f
 reg add "HKLM\System\CurrentControlSet\Services\Rdr\Parameters" /v RequireSecuritySignature /t REG_DWORD /d 1 /f
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableSMBv1" -Completed
+
+
+echo "####################################################################################################"
+echo "# Hardening-DisableWPAD"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-DisableWPAD" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableWPAD"
+# Disable wpad service
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinHttpAutoProxySvc" /t REG_DWORD /v Start /d 4 /f
+
+reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "DefaultConnectionSettings" /f
+reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "SavedLegacySettings" /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /t REG_DWORD /v WpadOverride /d 0 /f
+RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
+ipconfig /flushdns
+$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
+if( [string]::IsNullOrEmpty($_wpad) ){
+	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
+}
+$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
+if( [string]::IsNullOrEmpty($_wpad) ){
+	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
+}
+Write-Progress -Activity AutoHarden -Status "Hardening-DisableWPAD" -Completed
 
 
 echo "####################################################################################################"
@@ -1405,8 +1416,8 @@ Stop-Transcript
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUuXN8UBrODB/ZH9qG06mDVanK
-# jqCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUlgSgrqy8ZbilZNgSR4swxidJ
+# HaWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1464,16 +1475,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFBlXx80DZW4I0VcnBTQTajwl8hKVMA0GCSqGSIb3DQEBAQUA
-# BIICAGANBxauyqPHyCOKSGGVK4tj3OyZWohCfTjE761us65OS0V+kCjZp/X+EAQX
-# JBrQjuwmLUjk+yTSc3tx2t1tWws+MJf7s/rVoO0ZyR+IUB4Dr9BBGtxsi9V/dNIt
-# xYWlrRq11/b0vwJzcp2CydWWZk8kfCKCPMG35USyY2bWnXelmxMG+SErJcVNQ7KB
-# 1CLIeVIUik8i4SnQAlil728ffeHd9D5a4jT0YUSZg/rG8SGtDJ1woELsH6nVSjbE
-# kdVtyLtBhA19Wgqm1RtCczIaHYr/gPtuQbxcaqEbNfokKgc2x253gDB5GZIkpOe8
-# tI9kov9KmSEC45fr4f1eWOQQoeLGfCofMU7TIGZKYQUN4qbATLcjjFRUqSi4Ia81
-# gfv7FJXpeRyPCRAWiE3j49B5YeZOc74hrdIgJTTpJwM6qCXHtfxFBJPpqrVd8niw
-# KT7c+PEVNSY7YGnPph02yKGrxTsjhwoAlR3sD95qC4LaJpGRlciq85P9TqNG7ROb
-# ho3lREYaoj1U50Laobg5tvsZp8zoHN/+F+UDwgUneuDMjCPHXQal1N1d9kHWp7dA
-# pdlduCBnPxsrB/nYM5eAnyBOUZBriQK/nBzab1cYICVf1Rdz1YFPitepQVOXqaYk
-# LdRNI8e4YKC6vV6Me6nRWyHOQV2dTPAX5uoleHnqsUWuWp0x
+# KoZIhvcNAQkEMRYEFFsIHFGC6HhLsNoqMAh0QZPAxHa/MA0GCSqGSIb3DQEBAQUA
+# BIICAB3dEq0Kvkok7POOG1bcjmURD1LDaWIalPyahnYzzetX5meRWepNsaACP6vF
+# ZCzxsn/PNs3xl1JkRS5QP9hI4Fhuzz/w2ZgteCkPzxGQGnS8Zzthgdv3P7tnI0aB
+# XFLlueQFIfp9Zl5Iou3MyRIBGeHQpWa6UhLtZQwiAz3Y22ygXMeBh/S3Wgt554C4
+# uOAkzfN5uJCHd9E/6uhnBjffg3GCWkhhRAHyVIeYNhT8LoJ2sHK8sBM4jSymUAkj
+# X+ZsN1agOXc2VbhsLQKy1iHsqZXYmVQrD3uFmpjPO9MdUNy/KaFHD6Rk7p5aadYz
+# XO3cfmjUCKphEqcWjWe+US09SJim1e8M/HcYF5/IkmmQbq+8XLd5uHOAY5yVuFlt
+# Sni6yvJQivQzPqp5d9wPhAFjHFvhBJGsKKMXs+GINryON4bNzfKJyMOOvVGp2Rj3
+# Lrnh4Ce1Q+FbmKZhi8n5q8CMqMaccUlTd0EL6LWsvGoAyi81zGwg3VCQEMF0f1oE
+# 87/XED1RBQRiFrcIVT59ndbtyjDUnGReE7vfsWh/2tI7f4DSy5lzFla60wDyiBMW
+# JtzlHb4KNLOSCskSV/ykc3xGcDLa9YEYAtfOttTGiRHtB82qptu0VwaLn1Gvqou/
+# LlxppwoZ8H0BVOPs723r1hm8b/3UcoWyXEOrhl33EPzcq9Ph
 # SIG # End signature block
