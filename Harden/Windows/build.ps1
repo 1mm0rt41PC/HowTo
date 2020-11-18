@@ -89,7 +89,8 @@ echo '}' >> $output
 # msg.exe * /V "test"
 echo 'if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}' >> $output
 echo 'mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore' >> $output
-echo 'Start-Transcript -Force -IncludeInvocationHeader -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")' >> $output
+echo '$AutoHardenLog = "C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log"' >> $output
+echo 'Start-Transcript -Force -IncludeInvocationHeader -Append ($AutoHardenLog)' >> $output
 echo '$DebugPreference = "Continue"' >> $output
 echo '$VerbosePreference = "Continue"' >> $output
 echo '$InformationPreference = "Continue"' >> $output
@@ -132,6 +133,10 @@ Get-ChildItem ${PSScriptRoot}\src\*.ps1 | foreach {
 	echo ''
 } >> $output
 echo 'Stop-Transcript' >> $output
+echo '7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog' >> $output
+echo 'if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){' >> $output
+echo '	rm -f $AutoHardenLog' >> $output
+echo '}' >> $output
 
 if( Set-AuthenticodeSignature -filepath $output -cert $cert -IncludeChain All ){
 	Write-Host 'Signature OK'

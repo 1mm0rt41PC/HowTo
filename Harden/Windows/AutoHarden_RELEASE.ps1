@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-11-16
-$AutoHarden_version="2020-11-16"
+# Update: 2020-11-19
+$AutoHarden_version="2020-11-19"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -48,7 +48,8 @@ function ask( $query, $config ){
 }
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
 mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
-Start-Transcript -Force -IncludeInvocationHeader -Append ("C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log")
+$AutoHardenLog = "C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log"
+Start-Transcript -Force -IncludeInvocationHeader -Append ($AutoHardenLog)
 $DebugPreference = "Continue"
 $VerbosePreference = "Continue"
 $InformationPreference = "Continue"
@@ -258,6 +259,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System" /t REG_D
 # From: Fireice
 # https://www.winhelponline.com/blog/disable-web-results-windows-10-start-menu/
 reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer" /t REG_DWORD /v DisableSearchBoxSuggestions /d 1 /f
+Get-appxpackage -allusers *Microsoft.549981C3F5F10* | Remove-AppxPackage
 }
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /t REG_DWORD /v AllowCortana /d 1 /f
@@ -1139,6 +1141,18 @@ auditpol /set /subcategory:"{0CCE9240-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+
+
+##############################################################################
+# Log all autoruns to detect malware
+# From: https://github.com/palantir/windows-event-forwarding/
+start-job -scriptblock {
+	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
+	7z a -t7z "C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z" "C:\Windows\AutoHarden\autorunsc.csv"
+	if( [System.IO.File]::Exists("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z") ){
+		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
+	}
+}
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
 
 
@@ -1412,12 +1426,16 @@ Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
 Stop-Transcript
+7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog
+if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
+	rm -f $AutoHardenLog
+}
 
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUlgSgrqy8ZbilZNgSR4swxidJ
-# HaWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUl3EFr7UFQd8pGP6zAsn3GX8d
+# sSygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1475,16 +1493,16 @@ Stop-Transcript
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFFsIHFGC6HhLsNoqMAh0QZPAxHa/MA0GCSqGSIb3DQEBAQUA
-# BIICAB3dEq0Kvkok7POOG1bcjmURD1LDaWIalPyahnYzzetX5meRWepNsaACP6vF
-# ZCzxsn/PNs3xl1JkRS5QP9hI4Fhuzz/w2ZgteCkPzxGQGnS8Zzthgdv3P7tnI0aB
-# XFLlueQFIfp9Zl5Iou3MyRIBGeHQpWa6UhLtZQwiAz3Y22ygXMeBh/S3Wgt554C4
-# uOAkzfN5uJCHd9E/6uhnBjffg3GCWkhhRAHyVIeYNhT8LoJ2sHK8sBM4jSymUAkj
-# X+ZsN1agOXc2VbhsLQKy1iHsqZXYmVQrD3uFmpjPO9MdUNy/KaFHD6Rk7p5aadYz
-# XO3cfmjUCKphEqcWjWe+US09SJim1e8M/HcYF5/IkmmQbq+8XLd5uHOAY5yVuFlt
-# Sni6yvJQivQzPqp5d9wPhAFjHFvhBJGsKKMXs+GINryON4bNzfKJyMOOvVGp2Rj3
-# Lrnh4Ce1Q+FbmKZhi8n5q8CMqMaccUlTd0EL6LWsvGoAyi81zGwg3VCQEMF0f1oE
-# 87/XED1RBQRiFrcIVT59ndbtyjDUnGReE7vfsWh/2tI7f4DSy5lzFla60wDyiBMW
-# JtzlHb4KNLOSCskSV/ykc3xGcDLa9YEYAtfOttTGiRHtB82qptu0VwaLn1Gvqou/
-# LlxppwoZ8H0BVOPs723r1hm8b/3UcoWyXEOrhl33EPzcq9Ph
+# KoZIhvcNAQkEMRYEFLvs/pPGAyUoyuntUGXM5+gzN40pMA0GCSqGSIb3DQEBAQUA
+# BIICAFsIrmI6TbyTQC4XkPzSD7skUubW3ZSTFs3EXuacazGDhK4CBU3XLRO9iY4H
+# W7PlNAeB0wV1qKhpFEmY/UdoYEXzpOBfF1U8j1KA+SOtZctYGCuPzaPZIIl4FUmG
+# gQTgiiWQQoIEaA4jSf4Ma4GxeO7N2iz8Nne4dlPcr0BnVKSjqbovXP4mOHq4PcHh
+# tNvD5Bv85gKJOC7i4WCho374IKhGCAyyhD/XwLxDq2KwmeuoSKGbIS8uLChWnz+c
+# PqTsLj9ARjo/8smRueUYqfo1tJk+oQ/Lja93C759RJCMnfuOIxlCyMwiPHG5ImgQ
+# N/OHgEuaYPLcvPJWk3QVtiYm9osFtDxkX8sM0jXzaLS6fs5ZG6zlaKEywUyti3gB
+# f7ybXENGdIPLkhRc679v7iq1wpm6y9DT1I3HwjiI/cXch5Csv7RcArFG0RugqhDH
+# UcSW9gOo37k8GOdtYaIca232yOwy+NWFRGmSBb+GRgANxkG3ZO5GQ/8aib0LtCjj
+# ZwfKySfsQvx45ujY9mn7NwiONRXgEfyLvlpjLPlE/DkbxviBVy9p/uxBs8BpQ5Il
+# OmhCnzxBr2Jlf6wlfW16zbArMpNmSivp2QA1PhrChHMlhVbUBqNY6zYdcE3pheDE
+# HCQ6wvFp4uSBDktIZttCzQ1kWlpM6UB7LlsD5OuakxE9mIUv
 # SIG # End signature block

@@ -165,3 +165,15 @@ auditpol /set /subcategory:"{0CCE9240-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
+
+
+##############################################################################
+# Log all autoruns to detect malware
+# From: https://github.com/palantir/windows-event-forwarding/
+start-job -scriptblock {
+	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
+	7z a -t7z "C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z" "C:\Windows\AutoHarden\autorunsc.csv"
+	if( [System.IO.File]::Exists("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z") ){
+		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
+	}
+}
