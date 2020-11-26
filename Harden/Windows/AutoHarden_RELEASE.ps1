@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-11-19
-$AutoHarden_version="2020-11-19"
+# Update: 2020-11-26
+$AutoHarden_version="2020-11-26"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -276,25 +276,10 @@ Write-Progress -Activity AutoHarden -Status "Crapware-Cortana" -Completed
 
 
 echo "####################################################################################################"
-echo "# Crapware-DisableExplorerAdsense"
+echo "# Crapware-DisableTelemetry-and-ADS"
 echo "####################################################################################################"
-Write-Progress -Activity AutoHarden -Status "Crapware-DisableExplorerAdsense" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableExplorerAdsense"
-# Disable notifications/ads in File Explorer
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowSyncProviderNotifications /t REG_DWORD /d 0 /f
-# Disable “Suggested Apps” in Windows 10
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SystemPaneSuggestionsEnabled /t REG_DWORD /d 0 /f
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v OemPreInstalledAppsEnabled /t REG_DWORD /d 0 /f
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEnabled /t REG_DWORD /d 0 /f
-Write-Progress -Activity AutoHarden -Status "Crapware-DisableExplorerAdsense" -Completed
-
-
-echo "####################################################################################################"
-echo "# Crapware-DisableTelemetry"
-echo "####################################################################################################"
-Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableTelemetry"
+Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry-and-ADS" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Crapware-DisableTelemetry-and-ADS"
 # Disable Windows telemetry
 reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v DoNotShowFeedbackNotifications /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
@@ -314,10 +299,31 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SoftLandingEnabled /t REG_DWORD /d 0  /f
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enabled /t REG_DWORD /d 0 /f
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SystemPaneSuggestionsEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SilentInstalledAppsEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v ContentDeliveryAllowed /t REG_DWORD /d 0 /f
+# Disable “Suggested Apps” in Windows 10
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v OemPreInstalledAppsEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEverEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v RemediationRequired /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContentEnabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-310093Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338393Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-314563Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-353698Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-353694Enabled /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Policies\Microsoft\Windows\CloudContent" /v DisableTailoredExperiencesWithDiagnosticData /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\CloudContent" /v DisableThirdPartySuggestions /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+# Disable notifications/ads in File Explorer
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowSyncProviderNotifications /t REG_DWORD /d 0 /f
+
 # Start Menu: Disable Bing Search Results
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEnabled /t REG_DWORD /d 0 /f
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v CortanaConsent /t REG_DWORD /d 0 /f
-
 
 # Privacy - Disable Microsoft Help feedback.
 reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Assistance\Client\1.0" /v "NoExplicitFeedback" /t REG_DWORD /d 1 /f
@@ -330,8 +336,10 @@ reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\office\16.0\common\feedba
 reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\office\16.0\common\feedback" /v "includescreenshot" /t REG_DWORD /d 0 /f
 
 
+
+
 #https://github.com/crazy-max/WindowsSpyBlocker/raw/master/data/hosts/spy.txt
-Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry" -Completed
+Write-Progress -Activity AutoHarden -Status "Crapware-DisableTelemetry-and-ADS" -Completed
 
 
 echo "####################################################################################################"
@@ -1434,8 +1442,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUl3EFr7UFQd8pGP6zAsn3GX8d
-# sSygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUbd8rOen2Dlffho4JSZtKSrO9
+# nnmgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1493,16 +1501,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFLvs/pPGAyUoyuntUGXM5+gzN40pMA0GCSqGSIb3DQEBAQUA
-# BIICAFsIrmI6TbyTQC4XkPzSD7skUubW3ZSTFs3EXuacazGDhK4CBU3XLRO9iY4H
-# W7PlNAeB0wV1qKhpFEmY/UdoYEXzpOBfF1U8j1KA+SOtZctYGCuPzaPZIIl4FUmG
-# gQTgiiWQQoIEaA4jSf4Ma4GxeO7N2iz8Nne4dlPcr0BnVKSjqbovXP4mOHq4PcHh
-# tNvD5Bv85gKJOC7i4WCho374IKhGCAyyhD/XwLxDq2KwmeuoSKGbIS8uLChWnz+c
-# PqTsLj9ARjo/8smRueUYqfo1tJk+oQ/Lja93C759RJCMnfuOIxlCyMwiPHG5ImgQ
-# N/OHgEuaYPLcvPJWk3QVtiYm9osFtDxkX8sM0jXzaLS6fs5ZG6zlaKEywUyti3gB
-# f7ybXENGdIPLkhRc679v7iq1wpm6y9DT1I3HwjiI/cXch5Csv7RcArFG0RugqhDH
-# UcSW9gOo37k8GOdtYaIca232yOwy+NWFRGmSBb+GRgANxkG3ZO5GQ/8aib0LtCjj
-# ZwfKySfsQvx45ujY9mn7NwiONRXgEfyLvlpjLPlE/DkbxviBVy9p/uxBs8BpQ5Il
-# OmhCnzxBr2Jlf6wlfW16zbArMpNmSivp2QA1PhrChHMlhVbUBqNY6zYdcE3pheDE
-# HCQ6wvFp4uSBDktIZttCzQ1kWlpM6UB7LlsD5OuakxE9mIUv
+# KoZIhvcNAQkEMRYEFG3+aFAWapbZW69xHNpjnkUKwVDDMA0GCSqGSIb3DQEBAQUA
+# BIICAF5n/Qkb7q4CggmJCZvgpcBRg91CZ5bTtdoU15Cr5k2AsoF1Sq3bqxwcUyzX
+# oC1u4ZvFtXPMul9j5j0F9E8DQdX3F13M9cUUzBzBytA32xVzplW+3j3pha2PyTii
+# quCxMXul4MOqzmM4zI9l5n5G/d5iGM1hilzlMC11/kl+uHbOn0vg5zf74BfACpvR
+# GMzoPSUQN1lIhWlBYEGm/UJZZKLru6QgK/vTujzk8xVG85q0b7rxIQoCFT1zqoPw
+# qD/C95DK+1tudgwDQrDyiFnBzIRJwWPytHPKs0bgUsshOCBAL97IX+vSKe6TMl2+
+# kIHB8ZHkGVF5+hcUXiNLj+BwZ4nggsy6wzMdTnFevHHkp5C7IUFFTc2NijnAsXJR
+# cyMdMuwj/pD9QHGcia10JjTwHpiBWHSb2UipP6ptI/BOwRBqJoGf7TU+OqsOPhIQ
+# rEtUAMvlzBJxbYaSsA8QuQWAP9uWkCyPpSmfAqFsFp+TecfWckaCNffLYDdUN38k
+# DAXg+TsVzmjxLNaywG0ZVBguzlNP5KdNRN85rljMOnsIpV8yK9F8GI/F1F3gMNXv
+# eAWVJ5/HqYOAUQU3xVr+5EinrlMkg/dLT4mKU8BqcbclVnJk4aIps3X1W0AvcUpM
+# rq/iDfsZefzrdHYDqSMMwXQ68Xut/CKXHbjkBbEIdPhvDgBz
 # SIG # End signature block
