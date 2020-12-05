@@ -135,7 +135,7 @@ Get-ChildItem ${PSScriptRoot}\src\*.ps1 | foreach {
 echo 'Stop-Transcript' >> $output
 echo '7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog' >> $output
 echo 'if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){' >> $output
-echo '	rm -f $AutoHardenLog' >> $output
+echo '	rm -Force $AutoHardenLog' >> $output
 echo '}' >> $output
 
 if( Set-AuthenticodeSignature -filepath $output -cert $cert -IncludeChain All ){

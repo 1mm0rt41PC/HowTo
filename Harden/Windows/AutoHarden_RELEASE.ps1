@@ -1159,7 +1159,7 @@ start-job -scriptblock {
 	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
 	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
 	if( [System.IO.File]::Exists($autorunsc7z) ){
-		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
+		rm -Force "C:\Windows\AutoHarden\autorunsc.csv"
 	}
 }
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
@@ -1439,14 +1439,14 @@ Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 Stop-Transcript
 7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog
 if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
-	rm -f $AutoHardenLog
+	rm -Force $AutoHardenLog
 }
 
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzGC5k4zjQgsYsNPAq9g2at9u
-# OASgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUBwhMElXobD+DySBNvmcK2CAD
+# /Gegggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1504,16 +1504,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFLG6BtWFR7fNMN8v9e++oSBd0WrXMA0GCSqGSIb3DQEBAQUA
-# BIICAHd0dKKPdoQDvyANV1xs92yXMx7cH4L9XAxY1CLT9tyY9mKnO0aq/WG3FSSx
-# hP3MUodu2I8R3axYswY4z4QsnvNsqMfnDGSrXiCodIJXdScOPLhllK6aBxIeGxcS
-# k0qq7cDk+TsF4yziKSfTsRPLo/UmNHsD7lxPzMyGB6NW/4EzVUjLAqRDMrNTqGP8
-# SFQU/4H1Z/LKRjzVniS0rBgDLnjSbGFoWXvkboeO/RjiW1qFGcfxRzxZhtwpZJfR
-# 7tIU76572CQ+sJ7Wxk4T7edKB5WmkzsxWTVm/Yx1cXja5u3k43wFgCpX8Bki8VVj
-# vBBP5taAuZmsuPmoMyGwMOVuHixBCxdJeg8xeSqN6S943naj0BZfDhC62JSh06RR
-# TTkm/4z0vld7pekmSYrPqmK1KyYgHiA7WRi3vgQakNuQYcFBBb72d3iNQ8gIOtpL
-# NCD94yuD9yYHSxXoa5XDmAAZ+lCObDvRZ4bIpPMiB1H/nusiUT+SIcRZfrA+v8LX
-# Azgtk6ozjuJ47AerJwjaD4NbwKiOkRw75MYJB4i65OnuU0FqwSXHVGF9fI1q6qJz
-# QMg8udyvFBLaNRuXaqhRqp4CgAkAgxFfVMf1ruWTMW3C2VT1BoHrSRPAe5FmFxuD
-# fLCkm7RYgvOyjQ3GDfR0Zxu29Mro95QquB+6A/mdm651iQWF
+# KoZIhvcNAQkEMRYEFDguR6pFCYu1r9HfPuESID1Jp5ktMA0GCSqGSIb3DQEBAQUA
+# BIICAJ3xduolZlNftPJb86ytf6JMa64KoHHJLW9X/oj17nHtxuw1XwqAVC+Vl8UB
+# Nzj9aoIUT443w5Coggady94VTycHSYLorLJN/Hd6gNj46X3UxzCIyv9nnH6TnxmM
+# AIT9J2tUN57a5UgoV9K/34G71Zn7d1mbySrkDB9HNm3ygnhw6RMhRLUy2yPrepS8
+# VNiKgngMPMv4UNLkEtD3H58wkY4pycw4iCup4YrCvI/1Aa7/MpJUD9FqJsA/xjYh
+# dZRFS27ZdaAqNl+NmmvPnItmI+LRxJ5wU3/Bcb2AmtYdXx3/CZUAkDhsOb6Pjhow
+# nSZAXB1XonYEzsmJvPb/wHTTc4uh7sJrb8XhoXrFEiFhtUg8ZjxlE/5Gzm/rFFUd
+# dYBiSfEXRj4cKHoSkby7XzYA00P3tO93ISqOwaIHRUWueEr2sXY4B4nz7S+noWU/
+# D9nFRnJNTkSsnXN5Qy/00lX11B7Io7l9f4byq175RStSHAeCi032gpCRw9U7rKNv
+# sLUTqwOmBkJquE73/8Et5ZgD5fSE+kCDk/diQkr+HOXLf8yusr8umYUs4+AjtU4L
+# GJw83a/ZFlID10J8DwneNyqwFfPQpAxhDtMOfn8KdxjwwShHjGRwlGyikp2hkQB6
+# pPfy+hFyfkooQ/p1q1z3jGIqk6oLhn9N/1lQbw+GYnLBjxve
 # SIG # End signature block

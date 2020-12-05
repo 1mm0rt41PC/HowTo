@@ -175,6 +175,6 @@ start-job -scriptblock {
 	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
 	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
 	if( [System.IO.File]::Exists($autorunsc7z) ){
-		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
+		rm -Force "C:\Windows\AutoHarden\autorunsc.csv"
 	}
 }
