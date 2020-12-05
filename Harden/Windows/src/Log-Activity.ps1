@@ -172,8 +172,9 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 # From: https://github.com/palantir/windows-event-forwarding/
 start-job -scriptblock {
 	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
-	7z a -t7z "C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z" "C:\Windows\AutoHarden\autorunsc.csv"
-	if( [System.IO.File]::Exists("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z") ){
+	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
+	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
+	if( [System.IO.File]::Exists($autorunsc7z) ){
 		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
 	}
 }

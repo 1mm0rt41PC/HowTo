@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2020-11-26
-$AutoHarden_version="2020-11-26"
+# Update: 2020-12-05
+$AutoHarden_version="2020-12-05"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -1156,8 +1156,9 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 # From: https://github.com/palantir/windows-event-forwarding/
 start-job -scriptblock {
 	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
-	7z a -t7z "C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z" "C:\Windows\AutoHarden\autorunsc.csv"
-	if( [System.IO.File]::Exists("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z") ){
+	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
+	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
+	if( [System.IO.File]::Exists($autorunsc7z) ){
 		rm -f "C:\Windows\AutoHarden\autorunsc.csv"
 	}
 }
@@ -1442,8 +1443,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUbd8rOen2Dlffho4JSZtKSrO9
-# nnmgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZ8/WfQwM5Ve0oT1XwEhBGjUp
+# mxugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1501,16 +1502,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFG3+aFAWapbZW69xHNpjnkUKwVDDMA0GCSqGSIb3DQEBAQUA
-# BIICAF5n/Qkb7q4CggmJCZvgpcBRg91CZ5bTtdoU15Cr5k2AsoF1Sq3bqxwcUyzX
-# oC1u4ZvFtXPMul9j5j0F9E8DQdX3F13M9cUUzBzBytA32xVzplW+3j3pha2PyTii
-# quCxMXul4MOqzmM4zI9l5n5G/d5iGM1hilzlMC11/kl+uHbOn0vg5zf74BfACpvR
-# GMzoPSUQN1lIhWlBYEGm/UJZZKLru6QgK/vTujzk8xVG85q0b7rxIQoCFT1zqoPw
-# qD/C95DK+1tudgwDQrDyiFnBzIRJwWPytHPKs0bgUsshOCBAL97IX+vSKe6TMl2+
-# kIHB8ZHkGVF5+hcUXiNLj+BwZ4nggsy6wzMdTnFevHHkp5C7IUFFTc2NijnAsXJR
-# cyMdMuwj/pD9QHGcia10JjTwHpiBWHSb2UipP6ptI/BOwRBqJoGf7TU+OqsOPhIQ
-# rEtUAMvlzBJxbYaSsA8QuQWAP9uWkCyPpSmfAqFsFp+TecfWckaCNffLYDdUN38k
-# DAXg+TsVzmjxLNaywG0ZVBguzlNP5KdNRN85rljMOnsIpV8yK9F8GI/F1F3gMNXv
-# eAWVJ5/HqYOAUQU3xVr+5EinrlMkg/dLT4mKU8BqcbclVnJk4aIps3X1W0AvcUpM
-# rq/iDfsZefzrdHYDqSMMwXQ68Xut/CKXHbjkBbEIdPhvDgBz
+# KoZIhvcNAQkEMRYEFDxsoAD1IGBQYPY2NWa7ihI7mYbWMA0GCSqGSIb3DQEBAQUA
+# BIICAJb5ryN7B+cGZ9DBmJNzHGMcZq3bg9ntNp9pzoaCJLEXf0c7mPjiefcAcRDd
+# f1TnG1hNdtWs8l8ZBHfVB0R9tfulYmGjz4i2MJzN1DLKEmYtPsZVA0Q/Q+7/yEcU
+# 8PxpBphbrQ0xNJC9P3FTXUl/qQ6sCiu6zomZuxuBRZ3eFb42eHd3yeWRN9KM1vfR
+# 2rdFJFqO99el0aM+Sd5IyJaKXeOgjnvmXa+kSXHlEpKuCsKg9lIFXeRhpv3IzHP7
+# h2HD/6ltMxzbwazXxO8rSsIiWM333htusRc0BI0RzYuFDB5jSCQVO3W02PO6RMpK
+# VerkBfmcTLmmlOHWLQfP5KoyDsyT31t2HQUYx0gFA/lcQ/fZPV1gJ2H3Elbf8FqN
+# eBcCNSL3wGCjjKOG9HSAtKOIsMklPERWhbGswZ/cpDMog2F07ffkOX6SWTvm0O65
+# QF0a4tt2rOlejSfFagpwp5oVDtZDvWYQPWUykF2LXqKCe2IRgWOS77Vtn3X+4Bsj
+# 0IASiP5GGQ3JlID5IWPwLRbioHtaElZFvNOLBIvDZ4r2nC8AVVehKgK9bLVISRE6
+# hCmpprGxnDBaxNXm4o84/NlZ6kwhY6W9YhifE0YKHMBIfiYzQ6nwEmhzm5X0PTzD
+# 3Ezgw0eA3CO1xjXe1i947/CwAGJeYzSFzPrzQtHvNrcoO8Pc
 # SIG # End signature block
