@@ -1288,9 +1288,11 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Ti
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 4 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthService" /v Start /t REG_DWORD /d 4 /f
 # https://twitter.com/jonasLyk/status/1293815234805760000?s=20
-Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
-fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
-# Can crash WINDOWS. This part will be removed in december 2020 !!!!
+
+
+#Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
+#fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
+## Can crash WINDOWS. This part will be removed in december 2020 !!!!
 #cmd /c 'mklink "C:\ProgramData\Microsoft\Windows Defender:omgwtfbbq" "\??\NUL"'
 }
 else{
@@ -1443,8 +1445,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZ8/WfQwM5Ve0oT1XwEhBGjUp
-# mxugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQURj5Ph2DQqESYPajIpeVttIq5
+# jeygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1502,16 +1504,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFDxsoAD1IGBQYPY2NWa7ihI7mYbWMA0GCSqGSIb3DQEBAQUA
-# BIICAJb5ryN7B+cGZ9DBmJNzHGMcZq3bg9ntNp9pzoaCJLEXf0c7mPjiefcAcRDd
-# f1TnG1hNdtWs8l8ZBHfVB0R9tfulYmGjz4i2MJzN1DLKEmYtPsZVA0Q/Q+7/yEcU
-# 8PxpBphbrQ0xNJC9P3FTXUl/qQ6sCiu6zomZuxuBRZ3eFb42eHd3yeWRN9KM1vfR
-# 2rdFJFqO99el0aM+Sd5IyJaKXeOgjnvmXa+kSXHlEpKuCsKg9lIFXeRhpv3IzHP7
-# h2HD/6ltMxzbwazXxO8rSsIiWM333htusRc0BI0RzYuFDB5jSCQVO3W02PO6RMpK
-# VerkBfmcTLmmlOHWLQfP5KoyDsyT31t2HQUYx0gFA/lcQ/fZPV1gJ2H3Elbf8FqN
-# eBcCNSL3wGCjjKOG9HSAtKOIsMklPERWhbGswZ/cpDMog2F07ffkOX6SWTvm0O65
-# QF0a4tt2rOlejSfFagpwp5oVDtZDvWYQPWUykF2LXqKCe2IRgWOS77Vtn3X+4Bsj
-# 0IASiP5GGQ3JlID5IWPwLRbioHtaElZFvNOLBIvDZ4r2nC8AVVehKgK9bLVISRE6
-# hCmpprGxnDBaxNXm4o84/NlZ6kwhY6W9YhifE0YKHMBIfiYzQ6nwEmhzm5X0PTzD
-# 3Ezgw0eA3CO1xjXe1i947/CwAGJeYzSFzPrzQtHvNrcoO8Pc
+# KoZIhvcNAQkEMRYEFMsB5mLD3U3cpyUKYeCb9TXqiZ54MA0GCSqGSIb3DQEBAQUA
+# BIICAF0RxFLvvMg7rz95C6fhorePm9MydI9OTZYnzwhdBw/t0VLVY6VtPf3+v25w
+# H/WaHtSEuqaAzr3aRBvaOrs9Ur2RAvjcVHUUdmCZrPVGfyEr05bp13KHE8hTbrHB
+# II4uV2aqYoXyKeVbh716gaDneFoupWTL5Fok2d9WQWEE8e5F+QwKAPO5ScuyEfH4
+# tWY/OzIpiwjzwKez049aEiLbOG+G1oXEliaYw62GydICWx3tdvk+CP0kXW6ze9Q0
+# OEzYgPbzcJsEbBQNpGlM+ei9OnuM+6fAO5KNGoWbZoACBL2E1Auwm/K45R3Wtb9Z
+# wNCCHcEY9s9gq9X9CwOUbTXxRO2yfjjUhbp50S34ti8fM7jemcMXQpN7lozRvb/T
+# z5ArIrfpaEXmmDXxCyQnfYYVvBISxPLoGvY9QtPQWxPGtdmG5+Ntr+hYEuAvt5FD
+# nPTmdF2+QAv6G8qvN5LoDYTZikoXbNOTx91+1q1MjmpU18SskEmeHjYXb1Lpe+8A
+# TtMuS2cEsg9ekU+jfbPr3gI2lzyiN6iE2ikzD0SJUvzAxLC6u650YN2mx9i2Dm62
+# K8IgxLUwDOLZ4vzM3enph2nefKlArIaocxm04uJoX8h0jizohTSqYhEKXdKKjxEg
+# dgrUtBsmcSQVBjNvKRXLwj+Y0368/d3Jw/EHOMrvKW2xtAJ3
 # SIG # End signature block
