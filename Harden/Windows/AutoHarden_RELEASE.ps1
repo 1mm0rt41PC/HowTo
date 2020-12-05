@@ -76,7 +76,7 @@ if( ask "Execute AutoHarden every day at 08h00 AM" "0-AutoUpdate.ask" ){
 $Trigger = New-ScheduledTaskTrigger -At 08:00am -Daily
 #$Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec AllSigned -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
 $Action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-exec ByPass -nop -File C:\Windows\AutoHarden\AutoHarden.ps1 > C:\Windows\AutoHarden\ScheduledTask.log"
-$Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable
+$Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 if( ask "Auto update AutoHarden every day at 08h00 AM" "0-AutoUpdateFromWeb.ask" ){
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
@@ -1445,8 +1445,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQURj5Ph2DQqESYPajIpeVttIq5
-# jeygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzGC5k4zjQgsYsNPAq9g2at9u
+# OASgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1504,16 +1504,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFMsB5mLD3U3cpyUKYeCb9TXqiZ54MA0GCSqGSIb3DQEBAQUA
-# BIICAF0RxFLvvMg7rz95C6fhorePm9MydI9OTZYnzwhdBw/t0VLVY6VtPf3+v25w
-# H/WaHtSEuqaAzr3aRBvaOrs9Ur2RAvjcVHUUdmCZrPVGfyEr05bp13KHE8hTbrHB
-# II4uV2aqYoXyKeVbh716gaDneFoupWTL5Fok2d9WQWEE8e5F+QwKAPO5ScuyEfH4
-# tWY/OzIpiwjzwKez049aEiLbOG+G1oXEliaYw62GydICWx3tdvk+CP0kXW6ze9Q0
-# OEzYgPbzcJsEbBQNpGlM+ei9OnuM+6fAO5KNGoWbZoACBL2E1Auwm/K45R3Wtb9Z
-# wNCCHcEY9s9gq9X9CwOUbTXxRO2yfjjUhbp50S34ti8fM7jemcMXQpN7lozRvb/T
-# z5ArIrfpaEXmmDXxCyQnfYYVvBISxPLoGvY9QtPQWxPGtdmG5+Ntr+hYEuAvt5FD
-# nPTmdF2+QAv6G8qvN5LoDYTZikoXbNOTx91+1q1MjmpU18SskEmeHjYXb1Lpe+8A
-# TtMuS2cEsg9ekU+jfbPr3gI2lzyiN6iE2ikzD0SJUvzAxLC6u650YN2mx9i2Dm62
-# K8IgxLUwDOLZ4vzM3enph2nefKlArIaocxm04uJoX8h0jizohTSqYhEKXdKKjxEg
-# dgrUtBsmcSQVBjNvKRXLwj+Y0368/d3Jw/EHOMrvKW2xtAJ3
+# KoZIhvcNAQkEMRYEFLG6BtWFR7fNMN8v9e++oSBd0WrXMA0GCSqGSIb3DQEBAQUA
+# BIICAHd0dKKPdoQDvyANV1xs92yXMx7cH4L9XAxY1CLT9tyY9mKnO0aq/WG3FSSx
+# hP3MUodu2I8R3axYswY4z4QsnvNsqMfnDGSrXiCodIJXdScOPLhllK6aBxIeGxcS
+# k0qq7cDk+TsF4yziKSfTsRPLo/UmNHsD7lxPzMyGB6NW/4EzVUjLAqRDMrNTqGP8
+# SFQU/4H1Z/LKRjzVniS0rBgDLnjSbGFoWXvkboeO/RjiW1qFGcfxRzxZhtwpZJfR
+# 7tIU76572CQ+sJ7Wxk4T7edKB5WmkzsxWTVm/Yx1cXja5u3k43wFgCpX8Bki8VVj
+# vBBP5taAuZmsuPmoMyGwMOVuHixBCxdJeg8xeSqN6S943naj0BZfDhC62JSh06RR
+# TTkm/4z0vld7pekmSYrPqmK1KyYgHiA7WRi3vgQakNuQYcFBBb72d3iNQ8gIOtpL
+# NCD94yuD9yYHSxXoa5XDmAAZ+lCObDvRZ4bIpPMiB1H/nusiUT+SIcRZfrA+v8LX
+# Azgtk6ozjuJ47AerJwjaD4NbwKiOkRw75MYJB4i65OnuU0FqwSXHVGF9fI1q6qJz
+# QMg8udyvFBLaNRuXaqhRqp4CgAkAgxFfVMf1ruWTMW3C2VT1BoHrSRPAe5FmFxuD
+# fLCkm7RYgvOyjQ3GDfR0Zxu29Mro95QquB+6A/mdm651iQWF
 # SIG # End signature block
