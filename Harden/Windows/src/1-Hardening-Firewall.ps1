@@ -48,7 +48,7 @@ if( (ask "Block communication for evil tools ?" "block-communication-for-powersh
 	blockExe "Dfsvc" "C:\Windows\Microsoft.NET\*\*\Dfsvc.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\System32\Presentationhost.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\SysWOW64\Presentationhost.exe" "LOLBAS" $true
-	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true
+#	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true# Fixed in the latest version of Defender
 }else{
 	Get-NetFirewallRule -Group "AutoHarden-LOLBAS" | Remove-NetFirewallRule
 }
