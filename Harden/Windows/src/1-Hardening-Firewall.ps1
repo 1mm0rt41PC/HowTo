@@ -48,7 +48,10 @@ if( (ask "Block communication for evil tools ?" "block-communication-for-powersh
 	blockExe "Dfsvc" "C:\Windows\Microsoft.NET\*\*\Dfsvc.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\System32\Presentationhost.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\SysWOW64\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Intel Graphics Control Panel" "C:\Windows\System32\driverstore\filerepository\*\GfxDownloadWrapper.exe" "LOLBAS" $true
 #	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true# Fixed in the latest version of Defender
+#	https://malware.news/t/a-deep-dive-into-rundll32-exe/43840
+#	blockExe "Rundll32" "C:\Windows\System32\rundll32.exe" "LOLBAS" $true
 }else{
 	Get-NetFirewallRule -Group "AutoHarden-LOLBAS" | Remove-NetFirewallRule
 }

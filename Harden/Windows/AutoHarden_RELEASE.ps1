@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-02-12
-$AutoHarden_version="2021-02-12"
+# Update: 2021-04-09
+$AutoHarden_version="2021-04-09"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -151,7 +151,10 @@ if( (ask "Block communication for evil tools ?" "block-communication-for-powersh
 	blockExe "Dfsvc" "C:\Windows\Microsoft.NET\*\*\Dfsvc.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\System32\Presentationhost.exe" "LOLBAS" $true
 	blockExe "Presentationhost" "C:\Windows\SysWOW64\Presentationhost.exe" "LOLBAS" $true
+	blockExe "Intel Graphics Control Panel" "C:\Windows\System32\driverstore\filerepository\*\GfxDownloadWrapper.exe" "LOLBAS" $true
 #	blockExe "Windows Defender" "C:\ProgramData\Microsoft\Windows Defender\platform\*\MpCmdRun.exe" "LOLBAS" $true# Fixed in the latest version of Defender
+#	https://malware.news/t/a-deep-dive-into-rundll32-exe/43840
+#	blockExe "Rundll32" "C:\Windows\System32\rundll32.exe" "LOLBAS" $true
 }else{
 	Get-NetFirewallRule -Group "AutoHarden-LOLBAS" | Remove-NetFirewallRule
 }
@@ -813,6 +816,9 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Disab
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareWks /t REG_DWORD /d 0 /f
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v AutoShareServer /t REG_DWORD /d 0 /f
 
+# Block CobaltStrike from using \\evil.kali\tmp$\becon.exe
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation" /v AllowInsecureGuestAuth /t REG_DWORD /d 0 /f
+
 #Set-SmbServerConfiguration -AnnounceServer $false -Force
 #Get-SmbServerConfiguration
 
@@ -1306,6 +1312,16 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
 
 echo "####################################################################################################"
+echo "# Optimiz-DisableReservedStorageState"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Optimiz-DisableReservedStorageState" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-DisableReservedStorageState"
+# From: https://www.windowslatest.com/2020/03/15/windows-10-will-finally-allow-you-to-reclaim-reserved-storage/#:~:text=If%20you%20clean%20install%20Windows,for%20your%20additional%20system%20files
+DISM.exe /Online /Set-ReservedStorageState /State:Disabled
+Write-Progress -Activity AutoHarden -Status "Optimiz-DisableReservedStorageState" -Completed
+
+
+echo "####################################################################################################"
 echo "# Software-install-notepad++"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
@@ -1445,8 +1461,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUT9snyc/Fgztfccd/SfRel7d6
-# qkagggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTp4xY+5dUNtN7CQIGXmMgWwQ
+# XwWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1504,16 +1520,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFA6FQMIawDumr88WlBo5UtUYNNCgMA0GCSqGSIb3DQEBAQUA
-# BIICAF2idJ6I5XNks6C8tZmlFD1NIdJigH36VP2hYvciw3P5LjYt5V51PSghqx5K
-# XErYyGiev4/Hlsz2EzHpSCoBpcQofVqCJ8OHhKiJKPljvZM6qeTrW1fJ6XjiZ/e5
-# jsqlrfaUTw5wZoF/Sb03XmAx9uCk/T//wvmjzyeHHvSo+3VImbqks/xEBChAHLRP
-# GxqxIpWTz7CTn2hyHdYs6UK5ALg2eFSfgemMo5CRvuzEN71M+1/jDT2fYUY6efZL
-# uR/73wBMab1xyhQwD27gS/aH5Al1oHzp1Y8rOq81v0Qgx14I9BYQm5kC99IzKVrj
-# L6R0VQsJr1zdJ54YQX8cl/ubkx4WospL8KuhQkDo+lU5Ony3g1OK0FkpXBnPJjAo
-# fwCtvt6qZHXcykaM2Ai3DkdRXO/XJZdSCJwEMTvuHliAvSYDS887CkGkHl0LAP//
-# LTYkeXkNj3X32n4z++iNTN+b6XmsKFTC21FdSUZkjVaHdBJdkd0SGFbY0UE6+ho2
-# taPiqYPVgv9gt5uTWFf5nBmAzRZpBEtvPl3rT2UptMOpB/Hlu1e13JNHRibvXQQq
-# B59VdOjcuvcDaotigfN/H2C6Xtl3qUfz4h0sTdnXrcXffQ0H0tG9sA27iN186DqG
-# SM+OPuZ/s12QT2pE+evywhy9W/eWp7lY+uG6p3bGOiO/MlnG
+# KoZIhvcNAQkEMRYEFGA6Dq9fNg3psykeFSN0d8cplejaMA0GCSqGSIb3DQEBAQUA
+# BIICAJNMNkypIkCxbwHHSLKnla36l3y5ieiQa0YAsEIC5sM/HqOvp0ZVvpw54tNg
+# r74fdkZ6Zek3/z2pPYu/NsX85T2WjzwY+/CqrYZ9+V2mZX+hDFvbeN3NvAzKgK0g
+# CMm6GVfVU6MHpkHB9WQD1qeXKfYvV7T7HGEQf0EPXyXwcRz4oEeeY+H6OaPU8hFv
+# Dqc6ygz/g6jPfQG5bOPJbuhr05vyw2WDm+3gKo5oDB+xwg1jdoxS+dx8GclAACt3
+# +C+VgZ8FKhtt7jayn6fZJrO+YZNyZ00FShJLAdNeqjyBUaFTUnfCtGRuoydVodFw
+# 8ePe1C9QyoPvcF5x4H1mm/wt+XDc06Wf1qT2ob06QHFxPz6E38EPMe08JGPth7z0
+# +v0PFdz17zzEkM38/2X5pvRRirIbGlsbVG0H9umLaW6eRQMHzSnm98UQ266EUaMD
+# RFHglIfHj/npLzvqeScQgPurHlWVLvqY2/40j+N4tX8GhCYknNJWJBUlVX6Ler03
+# mCFJiI6oPNsfPocBgWzwb5AcUPFsEnKh/rwJ8nMUCrUjk4hyZ+KgJMqrDNzsm+tJ
+# 9V5pfroxmh2cZpd8+zvTZQBQmNCTDhaPk0XcgE3NDAYomrcwlSHYhgt06G2DdViZ
+# QV80BsOMhCMH+QLfXVSM2xayGOxCXRVQY1WQ/6O0hkT7CQGI
 # SIG # End signature block
