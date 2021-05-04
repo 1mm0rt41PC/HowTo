@@ -170,11 +170,11 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 ##############################################################################
 # Log all autoruns to detect malware
 # From: https://github.com/palantir/windows-event-forwarding/
-start-job -scriptblock {
-	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
-	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
-	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
-	if( [System.IO.File]::Exists($autorunsc7z) ){
-		rm -Force "C:\Windows\AutoHarden\autorunsc.csv"
+$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
+start-job -Name LogActivity -scriptblock {
+	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > ($autorunsc7z+".csv")	
+	7z a -t7z ($autorunsc7z+".7z")	($autorunsc7z+".csv")	
+	if( [System.IO.File]::Exists($autorunsc7z+".7z") ){
+		rm -Force ($autorunsc7z+".csv")	
 	}
 }

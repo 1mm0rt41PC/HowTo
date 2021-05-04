@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-04-09
-$AutoHarden_version="2021-04-09"
+# Update: 2021-05-04
+$AutoHarden_version="2021-05-04"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -1160,12 +1160,12 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 ##############################################################################
 # Log all autoruns to detect malware
 # From: https://github.com/palantir/windows-event-forwarding/
-start-job -scriptblock {
-	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > C:\Windows\AutoHarden\autorunsc.csv
-	$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd")+".7z")
-	7z a -t7z $autorunsc7z "C:\Windows\AutoHarden\autorunsc.csv"
-	if( [System.IO.File]::Exists($autorunsc7z) ){
-		rm -Force "C:\Windows\AutoHarden\autorunsc.csv"
+$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
+start-job -Name LogActivity -scriptblock {
+	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > ($autorunsc7z+".csv")	
+	7z a -t7z ($autorunsc7z+".7z")	($autorunsc7z+".csv")	
+	if( [System.IO.File]::Exists($autorunsc7z+".7z") ){
+		rm -Force ($autorunsc7z+".csv")	
 	}
 }
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
@@ -1452,6 +1452,7 @@ choco upgrade all -y
 Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
+Wait-Job -Name LogActivity
 Stop-Transcript
 7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog
 if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
@@ -1461,8 +1462,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTp4xY+5dUNtN7CQIGXmMgWwQ
-# XwWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUoibLjxO1442IVLaL6zLWiKdN
+# 8zSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1520,16 +1521,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFGA6Dq9fNg3psykeFSN0d8cplejaMA0GCSqGSIb3DQEBAQUA
-# BIICAJNMNkypIkCxbwHHSLKnla36l3y5ieiQa0YAsEIC5sM/HqOvp0ZVvpw54tNg
-# r74fdkZ6Zek3/z2pPYu/NsX85T2WjzwY+/CqrYZ9+V2mZX+hDFvbeN3NvAzKgK0g
-# CMm6GVfVU6MHpkHB9WQD1qeXKfYvV7T7HGEQf0EPXyXwcRz4oEeeY+H6OaPU8hFv
-# Dqc6ygz/g6jPfQG5bOPJbuhr05vyw2WDm+3gKo5oDB+xwg1jdoxS+dx8GclAACt3
-# +C+VgZ8FKhtt7jayn6fZJrO+YZNyZ00FShJLAdNeqjyBUaFTUnfCtGRuoydVodFw
-# 8ePe1C9QyoPvcF5x4H1mm/wt+XDc06Wf1qT2ob06QHFxPz6E38EPMe08JGPth7z0
-# +v0PFdz17zzEkM38/2X5pvRRirIbGlsbVG0H9umLaW6eRQMHzSnm98UQ266EUaMD
-# RFHglIfHj/npLzvqeScQgPurHlWVLvqY2/40j+N4tX8GhCYknNJWJBUlVX6Ler03
-# mCFJiI6oPNsfPocBgWzwb5AcUPFsEnKh/rwJ8nMUCrUjk4hyZ+KgJMqrDNzsm+tJ
-# 9V5pfroxmh2cZpd8+zvTZQBQmNCTDhaPk0XcgE3NDAYomrcwlSHYhgt06G2DdViZ
-# QV80BsOMhCMH+QLfXVSM2xayGOxCXRVQY1WQ/6O0hkT7CQGI
+# KoZIhvcNAQkEMRYEFEQnUxPIY+tGTg7scBafMuYaxBQEMA0GCSqGSIb3DQEBAQUA
+# BIICAKDG4EfRqahBZ880u5y4j0vZUT3I7w1nKR3Ga9AKHdxVeeER5nB3YsDIxiJF
+# st0/vxU/O0OCi4i/0W6VZqCbXo++dmWxZLNlJYcqW+IJCj9lWsBDsk/615mwM9TW
+# zcLGF5ghuf6zBi6WPDKqcM52HRMdKjVk6zGNoRee5kbkWPVqDC1zYhJ5+66j2ykt
+# 2cg1ngiixo5EyU2ZAPFXsMIpJxg4DtxYwq3jHBfQwHHgEztnpxYCN88o4f8XaJAu
+# ZGCNE2o1ieyT7btGV9yRdGnHHps3OVxUagTFXhvzfOvuJi4qtmwBxUDxg8u3aP+a
+# yeiMz2sD3ztfxno3MHiTBncKGSBcx3vQDsXLXa/lbFn1wnDgPg8HdP0PtLkbpuOk
+# CnyMgBz+SMFRRG+n5GkykO+UzC6Set73Oc+TFfop/ODpjtugC4RrjQkQt+kGlhlF
+# j0iHTzmxvh+3UH4Z2q+BOFxJ3HFtZNaJxxkauf8XhdzSWZd7YGGB+vm7HEO6GiVN
+# 8H1X5reOhsr17wLlQEWgsLYzVlkEQyD9iRmEagv8A33ltYpo5nXztkJDa8QA9bRI
+# TENLVFADk4JLLeBFhXjcNjge7Ux3GdoCdrarDZPfFnwhjLJUZKOJYpkHPNT5qAY4
+# FAKXbA+gjP88Sh3QodxIDemMpoeXjJUpMF3EC+ZENMLRyxmY
 # SIG # End signature block

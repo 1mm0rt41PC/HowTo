@@ -132,6 +132,7 @@ Get-ChildItem ${PSScriptRoot}\src\*.ps1 | foreach {
 	echo ''
 	echo ''
 } >> $output
+echo 'Wait-Job -Name LogActivity' >> $output
 echo 'Stop-Transcript' >> $output
 echo '7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog' >> $output
 echo 'if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){' >> $output
