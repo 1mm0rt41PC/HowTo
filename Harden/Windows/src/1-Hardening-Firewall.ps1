@@ -64,6 +64,8 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\root\*\winword.exe" "Office" $true
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\root\*\winword.exe" "Office" $true
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\excelcnv.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\*\excelcnv.exe" "Office" $true
 	
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\root\*\Powerpnt.exe" "Office" $true

@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-05-04
-$AutoHarden_version="2021-05-04"
+# Update: 2021-05-25
+$AutoHarden_version="2021-05-25"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -167,6 +167,8 @@ if( (ask "Block communication for Word and Excel ?" "block-communication-for-exc
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\root\*\winword.exe" "Office" $true
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\root\*\winword.exe" "Office" $true
 	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\winword.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\excelcnv.exe" "Office" $true
+	blockExe "Word" "C:\Program Files*\Microsoft Office*\*\*\excelcnv.exe" "Office" $true
 	
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\root\*\Powerpnt.exe" "Office" $true
 	blockExe "PowerPoint" "C:\Program Files*\Microsoft Office*\*\root\*\Powerpnt.exe" "Office" $true
@@ -1462,8 +1464,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUoibLjxO1442IVLaL6zLWiKdN
-# 8zSgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMHAH6+ZxsXM8yIILz2tS5lO0
+# zD+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1521,16 +1523,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFEQnUxPIY+tGTg7scBafMuYaxBQEMA0GCSqGSIb3DQEBAQUA
-# BIICAKDG4EfRqahBZ880u5y4j0vZUT3I7w1nKR3Ga9AKHdxVeeER5nB3YsDIxiJF
-# st0/vxU/O0OCi4i/0W6VZqCbXo++dmWxZLNlJYcqW+IJCj9lWsBDsk/615mwM9TW
-# zcLGF5ghuf6zBi6WPDKqcM52HRMdKjVk6zGNoRee5kbkWPVqDC1zYhJ5+66j2ykt
-# 2cg1ngiixo5EyU2ZAPFXsMIpJxg4DtxYwq3jHBfQwHHgEztnpxYCN88o4f8XaJAu
-# ZGCNE2o1ieyT7btGV9yRdGnHHps3OVxUagTFXhvzfOvuJi4qtmwBxUDxg8u3aP+a
-# yeiMz2sD3ztfxno3MHiTBncKGSBcx3vQDsXLXa/lbFn1wnDgPg8HdP0PtLkbpuOk
-# CnyMgBz+SMFRRG+n5GkykO+UzC6Set73Oc+TFfop/ODpjtugC4RrjQkQt+kGlhlF
-# j0iHTzmxvh+3UH4Z2q+BOFxJ3HFtZNaJxxkauf8XhdzSWZd7YGGB+vm7HEO6GiVN
-# 8H1X5reOhsr17wLlQEWgsLYzVlkEQyD9iRmEagv8A33ltYpo5nXztkJDa8QA9bRI
-# TENLVFADk4JLLeBFhXjcNjge7Ux3GdoCdrarDZPfFnwhjLJUZKOJYpkHPNT5qAY4
-# FAKXbA+gjP88Sh3QodxIDemMpoeXjJUpMF3EC+ZENMLRyxmY
+# KoZIhvcNAQkEMRYEFICrD4XZSk1aaGRbDe9zx8Gu/DBEMA0GCSqGSIb3DQEBAQUA
+# BIICAAj3VHvvvrem7tlgx+LQvQUvLYQBxwS7b9wyU/tnjRNj0kBYqOSa+IEBG4op
+# 6K+0waNLsOoQJBEqfvgWcKysCwrqakP2XDLCUmVSAf4foYC/jE3BHmCnXMd5C3pE
+# IfTs+ZneNI9VjkZYiGst2y1Uh0/Tp9lbtUEM/7XARgzEVlZf8/lIXfe5UiGv7vrB
+# WekdIIPJhmsuTLbjv3mhJ10RN66ZvcsIpyCM/EGnuVFpeVShn8Nzc9iTPW/vTcLL
+# gTM2PJiWfbCGMEG3r+CxaflCwnCHKsGyMNZ0F4AdA47hjGpkR6d8R2xIpel2OSJ1
+# fy0LpxziA1kepknCYExor1N3r4kxvXKmsG3fE9UbCf4+3vjuhT9Xy9AKm09LU+e1
+# UbtARw2Z/BSTv5Jlcix4Xr34z0MYVqJ72q0tSTTI8OIhxEc93EfB3lyj2OIXvRB1
+# xmipos8leXJy4GH/Nkpb+O8O1HRGPttGGGEw0IBP6w47Ngul9RBd90QyCm0ciUFk
+# QMf072+JTS+CJf4WN8I+HjjzHOCFF7ljtdj69d/UrpkSLejrHoGRixuQMyGR641G
+# hZd5OfHNDvo5J6wNKOvtvp9c6tYKXVqtt9h8OtNxzGz4/yZTioyuGkPIcPdECHeE
+# p4hkSqPJwfKsb/5+BB1yAYdgjbhteT5QADatwYz7FlnP0SC2
 # SIG # End signature block
