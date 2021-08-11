@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-05-25
-$AutoHarden_version="2021-05-25"
+# Update: 2021-08-11
+$AutoHarden_version="2021-08-11"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -432,6 +432,16 @@ Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder"
 
 
 echo "####################################################################################################"
+echo "# Fix-HiveNightmare"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Fix-HiveNightmare" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Fix-HiveNightmare"
+# https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-36934
+icacls $env:windir\system32\config\*.* /inheritance:e
+Write-Progress -Activity AutoHarden -Status "Fix-HiveNightmare" -Completed
+
+
+echo "####################################################################################################"
 echo "# Harden-DisableShortPath"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Harden-DisableShortPath" -PercentComplete 0
@@ -647,6 +657,21 @@ Write-Progress -Activity AutoHarden -Status "Hardening-BlockUntrustedFonts" -Com
 
 
 echo "####################################################################################################"
+echo "# Hardening-CertPaddingCheck"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-CertPaddingCheck" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-CertPaddingCheck"
+# To inject shellcode inside signed binaries : https://github.com/med0x2e/SigFlip
+# MS13-098 - Vulnerability in Windows Could Allow Remote Code Execution - https://docs.microsoft.com/en-us/security-updates/SecurityBulletins/2013/ms13-098?redirectedfrom=MSDN
+#
+# IMPACT: Impact of enabling the functionality changes included in the MS13-098 update. Non-conforming binaries will appear unsigned and, therefore, be rendered untrusted.
+#
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Cryptography\Wintrust\Config" /t REG_DWORD /v EnableCertPaddingCheck /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Cryptography\Wintrust\Config" /t REG_DWORD /v EnableCertPaddingCheck /d 1 /f
+Write-Progress -Activity AutoHarden -Status "Hardening-CertPaddingCheck" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-DisableCABlueCoat"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -PercentComplete 0
@@ -854,11 +879,11 @@ reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /t REG_DWORD /v WpadOverride /d 0 /f
 RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
 ipconfig /flushdns
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
+$_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 wpad"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
 }
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
+$_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 ProxySrv"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
 }
@@ -1464,8 +1489,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMHAH6+ZxsXM8yIILz2tS5lO0
-# zD+gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUe1jw0C9XHVlfyg/zqZUmHO0q
+# fTCgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1523,16 +1548,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFICrD4XZSk1aaGRbDe9zx8Gu/DBEMA0GCSqGSIb3DQEBAQUA
-# BIICAAj3VHvvvrem7tlgx+LQvQUvLYQBxwS7b9wyU/tnjRNj0kBYqOSa+IEBG4op
-# 6K+0waNLsOoQJBEqfvgWcKysCwrqakP2XDLCUmVSAf4foYC/jE3BHmCnXMd5C3pE
-# IfTs+ZneNI9VjkZYiGst2y1Uh0/Tp9lbtUEM/7XARgzEVlZf8/lIXfe5UiGv7vrB
-# WekdIIPJhmsuTLbjv3mhJ10RN66ZvcsIpyCM/EGnuVFpeVShn8Nzc9iTPW/vTcLL
-# gTM2PJiWfbCGMEG3r+CxaflCwnCHKsGyMNZ0F4AdA47hjGpkR6d8R2xIpel2OSJ1
-# fy0LpxziA1kepknCYExor1N3r4kxvXKmsG3fE9UbCf4+3vjuhT9Xy9AKm09LU+e1
-# UbtARw2Z/BSTv5Jlcix4Xr34z0MYVqJ72q0tSTTI8OIhxEc93EfB3lyj2OIXvRB1
-# xmipos8leXJy4GH/Nkpb+O8O1HRGPttGGGEw0IBP6w47Ngul9RBd90QyCm0ciUFk
-# QMf072+JTS+CJf4WN8I+HjjzHOCFF7ljtdj69d/UrpkSLejrHoGRixuQMyGR641G
-# hZd5OfHNDvo5J6wNKOvtvp9c6tYKXVqtt9h8OtNxzGz4/yZTioyuGkPIcPdECHeE
-# p4hkSqPJwfKsb/5+BB1yAYdgjbhteT5QADatwYz7FlnP0SC2
+# KoZIhvcNAQkEMRYEFIZBznW2tjRlUrACXzaGSnvBRZRjMA0GCSqGSIb3DQEBAQUA
+# BIICAHiu/sZ/PDVvc94lmj/El3Vpdw3hT/i73U23IGW1e6q1dOS2BTNirLwhcEYE
+# jReP2VzhkFLnkZo8fclZm38V3tPJ1kQDijKy+//S2kwFnEpu9J7eQuK3B7LUv+I7
+# M/bQcXL09JYNxr1vuzODDpUMV/JQZ2TQBCa8vSlKu4jPgfzbWyPEkmvlLuPYyfHS
+# GunZUFar5+0sjcwQFG4PfzprmCXov2plPbr+AKWRgdJLUrBTxWk+6V8u/I7TLF9G
+# eoyoluf0YgkD0SL76HmH4dgd+hAEV/2rhm+0bIYOxgBjDWUSS1l6BqCplh2ZTxBi
+# CiWT1qJ33JVigHqEPtY9U+RJ0avVgqZmPpgdeQNBkKuxk4OwxmXs58nA1XhFLSvS
+# gfvRh0VLvgeh0w3/PjF9uKoCaKUXFoUYHNA/rk/22yB5A/PHB6Kzbqk4feRZIjmN
+# v2xBrEV5FiPrJl3DIh81zTfgpk3F1XPKfH26SqY8L6Uxd40Cs8XW3MylspJkel/L
+# B7CDqV7xkUdau7TCUxC5dITdq4jYF5p1a2NXL+3m355n734G2fd6VJStDay7cOyR
+# Rm9qBtlc8TCS3uTZ4Cra3U9h9x20bg8bjFgbju5PJh3c0bg1btT2Tz/IUji/cFci
+# UeUeJ99B6eNaB9vVOmY2jPia1zjIxBOL9hapqvOwCJ+aeuz8
 # SIG # End signature block

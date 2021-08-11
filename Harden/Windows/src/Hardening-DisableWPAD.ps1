@@ -6,11 +6,11 @@ reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /t REG_DWORD /v WpadOverride /d 0 /f
 RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
 ipconfig /flushdns
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 wpad"
+$_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 wpad"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
 }
-$_wpad=cat C:\Windows\System32\drivers\etc\hosts | findstr /c:"0.0.0.0 ProxySrv"
+$_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 ProxySrv"
 if( [string]::IsNullOrEmpty($_wpad) ){
 	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
 }
