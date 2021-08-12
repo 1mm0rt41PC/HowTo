@@ -8,9 +8,9 @@ RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
 ipconfig /flushdns
 $_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 wpad"
 if( [string]::IsNullOrEmpty($_wpad) ){
-	echo "`r`n0.0.0.0 wpad" >> C:\Windows\System32\drivers\etc\hosts
+	[System.IO.File]::AppendAllText("C:\Windows\System32\drivers\etc\hosts", "`r`n0.0.0.0 wpad", (New-Object System.Text.UTF8Encoding $False));
 }
 $_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 ProxySrv"
 if( [string]::IsNullOrEmpty($_wpad) ){
-	echo "`r`n0.0.0.0 ProxySrv" >> C:\Windows\System32\drivers\etc\hosts
+	[System.IO.File]::AppendAllText("C:\Windows\System32\drivers\etc\hosts", "`r`n0.0.0.0 ProxySrv", (New-Object System.Text.UTF8Encoding $False));
 }
