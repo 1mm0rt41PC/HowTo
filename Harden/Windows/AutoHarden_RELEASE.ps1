@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-08-12
-$AutoHarden_version="2021-08-12"
+# Update: 2021-08-13
+$AutoHarden_version="2021-08-13"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -245,6 +245,17 @@ Disable-BitLocker -MountPoint 'C:'
 manage-bde -off C:
 }
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
+
+
+echo "####################################################################################################"
+echo "# 2-Hardening-Powershell"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "2-Hardening-Powershell" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 2-Hardening-Powershell"
+# Disable Powershellv2
+DISM /Online /Disable-Feature:MicrosoftWindowsPowerShellV2Root /NoRestart
+Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root -NoRestart
+Write-Progress -Activity AutoHarden -Status "2-Hardening-Powershell" -Completed
 
 
 echo "####################################################################################################"
@@ -1489,8 +1500,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1lqDVjKg3sLefbidxs1ldW31
-# Yjigggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/W45Liwt4J0pMOfGEkTMQspR
+# mZGgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1548,16 +1559,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFBr2CWeyYZo/VSzSWhZCnvA4efUiMA0GCSqGSIb3DQEBAQUA
-# BIICAH1le6ialGF800ZrMuos8obgJrjJrXZvINBypF/S/vhCo8CuAYGclsPdir4n
-# LJHGtrL/6U0eosy9VxIeiX8Rg0L6dVqjUyRrh++i3saMBPYm1Rb3EN1ErmCQZTS0
-# 7L9bZWj/nt3/XEIR+EIwVOQ/yH3ech+mdbBhRbUpYYwm8Pq2vCpfmjV7TVQXrWnQ
-# mjgXpxo5DPlPYm55ZS2MUa+GNviO6kSn4EGx7Uw0ChtuPcSHaArztgyaZuU6OP5i
-# O3nzEdndkfO61TCYkPS/X4We2139gHsrte3gwXXW3XsySGeeuPZVXfkYauKtMZWn
-# kIyfOt2QeG9jJRziNwqZT4eAueXCDNEd4qNYu6KbZzn+yHbPrZMiGIvGPAz3lxCw
-# rMcskUw74Irxvnl1Oemtis1sHXvK65OiUju5foVBJTTNP2aBfn9w0yCFGibSj7Py
-# oAWFrJfK4Lgr2LM9kSb4YjHG4dku2vkANexqAYPHoEUidYe6N1JL592Y2HM03dsZ
-# zTF9aLtekPZs4dP1uEzu9xDDhi2glM5Ifale6ISR4293PapIsJtMxTRvKsYKXyRy
-# g1wTddzbkOzYVO0Igc/ef1WbnAMZA29fzWpoo6NQMvKesGMrdEdRMTIBw6FMN9ln
-# 0Hti1ph4FDt6p1aSkJNq7A8FaCz1SEy3NjmoGwoQW52MNy0l
+# KoZIhvcNAQkEMRYEFJi2e142QKI8msrwXu/0O6kzPkleMA0GCSqGSIb3DQEBAQUA
+# BIICAIVB+zMdbt/8QaQwXJx+rGoqD1M4KzkQzbfy1YXMKyRGFv9dC+ZZfBZXr32m
+# JhkCZzAkvCE3D4Kx4LOpw31uZuEMHg4nVmn8U4ImaM1hiWeRI9pAIygr6Hce06N+
+# +jjd1VNhUg+nrHzz7ioTYE5FG1XetFOEsku8WaHe59ClOkfxZ5ah7Y7596XkgBQc
+# WixvSHyLHvL7FFasm1HJSQP/gEM/zKc2vxUFVlN20vjEGk5oHsWAUKihdzCm9jR3
+# AdZ05fX/26Y3M2W5V7mFivu2zlgXoLaRy5D+5kSICxrtOdI0NRmQ7TVnaHLRCn5r
+# V8HLX81vEj2I2223en5xeZ63AvP9Dn8R85wbOrgvwbTmzRp3EMTF3pTaw+F2uH0z
+# Yr0geomf7e8sK0soAmNNHVbyLc0Ost7HDUDTYSGRRj/J33bR9IihmgYhtsa17j9S
+# oe1fImG/grJF11QECYZ3jXEIdQEoSN+JQRHrV9AoXpLtaXn/uxMk3xxwUgS1KX2/
+# D2Q55BS3riv91sNmL0R8/lmPbCv6qXW8QR2pCsrn4L90tPWXuPhGUxiO4d2CzIvv
+# NoAPHNwsIue7cmMedSNNCX6nN4UXUBVKVjQqW2OFUAypyrrN+33s8r61iKTooOT7
+# tkthzbDmZeVOtsNT7316jdxvChePZTRLVa5WrhYEWrXKTL1N
 # SIG # End signature block
