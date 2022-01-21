@@ -47,9 +47,16 @@ function ask( $query, $config ){
 	}
 }
 if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ){  Write-Host -BackgroundColor Red -ForegroundColor White "Administrator privileges required ! This terminal has not admin priv. This script ends now !"; pause;exit;}
-mkdir C:\Windows\AutoHarden\ -Force -ErrorAction Ignore
-$AutoHardenLog = "C:\Windows\AutoHarden\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log"
-Start-Transcript -Force -IncludeInvocationHeader -Append ($AutoHardenLog)
+$AutoHarden_Folder="C:\Windows\AutoHarden"
+$AutoHarden_Logs="${AutoHarden_Folder}\logs"
+$AutoHarden_AsksFolder="${AutoHarden_Folder}\asks"
+mkdir $AutoHarden_Folder -Force -ErrorAction Continue | Out-Null
+mkdir $AutoHarden_Logs -Force -ErrorAction Continue | Out-Null
+mkdir $AutoHarden_AsksFolder -Force -ErrorAction Continue | Out-Null
+Move-Item -ErrorAction SilentlyContinue -Force ${AutoHarden_Folder}\*.log ${AutoHarden_Logs}
+Move-Item -ErrorAction SilentlyContinue -Force ${AutoHarden_Folder}\*.7z ${AutoHarden_Logs}
+$AutoHardenTransScriptLog = "${AutoHarden_Logs}\Activities_"+(Get-Date -Format "yyyy-MM-dd")+".log"
+Start-Transcript -Force -IncludeInvocationHeader -Append ($AutoHardenTransScriptLog)
 $DebugPreference = "Continue"
 $VerbosePreference = "Continue"
 $InformationPreference = "Continue"
@@ -1055,7 +1062,7 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Log-Activity"
 reg add HKLM\Software\Policies\Microsoft\Windows\PowerShell\ModuleLogging /v EnableModuleLogging /t REG_DWORD /d 1 /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableTranscripting /t REG_DWORD /d 1 /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableInvocationHeader /t REG_DWORD /d 1 /f
-reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v OutputDirectory /t REG_SZ /d "C:\Windows\AutoHarden\Powershell.log" /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v OutputDirectory /t REG_SZ /d "${AutoHarden_Logs}\Powershell.log" /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockLogging /t REG_DWORD /d 1 /f
 # This is VERY noisy, do not set in most environments, or seriously test first (4105 & 4106)
 #reg query HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockInvocationLogging
@@ -1071,13 +1078,16 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Cha
 # Log DNS
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
 
-if( -not [System.IO.File]::Exists("C:\Windows\AutoHarden\AuditPol_BEFORE.txt") ){
-	Auditpol /get /category:* > C:\Windows\AutoHarden\AuditPol_BEFORE.txt
+if( -not [System.IO.File]::Exists("${AutoHarden_Logs}\AuditPol_BEFORE.log.zip") ){
+	Auditpol /get /category:* > $AutoHarden_Logs\AuditPol_BEFORE.log
+	Compress-Archive -Path "${AutoHarden_Logs}\AuditPol_BEFORE.log" -CompressionLevel "Optimal" -DestinationPath "${AutoHarden_Logs}\AuditPol_BEFORE.log.zip"
 }
+
 
 # From
 #	https://github.com/rkovar/PowerShell/blob/master/audit.bat
 #	https://forensixchange.com/posts/19_05_07_dns_investigation/
+#	https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d
 
 # SET THE LOG SIZE - What local size they will be
 # ---------------------
@@ -1146,9 +1156,9 @@ auditpol /set /subcategory:"{0CCE9222-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9223-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers,{0CCE9224-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9224-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
-#   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030}
+#   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030} == "Filtering Platform Packet Drop"
 auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
-#   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030}
+#   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030} == "Filtering Platform Connection"
 #   Autres événements d’accès à l’objet,{0CCE9227-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9227-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers détaillé,{0CCE9244-69AE-11D9-BED3-505054503030}
@@ -1221,12 +1231,14 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 ##############################################################################
 # Log all autoruns to detect malware
 # From: https://github.com/palantir/windows-event-forwarding/
-$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
-start-job -Name LogActivity -scriptblock {
-	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > ($autorunsc7z+".csv")	
-	7z a -t7z ($autorunsc7z+".7z")	($autorunsc7z+".csv")	
-	if( [System.IO.File]::Exists($autorunsc7z+".7z") ){
-		rm -Force ($autorunsc7z+".csv")	
+if( Get-Command autorunsc -errorAction SilentlyContinue ){
+	$autorunsc7z = ("${AutoHarden_Logs}\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
+	start-job -Name LogActivity_autoruns -scriptblock {
+		autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > "${autorunsc7z}.csv"
+		Compress-Archive -Path "${autorunsc7z}.csv" -CompressionLevel "Optimal" -DestinationPath "${autorunsc7z}.csv.zip"
+		if( [System.IO.File]::Exists("${autorunsc7z}.csv.zip") ){
+			rm -Force "${autorunsc7z}.csv"
+		}
 	}
 }
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
@@ -1499,18 +1511,30 @@ if( $npp_path -ne $null ){
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
 
 
-Wait-Job -Name LogActivity
+echo "####################################################################################################"
+echo "# ZZZ-30.__END__"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running ZZZ-30.__END__"
+###############################################################################
+# Cleaning the script...
+###############################################################################
+logInfo 'Waiting for the job autoruns...'
+Wait-Job -Name LogActivity_autoruns -ErrorAction SilentlyContinue
 Stop-Transcript
-7z a -t7z ($AutoHardenLog+".7z") $AutoHardenLog
-if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
-	rm -Force $AutoHardenLog
+Compress-Archive -Path $AutoHardenTransScriptLog -CompressionLevel "Optimal" -DestinationPath ${AutoHardenTransScriptLog}.zip -ErrorAction SilentlyContinue
+if( [System.IO.File]::Exists("${AutoHardenTransScriptLog}.zip") ){
+	rm -Force $AutoHardenTransScriptLog
 }
+Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
+
+
 
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQULm47G47kLwurtr1gC9/spZCC
-# 54ugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUiB6HrsUexqYlBJTFSEbfTDPO
+# DmWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1568,16 +1592,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFHuHXTolrOtGXluju08gjQCy3gJQMA0GCSqGSIb3DQEBAQUA
-# BIICALDGTYDx/7Yj+73cTuiMmgL3vdVgqXgmH3uBg5wF9imIGIz8kEhf0T8UM5t6
-# rX0aDMUIninUfp9TCCDsiJD31TThsPXyxGRgAupG+LQHYB5JbXThFXKLNV+RC3i4
-# gqH8PTgrHxbnmaUpo6IfVcaQv2/QvXCMP7kIru1M7IMUOE7dPsY/o8sRbp+UWewU
-# 4wit9Ah8A8Q5V44SvH5O3SfJ2XaAo2Uka2LBNQRI2RjbkPBVondIu/0FHhHtAEuC
-# jCuR+O/3GolFqhRXAeDSNsXGASDq7/SE7jqihiZr2A+RtKqEOWatSQXk/zm8BCW+
-# C22DT64fA57pvFUAJ6VMhnSR/1+bo++J6r85LhSzS6sR+Yfmcz6ZCCGf5OlN1thm
-# KacDHFVE/FQJYHSI+XURQGYQZ/p3Y3D2sFOZytc0MLcB44ZGvksmAIKSRUxinmK/
-# 3O2FWSDex3qwft5Od2WV0rqjQvf98Q3+EaiIDnTcM7i33DOpzu3QFZPEMJ3o8w8b
-# a6Pw6hlQmuJyyDI5C0eRozRN/KDJGuQZeJggeLb5t817gjz+qdQntTrs9y2FwxVP
-# 3DPcmja5Zi8kulTCMtUpDjWYksAmphmkegoeSAEQP0CRxsWABrF4vDY7AVRPXBaw
-# KDUgdMqqMQmeivN1+M31fJUSL0c56SJBUGDuRWVKosUQeCch
+# KoZIhvcNAQkEMRYEFI6VftqQwvc6PvDEsZw6AJ3ALaOUMA0GCSqGSIb3DQEBAQUA
+# BIICACYlJL7SIxqhcQdeUz5WnTUn7w4w9j3tk04B1a44U37r8b3UcEWP6bsGSV5U
+# Vmv0DKFJMRDPua+dzmOAwDCNsAEBDbb+n8oE0kstdVGrInuyeqXjJWc2HyP+P8Ks
+# IS3s9xfv8CaFFbNN1hLd1w2rbHaKCfttf+6JBNM70TeaFTcRIxyFkg8R6Ix8Q0zp
+# 6wHdJJjqq9U9Atib+2MVUgxnXRiZe3YL/8ywjLCur/AvhfwSO4NcQThndL50ifoT
+# Ze8rdIg99vTwxTXct8IwzKrZ0RuzwBBRmrsCucuuMOjPT4yaJR+SdQHsfvYI86Cq
+# x+KG8dYsomyq0BQxdSR7Hp1CKXt68VI6eIM1+B8iredJkOhMybEBXDXNyiFa1nCM
+# sgHslmITNLuv0gWlo7IM8r8lYXPGxizkwm79K4U6Bhvje3AX2pW+Afkw4dCvUEVH
+# JKjwLM9FqUxNCW3ZoJga0zGSmcnKKV2ObxIVp6bQ48jKiQ+H+RrCicPwvYUdCR4F
+# 86lZJZXJH7a0C62Vn402BzhGxEqUGVCmQSQmRt45CCgeO7pzj9j5J2ySK5jS3/Sa
+# WLq5qJBNKkZiApLf6aAS3klMOsfQSx46lthdHviIIiJUN8k3RmYZGMYcqRQoEQgU
+# sMTL4NY9ahFEd0unqKMxzCNy2lPwPK3Dx4NwNn0HwwFi535u
 # SIG # End signature block

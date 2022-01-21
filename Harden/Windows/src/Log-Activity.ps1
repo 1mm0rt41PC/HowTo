@@ -4,7 +4,7 @@
 reg add HKLM\Software\Policies\Microsoft\Windows\PowerShell\ModuleLogging /v EnableModuleLogging /t REG_DWORD /d 1 /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableTranscripting /t REG_DWORD /d 1 /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v EnableInvocationHeader /t REG_DWORD /d 1 /f
-reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v OutputDirectory /t REG_SZ /d "C:\Windows\AutoHarden\Powershell.log" /f
+reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\Transcription /v OutputDirectory /t REG_SZ /d "${AutoHarden_Logs}\Powershell.log" /f
 reg add HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockLogging /t REG_DWORD /d 1 /f
 # This is VERY noisy, do not set in most environments, or seriously test first (4105 & 4106)
 #reg query HKCU\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockInvocationLogging
@@ -20,13 +20,16 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Cha
 # Log DNS
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
 
-if( -not [System.IO.File]::Exists("C:\Windows\AutoHarden\AuditPol_BEFORE.txt") ){
-	Auditpol /get /category:* > C:\Windows\AutoHarden\AuditPol_BEFORE.txt
+if( -not [System.IO.File]::Exists("${AutoHarden_Logs}\AuditPol_BEFORE.log.zip") ){
+	Auditpol /get /category:* > $AutoHarden_Logs\AuditPol_BEFORE.log
+	Compress-Archive -Path "${AutoHarden_Logs}\AuditPol_BEFORE.log" -CompressionLevel "Optimal" -DestinationPath "${AutoHarden_Logs}\AuditPol_BEFORE.log.zip"
 }
+
 
 # From
 #	https://github.com/rkovar/PowerShell/blob/master/audit.bat
 #	https://forensixchange.com/posts/19_05_07_dns_investigation/
+#	https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-gpac/77878370-0712-47cd-997d-b07053429f6d
 
 # SET THE LOG SIZE - What local size they will be
 # ---------------------
@@ -95,9 +98,9 @@ auditpol /set /subcategory:"{0CCE9222-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9223-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers,{0CCE9224-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9224-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
-#   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030}
+#   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030} == "Filtering Platform Packet Drop"
 auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
-#   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030}
+#   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030} == "Filtering Platform Connection"
 #   Autres événements d’accès à l’objet,{0CCE9227-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9227-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers détaillé,{0CCE9244-69AE-11D9-BED3-505054503030}
@@ -170,11 +173,13 @@ auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:ena
 ##############################################################################
 # Log all autoruns to detect malware
 # From: https://github.com/palantir/windows-event-forwarding/
-$autorunsc7z = ("C:\Windows\AutoHarden\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
-start-job -Name LogActivity -scriptblock {
-	autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > ($autorunsc7z+".csv")	
-	7z a -t7z ($autorunsc7z+".7z")	($autorunsc7z+".csv")	
-	if( [System.IO.File]::Exists($autorunsc7z+".7z") ){
-		rm -Force ($autorunsc7z+".csv")	
+if( Get-Command autorunsc -errorAction SilentlyContinue ){
+	$autorunsc7z = ("${AutoHarden_Logs}\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
+	start-job -Name LogActivity_autoruns -scriptblock {
+		autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > "${autorunsc7z}.csv"
+		Compress-Archive -Path "${autorunsc7z}.csv" -CompressionLevel "Optimal" -DestinationPath "${autorunsc7z}.csv.zip"
+		if( [System.IO.File]::Exists("${autorunsc7z}.csv.zip") ){
+			rm -Force "${autorunsc7z}.csv"
+		}
 	}
 }
