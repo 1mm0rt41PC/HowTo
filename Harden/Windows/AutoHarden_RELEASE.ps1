@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2021-08-13
-$AutoHarden_version="2021-08-13"
+# Update: 2022-01-21
+$AutoHarden_version="2022-01-21"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -241,8 +241,8 @@ try{
 }
 }
 else{
-Disable-BitLocker -MountPoint 'C:'
-manage-bde -off C:
+#Disable-BitLocker -MountPoint 'C:'
+#manage-bde -off C:
 }
 Write-Progress -Activity AutoHarden -Status "2-Hardening-HardDriveEncryption" -Completed
 
@@ -639,6 +639,29 @@ Write-Progress -Activity AutoHarden -Status "Hardening-AccountRename" -Completed
 
 
 echo "####################################################################################################"
+echo "# Hardening-BlockAutoDiscover"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-BlockAutoDiscover" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-BlockAutoDiscover"
+# Avoid credentials leak https://www.guardicore.com/labs/autodiscovering-the-great-leak/
+$autodicover=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 autodicover"
+if( [string]::IsNullOrEmpty($autodicover) ){
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
+	$tlds = Invoke-WebRequest -Uri 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
+	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
+
+	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StarstWith('#') } | foreach {
+		echo "127.0.0.1 autodicover.$_"
+	}
+	$domains = $domains -join "`r`n"
+	[System.IO.File]::AppendAllText("C:\Windows\System32\drivers\etc\hosts", "`r`n# [AutoHarden] Block Autodiscover`r`n$domains", (New-Object System.Text.UTF8Encoding $False));
+	RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
+	ipconfig /flushdns
+}
+Write-Progress -Activity AutoHarden -Status "Hardening-BlockAutoDiscover" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-BlockOutgoingSNMP"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-BlockOutgoingSNMP" -PercentComplete 0
@@ -1005,7 +1028,7 @@ get-item C:\Windows\temp\Wi-Fi-*.xml | foreach {
 		netsh wlan delete profile name="$p" interface=*
 	}
 }
-rm C:\Windows\temp\Wi-Fi-*.xml
+rm C:\Windows\temp\Wi-Fi-*.xml | Out-Null
 Write-Progress -Activity AutoHarden -Status "Hardening-Wifi-RemoveOpenProfile" -Completed
 
 
@@ -1331,6 +1354,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v Dis
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" /v DisableRealtimeMonitoring /t REG_DWORD /d 1 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 4 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthService" /v Start /t REG_DWORD /d 4 /f
+Add-MpPreference -ExclusionPath "C:\"
 # https://twitter.com/jonasLyk/status/1293815234805760000?s=20
 
 
@@ -1342,9 +1366,10 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthServ
 else{
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 0 /f
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend" /v Start /t REG_DWORD /d 2 /f
+
 # https://twitter.com/jonasLyk/status/1293815234805760000?s=20
-Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
-fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
+#Remove-Item "C:\ProgramData\Microsoft\Windows Defender" -stream "omgwtfbbq" -Force -ErrorAction SilentlyContinue 
+#fsutil reparsepoint delete "C:\ProgramData\Microsoft\Windows Defender"
 }
 Write-Progress -Activity AutoHarden -Status "Optimiz-DisableDefender" -Completed
 
@@ -1360,21 +1385,27 @@ Write-Progress -Activity AutoHarden -Status "Optimiz-DisableReservedStorageState
 
 
 echo "####################################################################################################"
-echo "# Software-install-notepad++"
+echo "# Software-install-1-Functions"
 echo "####################################################################################################"
-Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
-if( ask "Replace notepad with notepad++" "Software-install-notepad++.ask" ){
+Write-Progress -Activity AutoHarden -Status "Software-install-1-Functions" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-1-Functions"
 ################################################################################
 # Installation de choco
 #
 if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
-	echo "==============================================================================="
-	echo "Install: choco"
+	Write-Host "==============================================================================="
+	Write-Host "Install: choco"
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
     iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 }
+Add-MpPreference -AttackSurfaceReductionOnlyExclusions "C:\ProgramData\chocolatey\bin"
+Add-MpPreference -AttackSurfaceReductionOnlyExclusions "C:\ProgramData\chocolatey\lib"
+Add-MpPreference -AttackSurfaceReductionOnlyExclusions "C:\ProgramData\chocolatey\tools"
+Add-MpPreference -ExclusionPath "C:\ProgramData\chocolatey\bin"
+Add-MpPreference -ExclusionPath "C:\ProgramData\chocolatey\lib"
+Add-MpPreference -ExclusionPath "C:\ProgramData\chocolatey\tools"
+
 ################################################################################
 # Installation des soft de base
 #
@@ -1383,15 +1414,37 @@ function chocoInstall( $pk )
 	if( "$global:chocoList" -Match "$pk" ){
 		return ;
 	}
-	echo "==============================================================================="
-	echo "Install: $pk"
+	Write-Host "==============================================================================="
+	Write-Host "Install: $pk"
 	choco install $pk -y
 }
 $global:chocoList = & choco list -localonly 
+choco upgrade all -y
+Write-Progress -Activity AutoHarden -Status "Software-install-1-Functions" -Completed
 
+
+echo "####################################################################################################"
+echo "# Software-install-2-GlobalPackages"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Software-install-2-GlobalPackages" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-2-GlobalPackages"
+chocoInstall vcredist-all
+chocoInstall 7zip.install
+chocoInstall greenshot
+chocoInstall vlc
+chocoInstall sysinternals
+chocoInstall keepassxc
+Write-Progress -Activity AutoHarden -Status "Software-install-2-GlobalPackages" -Completed
+
+
+echo "####################################################################################################"
+echo "# Software-install-notepad++"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-notepad++"
+if( ask "Replace notepad with notepad++" "Software-install-notepad++.ask" ){
 chocoInstall notepadplusplus.install
 $npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName.Replace('.exe','.vbs')
-
 @'
 '// DISCLAIMER
 '// THIS COMES WITH NO WARRANTY, IMPLIED OR OTHERWISE. USE AT YOUR OWN RISK
@@ -1432,7 +1485,7 @@ if( [System.IO.File]::Exists($npp_path) ){
 	# Create sub folder
 	reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /v Debugger /t REG_SZ /d x /f
 	# Create key
-	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
+	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force | Out-Null
 }
 }
 else{
@@ -1440,54 +1493,10 @@ $npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe")
 if( $npp_path -ne $null ){
 	$npp_path = $npp_path.FullName.Replace('.exe','.vbs')
 	rm $npp_path
-	choco uninstall notepadplusplus.install -y
 	reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /f
 }
 }
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -Completed
-
-
-echo "####################################################################################################"
-echo "# Software-install"
-echo "####################################################################################################"
-Write-Progress -Activity AutoHarden -Status "Software-install" -PercentComplete 0
-Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install"
-################################################################################
-# Installation de choco
-#
-if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
-	echo "==============================================================================="
-	echo "Install: choco"
-	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-    iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
-	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
-}
-
-################################################################################
-# Installation des soft de base
-#
-function chocoInstall( $pk )
-{
-	if( "$global:chocoList" -Match "$pk" ){
-		return ;
-	}
-	echo "==============================================================================="
-	echo "Install: $pk"
-	choco install $pk -y
-}
-$global:chocoList = & choco list -localonly 
-
-chocoInstall vcredist-all
-chocoInstall 7zip.install
-chocoInstall greenshot
-chocoInstall vlc
-chocoInstall sysinternals
-chocoInstall keepass.install
-
-#linkshellextension,veracrypt
-
-choco upgrade all -y
-Write-Progress -Activity AutoHarden -Status "Software-install" -Completed
 
 
 Wait-Job -Name LogActivity
@@ -1500,8 +1509,8 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/W45Liwt4J0pMOfGEkTMQspR
-# mZGgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQULm47G47kLwurtr1gC9/spZCC
+# 54ugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1559,16 +1568,16 @@ if( [System.IO.File]::Exists($AutoHardenLog+".7z") ){
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFJi2e142QKI8msrwXu/0O6kzPkleMA0GCSqGSIb3DQEBAQUA
-# BIICAIVB+zMdbt/8QaQwXJx+rGoqD1M4KzkQzbfy1YXMKyRGFv9dC+ZZfBZXr32m
-# JhkCZzAkvCE3D4Kx4LOpw31uZuEMHg4nVmn8U4ImaM1hiWeRI9pAIygr6Hce06N+
-# +jjd1VNhUg+nrHzz7ioTYE5FG1XetFOEsku8WaHe59ClOkfxZ5ah7Y7596XkgBQc
-# WixvSHyLHvL7FFasm1HJSQP/gEM/zKc2vxUFVlN20vjEGk5oHsWAUKihdzCm9jR3
-# AdZ05fX/26Y3M2W5V7mFivu2zlgXoLaRy5D+5kSICxrtOdI0NRmQ7TVnaHLRCn5r
-# V8HLX81vEj2I2223en5xeZ63AvP9Dn8R85wbOrgvwbTmzRp3EMTF3pTaw+F2uH0z
-# Yr0geomf7e8sK0soAmNNHVbyLc0Ost7HDUDTYSGRRj/J33bR9IihmgYhtsa17j9S
-# oe1fImG/grJF11QECYZ3jXEIdQEoSN+JQRHrV9AoXpLtaXn/uxMk3xxwUgS1KX2/
-# D2Q55BS3riv91sNmL0R8/lmPbCv6qXW8QR2pCsrn4L90tPWXuPhGUxiO4d2CzIvv
-# NoAPHNwsIue7cmMedSNNCX6nN4UXUBVKVjQqW2OFUAypyrrN+33s8r61iKTooOT7
-# tkthzbDmZeVOtsNT7316jdxvChePZTRLVa5WrhYEWrXKTL1N
+# KoZIhvcNAQkEMRYEFHuHXTolrOtGXluju08gjQCy3gJQMA0GCSqGSIb3DQEBAQUA
+# BIICALDGTYDx/7Yj+73cTuiMmgL3vdVgqXgmH3uBg5wF9imIGIz8kEhf0T8UM5t6
+# rX0aDMUIninUfp9TCCDsiJD31TThsPXyxGRgAupG+LQHYB5JbXThFXKLNV+RC3i4
+# gqH8PTgrHxbnmaUpo6IfVcaQv2/QvXCMP7kIru1M7IMUOE7dPsY/o8sRbp+UWewU
+# 4wit9Ah8A8Q5V44SvH5O3SfJ2XaAo2Uka2LBNQRI2RjbkPBVondIu/0FHhHtAEuC
+# jCuR+O/3GolFqhRXAeDSNsXGASDq7/SE7jqihiZr2A+RtKqEOWatSQXk/zm8BCW+
+# C22DT64fA57pvFUAJ6VMhnSR/1+bo++J6r85LhSzS6sR+Yfmcz6ZCCGf5OlN1thm
+# KacDHFVE/FQJYHSI+XURQGYQZ/p3Y3D2sFOZytc0MLcB44ZGvksmAIKSRUxinmK/
+# 3O2FWSDex3qwft5Od2WV0rqjQvf98Q3+EaiIDnTcM7i33DOpzu3QFZPEMJ3o8w8b
+# a6Pw6hlQmuJyyDI5C0eRozRN/KDJGuQZeJggeLb5t817gjz+qdQntTrs9y2FwxVP
+# 3DPcmja5Zi8kulTCMtUpDjWYksAmphmkegoeSAEQP0CRxsWABrF4vDY7AVRPXBaw
+# KDUgdMqqMQmeivN1+M31fJUSL0c56SJBUGDuRWVKosUQeCch
 # SIG # End signature block

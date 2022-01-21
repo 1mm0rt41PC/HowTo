@@ -1,30 +1,5 @@
-################################################################################
-# Installation de choco
-#
-if( !(Get-Command "choco" -errorAction SilentlyContinue) ){
-	echo "==============================================================================="
-	echo "Install: choco"
-	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-    iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
-	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
-}
-################################################################################
-# Installation des soft de base
-#
-function chocoInstall( $pk )
-{
-	if( "$global:chocoList" -Match "$pk" ){
-		return ;
-	}
-	echo "==============================================================================="
-	echo "Install: $pk"
-	choco install $pk -y
-}
-$global:chocoList = & choco list -localonly 
-
 chocoInstall notepadplusplus.install
 $npp_path=(Get-Item "C:\Program Files*\Notepad++\notepad++.exe").FullName.Replace('.exe','.vbs')
-
 @'
 '// DISCLAIMER
 '// THIS COMES WITH NO WARRANTY, IMPLIED OR OTHERWISE. USE AT YOUR OWN RISK
@@ -65,5 +40,5 @@ if( [System.IO.File]::Exists($npp_path) ){
 	# Create sub folder
 	reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" /v Debugger /t REG_SZ /d x /f
 	# Create key
-	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force
+	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" -Name Debugger -Value ('wscript.exe "'+$npp_path+'"') -PropertyType String -Force | Out-Null
 }

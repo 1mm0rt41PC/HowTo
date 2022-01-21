@@ -8,4 +8,4 @@ get-item C:\Windows\temp\Wi-Fi-*.xml | foreach {
 		netsh wlan delete profile name="$p" interface=*
 	}
 }
-rm C:\Windows\temp\Wi-Fi-*.xml
+rm C:\Windows\temp\Wi-Fi-*.xml | Out-Null
