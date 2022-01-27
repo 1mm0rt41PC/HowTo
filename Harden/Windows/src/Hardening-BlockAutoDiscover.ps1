@@ -5,7 +5,7 @@ if( [string]::IsNullOrEmpty($autodicover) ){
 	$tlds = Invoke-WebRequest -Uri 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 
-	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StarstWith('#') } | foreach {
+	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StartsWith('#') } | foreach {
 		echo "127.0.0.1 autodicover.$_"
 	}
 	$domains = $domains -join "`r`n"

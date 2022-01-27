@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-01-21
-$AutoHarden_version="2022-01-21"
+# Update: 2022-01-27
+$AutoHarden_version="2022-01-27"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -657,7 +657,7 @@ if( [string]::IsNullOrEmpty($autodicover) ){
 	$tlds = Invoke-WebRequest -Uri 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 
-	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StarstWith('#') } | foreach {
+	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StartsWith('#') } | foreach {
 		echo "127.0.0.1 autodicover.$_"
 	}
 	$domains = $domains -join "`r`n"
@@ -1533,8 +1533,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUiB6HrsUexqYlBJTFSEbfTDPO
-# DmWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU2Y38MRI84hJ5/kSMF62H4FMt
+# iNagggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1592,16 +1592,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFI6VftqQwvc6PvDEsZw6AJ3ALaOUMA0GCSqGSIb3DQEBAQUA
-# BIICACYlJL7SIxqhcQdeUz5WnTUn7w4w9j3tk04B1a44U37r8b3UcEWP6bsGSV5U
-# Vmv0DKFJMRDPua+dzmOAwDCNsAEBDbb+n8oE0kstdVGrInuyeqXjJWc2HyP+P8Ks
-# IS3s9xfv8CaFFbNN1hLd1w2rbHaKCfttf+6JBNM70TeaFTcRIxyFkg8R6Ix8Q0zp
-# 6wHdJJjqq9U9Atib+2MVUgxnXRiZe3YL/8ywjLCur/AvhfwSO4NcQThndL50ifoT
-# Ze8rdIg99vTwxTXct8IwzKrZ0RuzwBBRmrsCucuuMOjPT4yaJR+SdQHsfvYI86Cq
-# x+KG8dYsomyq0BQxdSR7Hp1CKXt68VI6eIM1+B8iredJkOhMybEBXDXNyiFa1nCM
-# sgHslmITNLuv0gWlo7IM8r8lYXPGxizkwm79K4U6Bhvje3AX2pW+Afkw4dCvUEVH
-# JKjwLM9FqUxNCW3ZoJga0zGSmcnKKV2ObxIVp6bQ48jKiQ+H+RrCicPwvYUdCR4F
-# 86lZJZXJH7a0C62Vn402BzhGxEqUGVCmQSQmRt45CCgeO7pzj9j5J2ySK5jS3/Sa
-# WLq5qJBNKkZiApLf6aAS3klMOsfQSx46lthdHviIIiJUN8k3RmYZGMYcqRQoEQgU
-# sMTL4NY9ahFEd0unqKMxzCNy2lPwPK3Dx4NwNn0HwwFi535u
+# KoZIhvcNAQkEMRYEFGYLYgHXiOyvm0O3CCaCh3I/ot/hMA0GCSqGSIb3DQEBAQUA
+# BIICACstmMArRJmY3jzOJuGuWKwgZqSPfnhndR906o4W0vl710d+UEp+2m6qwk7f
+# lJGq6CS7/KftDWaIu12xU1plb2WTtHEgtQOKhSAOg3YYmTa4EnCA1cpMlXvXhEPV
+# QIWgm5RTpUp+mXukOjZlxWuo0iXbadJ76b5XfO4CX7r7/LASJRFUe7qRMJPOmQsE
+# JzbXLJOXIBDPcu+kku5kxununa4ufTq4dom70zfPVsB1+yXYvuSODb8uMh0nDZNY
+# kYTjah6gtAkJSpFFhwdEVJBYzaXxHLD5l2Jk5FvoyZHKKUhIc8Rn0sAuHWE1eqnp
+# pVD2mROAyNmMe+hwzmHm3+jKML/4Z4ez/ThxA2YqN9xf20TGNrw8dKH4TgTCScrk
+# Kf7voYVqfxW1kw3+96q6ivV1SQmEf2IffYRF84kd2PeyntKV6892ZgO100R3RFD0
+# uWWeTXSSp8ogaRud4JcRl3z5z1cJEMavR0clOJy20VpRYqNwr6N1IWYAOHcJIMgB
+# oZ5eRgTaEbYMuYsJjsfBqqj3X65JQf9SSYt1FV6ToapkcwJYDZJKmR0QDJCjhuCi
+# xkenGChcX0n/uq1F1uCRCcXNaT7HBwHHWbYKbWQ54iq/k9sD7TOUw5nUj5JosDsq
+# qlJfcp71BHnq/3MIO7FMn9k3KdXqgfCrxqO3ec5OsTuveQuL
 # SIG # End signature block
