@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-01-27
-$AutoHarden_version="2022-01-27"
+# Update: 2022-03-01
+$AutoHarden_version="2022-03-01"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -218,6 +218,16 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol tcp -RemotePort 
 # Note about 135/TCP => https://superuser.com/questions/669199/how-to-stop-listening-at-port-135/1012382#1012382
 # Port 135/TCP can be killed in 100% of server and workstation if CreateObject("Excel.Application", RemoteMachine) is not used
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
+
+
+echo "####################################################################################################"
+echo "# 2-Hardening-ADIDNS"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "2-Hardening-ADIDNS" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 2-Hardening-ADIDNS"
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v DisableReverseAddressRegistrations /d 1 /t REG_DWORD /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v DisableDynamicUpdate /d 1 /t REG_DWORD /f
+Write-Progress -Activity AutoHarden -Status "2-Hardening-ADIDNS" -Completed
 
 
 echo "####################################################################################################"
@@ -450,6 +460,16 @@ Write-Progress -Activity AutoHarden -Status "Crapware-Windows10UpgradeOldFolder"
 
 
 echo "####################################################################################################"
+echo "# Fix-CVE-2020-16898"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Fix-CVE-2020-16898" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Fix-CVE-2020-16898"
+# Protection against CVE-2020-16898: “Bad Neighbor”
+netsh int ipv6 show int | foreach { $p=$_.trim().split(' ')[0]; [int]::TryParse($p,[ref]$null) -and (netsh int ipv6 set int $p rabaseddnsconfig=disable) -and (write-host "int >$p<") }
+Write-Progress -Activity AutoHarden -Status "Fix-CVE-2020-16898" -Completed
+
+
+echo "####################################################################################################"
 echo "# Fix-HiveNightmare"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Fix-HiveNightmare" -PercentComplete 0
@@ -457,6 +477,48 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Fix-HiveNightma
 # https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-36934
 icacls $env:windir\system32\config\*.* /inheritance:e
 Write-Progress -Activity AutoHarden -Status "Fix-HiveNightmare" -Completed
+
+
+echo "####################################################################################################"
+echo "# Harden-Adobe"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Harden-Adobe" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-Adobe"
+# AdobePDFJS hardens Acrobat JavaScript.
+# bEnableJS possible values:
+# 0 - Disable AcroJS
+# 1 - Enable AcroJS
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\JSPrefs -Name bEnableJS -Value 0 -Type DWord
+
+# Disables Acrobat Reader embedded objects
+# AdobePDFObjects hardens Adobe Reader Embedded Objects.
+# bAllowOpenFile set to 0 and
+# bSecureOpenFile set to 1 to disable
+# the opening of non-PDF documents
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bAllowOpenFile -Value 0 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bSecureOpenFile -Value 1 -Type DWord
+
+# AdobePDFProtectedMode switches on the Protected Mode setting under
+# "Security (Enhanced)" (enabled by default in current versions).
+# (HKEY_LOCAL_USER\Software\Adobe\Acrobat Reader<version>\Privileged -> DWORD „bProtectedMode“)
+# 0 - Disable Protected Mode
+# 1 - Enable Protected Mode
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Privileged -Name bProtectedMode -Value 1 -Type DWord
+
+# AdobePDFProtectedView switches on Protected View for all files from
+# untrusted sources.
+# (HKEY_CURRENT_USER\SOFTWARE\Adobe\Acrobat Reader\<version>\TrustManager -> iProtectedView)
+# 0 - Disable Protected View
+# 1 - Enable Protected View
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name iProtectedView -Value 1 -Type DWord
+
+# AdobePDFEnhancedSecurity switches on Enhanced Security setting under
+# "Security (Enhanced)".
+# (enabled by default in current versions)
+# (HKEY_CURRENT_USER\SOFTWARE\Adobe\Acrobat Reader\DC\TrustManager -> bEnhancedSecurityInBrowser = 1 & bEnhancedSecurityStandalone = 1)
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityInBrowser -Value 1 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityStandalone -Value 1 -Type DWord
+Write-Progress -Activity AutoHarden -Status "Harden-Adobe" -Completed
 
 
 echo "####################################################################################################"
@@ -713,6 +775,17 @@ Write-Progress -Activity AutoHarden -Status "Hardening-CertPaddingCheck" -Comple
 
 
 echo "####################################################################################################"
+echo "# Hardening-Co-Installers"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-Co-Installers" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Co-Installers"
+if( ask "Allow auto installation of vendor's application ? This point allow all users of this computer to get full admin privilege on this station. Tips: Not usefull for home user" "Hardening-Co-Installers.ask" ){
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Installer" /t REG_DWORD /v DisableCoInstallers /d 1 /f
+}
+Write-Progress -Activity AutoHarden -Status "Hardening-Co-Installers" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-DisableCABlueCoat"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -PercentComplete 0
@@ -778,9 +851,6 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePor
 # reg add "HKLM\SYSTEM\CurrentControlSet\services\tcpip6\parameters" /v DisabledComponents /t REG_DWORD /d 0xFF /f
 # Netsh int ipv6 set int 12 routerdiscovery=disabled
 # Netsh int ipv6 set int 12 managedaddress=disabled
-
-# Protection against CVE-2020-16898: “Bad Neighbor”
-netsh int ipv6 show int | foreach { $p=$_.trim().split(' ')[0]; [int]::TryParse($p,[ref]$null) -and (netsh int ipv6 set int $p rabaseddnsconfig=disable) -and (write-host "int >$p<") }
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableIPv6" -Completed
 
 
@@ -1227,6 +1297,17 @@ auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:ena
 #   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 
+##############################################################################
+# Enable sysmon
+if( Get-Command sysmon -errorAction SilentlyContinue ){
+	choco install sysmon -y
+	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
+	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
+		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
+		sysmon.exe -accepteula -i C:\Windows\sysmon.xml
+		sysmon.exe -accepteula -c C:\Windows\sysmon.xml
+	}
+}
 
 ##############################################################################
 # Log all autoruns to detect malware
@@ -1319,6 +1400,16 @@ killfakename 'C:\Users\desktop.ini'
 killfakename 'C:\Program Files\desktop.ini'
 killfakename 'C:\Program Files (x86)\desktop.ini'
 Write-Progress -Activity AutoHarden -Status "Optimiz-CleanUpWindowsName" -Completed
+
+
+echo "####################################################################################################"
+echo "# Optimiz-cmd-color"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Optimiz-cmd-color" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-cmd-color"
+# https://ss64.com/nt/syntax-ansi.html
+reg.exe add HKEY_CURRENT_USER\Console /v VirtualTerminalLevel /d 1 /t REG_DWORD
+Write-Progress -Activity AutoHarden -Status "Optimiz-cmd-color" -Completed
 
 
 echo "####################################################################################################"
@@ -1533,8 +1624,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU2Y38MRI84hJ5/kSMF62H4FMt
-# iNagggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfc6swhhPqrkccTi2GTlbQOgA
+# vcygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1592,16 +1683,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFGYLYgHXiOyvm0O3CCaCh3I/ot/hMA0GCSqGSIb3DQEBAQUA
-# BIICACstmMArRJmY3jzOJuGuWKwgZqSPfnhndR906o4W0vl710d+UEp+2m6qwk7f
-# lJGq6CS7/KftDWaIu12xU1plb2WTtHEgtQOKhSAOg3YYmTa4EnCA1cpMlXvXhEPV
-# QIWgm5RTpUp+mXukOjZlxWuo0iXbadJ76b5XfO4CX7r7/LASJRFUe7qRMJPOmQsE
-# JzbXLJOXIBDPcu+kku5kxununa4ufTq4dom70zfPVsB1+yXYvuSODb8uMh0nDZNY
-# kYTjah6gtAkJSpFFhwdEVJBYzaXxHLD5l2Jk5FvoyZHKKUhIc8Rn0sAuHWE1eqnp
-# pVD2mROAyNmMe+hwzmHm3+jKML/4Z4ez/ThxA2YqN9xf20TGNrw8dKH4TgTCScrk
-# Kf7voYVqfxW1kw3+96q6ivV1SQmEf2IffYRF84kd2PeyntKV6892ZgO100R3RFD0
-# uWWeTXSSp8ogaRud4JcRl3z5z1cJEMavR0clOJy20VpRYqNwr6N1IWYAOHcJIMgB
-# oZ5eRgTaEbYMuYsJjsfBqqj3X65JQf9SSYt1FV6ToapkcwJYDZJKmR0QDJCjhuCi
-# xkenGChcX0n/uq1F1uCRCcXNaT7HBwHHWbYKbWQ54iq/k9sD7TOUw5nUj5JosDsq
-# qlJfcp71BHnq/3MIO7FMn9k3KdXqgfCrxqO3ec5OsTuveQuL
+# KoZIhvcNAQkEMRYEFAJ4tYimrSkhGgyAUdw7+qH5OwlfMA0GCSqGSIb3DQEBAQUA
+# BIICAKWfsgw3T+EsrGrgXttlFIiPB3cvlXozVpX3R5Y8RV+n1+LcvU6e/3tQc743
+# RCwusjcd2cEhqFZdDI9FS0lS21uRHSks99gTvSDEVL0jx1q2hpJ8uUqTGE9JsU0E
+# Rz/Yo2YMKq+72D7Mo1oYD5EF9iU+o8LOwTaccrvsKsZCfKUaQcFlIheWVInhKSQu
+# g6eFntcdu4OLYRpmk/x9wZHW6sZdDQb6tt1arg1IaOXJEnbi0/KNCSfVzQ/hrdl1
+# uTnLFWyRNc7CZRGlf9HnWobEab+3Wf/Jd/WarR7GJ69ubFcrVTq+RZWWy6VGoY9M
+# ag3OOzDIwf4eS9RaVlrRrY8/Gj6ueoTJcLxfTEmcQt2Npts+BxDxtgV8RhPQN9Em
+# VDWZqmqQgZ2DQyCvGcGW7oEKulN4wNOiJGYVf9Ss8SKUu0rj1V5pH9DmSuinhU5J
+# bTA+Mz3uRcBXcpmagdbrb9P/H/ZLwNgfQEwQNtosEkSOKVCCqcJeDsJ8F4wpyJA+
+# c2UFxgHUHVGTumuB2WFcQKkhpbMRfsJ27YtidLqshLAEXGfR9zRRUcgNW4XyOZxl
+# CQyH8+rsWtcTFwuVkyzSBFCXNBwTGiOhmnSjgiFWVermpKwbuVn/mLfONvt9h28y
+# P6mSWgvQNrNaC/D6gmAou+4iCxsYDrl/RTG1HyJcryFBnTCd
 # SIG # End signature block
