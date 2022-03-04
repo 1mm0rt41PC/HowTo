@@ -349,6 +349,19 @@ if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_
 	exit
 fi
 
+if [ "$TEST_DICO" != "" ]; then
+	if title "Test dico $TEST_DICO ?"; then
+		hashcat 0 `absPath $TEST_DICO`
+		for rule in $RULES; do
+			if title "Using dico $TEST_DICO with rule $rule"; then
+				hashcat 0 `absPath $TEST_DICO` -r `absPath $HC/rules/$rule`
+				loopOnPotfile
+			fi
+		done
+	fi
+	exit 0
+fi
+
 # Building rank
 mkdir -p $STATS_DIR
 if ! isProcessHashCat; then
@@ -410,7 +423,6 @@ EOD
 		export HASH_TYPE=1000 # mode NTLM
 	fi
 fi
-
 if title "Brute force password with max len 7"; then
 	hashcat 3 -i '?a?a?a?a?a?a?a'
 fi
