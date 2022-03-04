@@ -168,29 +168,3 @@ auditpol /set /subcategory:"{0CCE9240-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
-
-##############################################################################
-# Enable sysmon
-if( Get-Command sysmon -errorAction SilentlyContinue ){
-	choco install sysmon -y
-	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
-	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
-		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
-		sysmon.exe -accepteula -i C:\Windows\sysmon.xml
-		sysmon.exe -accepteula -c C:\Windows\sysmon.xml
-	}
-}
-
-##############################################################################
-# Log all autoruns to detect malware
-# From: https://github.com/palantir/windows-event-forwarding/
-if( Get-Command autorunsc -errorAction SilentlyContinue ){
-	$autorunsc7z = ("${AutoHarden_Logs}\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
-	start-job -Name LogActivity_autoruns -scriptblock {
-		autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > "${autorunsc7z}.csv"
-		Compress-Archive -Path "${autorunsc7z}.csv" -CompressionLevel "Optimal" -DestinationPath "${autorunsc7z}.csv.zip"
-		if( [System.IO.File]::Exists("${autorunsc7z}.csv.zip") ){
-			rm -Force "${autorunsc7z}.csv"
-		}
-	}
-}
