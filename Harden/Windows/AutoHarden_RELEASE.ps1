@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-03-01
-$AutoHarden_version="2022-03-01"
+# Update: 2022-03-04
+$AutoHarden_version="2022-03-04"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -218,6 +218,31 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol tcp -RemotePort 
 # Note about 135/TCP => https://superuser.com/questions/669199/how-to-stop-listening-at-port-135/1012382#1012382
 # Port 135/TCP can be killed in 100% of server and workstation if CreateObject("Excel.Application", RemoteMachine) is not used
 Write-Progress -Activity AutoHarden -Status "1-Hardening-Firewall" -Completed
+
+
+echo "####################################################################################################"
+echo "# 1-__init__2-Functions-logs"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "1-__init__2-Functions-logs" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running 1-__init__2-Functions-logs"
+###############################################################################
+# FUNCTIONS - Logs
+function logInfo( $msg )
+{
+	Write-Host -NoNewline -Background 'Blue' '[i]'
+	Write-Host " $msg"
+}
+function logSuccess( $msg )
+{
+	Write-Host -NoNewline -Background 'Green' '[v]'
+	Write-Host " $msg"
+}
+function logError( $msg )
+{
+	Write-Host -NoNewline -Background 'Red' '[X]'
+	Write-Host " $msg"
+}
+Write-Progress -Activity AutoHarden -Status "1-__init__2-Functions-logs" -Completed
 
 
 echo "####################################################################################################"
@@ -488,36 +513,36 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Harden-Adobe"
 # bEnableJS possible values:
 # 0 - Disable AcroJS
 # 1 - Enable AcroJS
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\JSPrefs -Name bEnableJS -Value 0 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\JSPrefs -Name bEnableJS -Value 0 -Type DWord -errorAction SilentlyContinue
 
 # Disables Acrobat Reader embedded objects
 # AdobePDFObjects hardens Adobe Reader Embedded Objects.
 # bAllowOpenFile set to 0 and
 # bSecureOpenFile set to 1 to disable
 # the opening of non-PDF documents
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bAllowOpenFile -Value 0 -Type DWord
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bSecureOpenFile -Value 1 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bAllowOpenFile -Value 0 -Type DWord -errorAction SilentlyContinue
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Originals -Name bSecureOpenFile -Value 1 -Type DWord -errorAction SilentlyContinue
 
 # AdobePDFProtectedMode switches on the Protected Mode setting under
 # "Security (Enhanced)" (enabled by default in current versions).
 # (HKEY_LOCAL_USER\Software\Adobe\Acrobat Reader<version>\Privileged -> DWORD „bProtectedMode“)
 # 0 - Disable Protected Mode
 # 1 - Enable Protected Mode
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Privileged -Name bProtectedMode -Value 1 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\Privileged -Name bProtectedMode -Value 1 -Type DWord -errorAction SilentlyContinue
 
 # AdobePDFProtectedView switches on Protected View for all files from
 # untrusted sources.
 # (HKEY_CURRENT_USER\SOFTWARE\Adobe\Acrobat Reader\<version>\TrustManager -> iProtectedView)
 # 0 - Disable Protected View
 # 1 - Enable Protected View
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name iProtectedView -Value 1 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name iProtectedView -Value 1 -Type DWord -errorAction SilentlyContinue
 
 # AdobePDFEnhancedSecurity switches on Enhanced Security setting under
 # "Security (Enhanced)".
 # (enabled by default in current versions)
 # (HKEY_CURRENT_USER\SOFTWARE\Adobe\Acrobat Reader\DC\TrustManager -> bEnhancedSecurityInBrowser = 1 & bEnhancedSecurityStandalone = 1)
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityInBrowser -Value 1 -Type DWord
-Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityStandalone -Value 1 -Type DWord
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityInBrowser -Value 1 -Type DWord -errorAction SilentlyContinue
+Set-ItemProperty HKCU:\SOFTWARE\Adobe\Acrobat Reader\*\TrustManager -Name bEnhancedSecurityStandalone -Value 1 -Type DWord -errorAction SilentlyContinue
 Write-Progress -Activity AutoHarden -Status "Harden-Adobe" -Completed
 
 
@@ -1296,32 +1321,6 @@ auditpol /set /subcategory:"{0CCE9240-69AE-11D9-BED3-505054503030}" /success:ena
 auditpol /set /subcategory:"{0CCE9241-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Service d’authentification Kerberos,{0CCE9242-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9242-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
-
-##############################################################################
-# Enable sysmon
-if( Get-Command sysmon -errorAction SilentlyContinue ){
-	choco install sysmon -y
-	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
-	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
-		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
-		sysmon.exe -accepteula -i C:\Windows\sysmon.xml
-		sysmon.exe -accepteula -c C:\Windows\sysmon.xml
-	}
-}
-
-##############################################################################
-# Log all autoruns to detect malware
-# From: https://github.com/palantir/windows-event-forwarding/
-if( Get-Command autorunsc -errorAction SilentlyContinue ){
-	$autorunsc7z = ("${AutoHarden_Logs}\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
-	start-job -Name LogActivity_autoruns -scriptblock {
-		autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" > "${autorunsc7z}.csv"
-		Compress-Archive -Path "${autorunsc7z}.csv" -CompressionLevel "Optimal" -DestinationPath "${autorunsc7z}.csv.zip"
-		if( [System.IO.File]::Exists("${autorunsc7z}.csv.zip") ){
-			rm -Force "${autorunsc7z}.csv"
-		}
-	}
-}
 Write-Progress -Activity AutoHarden -Status "Log-Activity" -Completed
 
 
@@ -1541,6 +1540,40 @@ Write-Progress -Activity AutoHarden -Status "Software-install-2-GlobalPackages" 
 
 
 echo "####################################################################################################"
+echo "# Software-install-Logs"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Software-install-Logs" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-install-Logs"
+##############################################################################
+# Enable sysmon
+if( -not (Get-Command sysmon -errorAction SilentlyContinue) ){
+	chocoInstall sysmon
+	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
+	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
+		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
+		sysmon.exe -accepteula -i C:\Windows\sysmon.xml
+		sysmon.exe -accepteula -c C:\Windows\sysmon.xml
+	}
+}
+
+
+##############################################################################
+# Log all autoruns to detect malware
+# From: https://github.com/palantir/windows-event-forwarding/
+if( Get-Command autorunsc -errorAction SilentlyContinue ){
+	$autorunsc7z = ("${AutoHarden_Logs}\autorunsc_"+(Get-Date -Format "yyyy-MM-dd"))
+	start-job -Name LogActivity_autoruns -scriptblock {
+		autorunsc -nobanner /accepteula -a "*" -c -h -s -v -vt "*" | Out-File -Encoding UTF8 "${autorunsc7z}.csv"
+		Compress-Archive -Path "${autorunsc7z}.csv" -CompressionLevel "Optimal" -DestinationPath "${autorunsc7z}.csv.zip"
+		if( [System.IO.File]::Exists("${autorunsc7z}.csv.zip") ){
+			rm -Force "${autorunsc7z}.csv"
+		}
+	}
+}
+Write-Progress -Activity AutoHarden -Status "Software-install-Logs" -Completed
+
+
+echo "####################################################################################################"
 echo "# Software-install-notepad++"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Software-install-notepad++" -PercentComplete 0
@@ -1613,7 +1646,7 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running ZZZ-30.__END__"
 logInfo 'Waiting for the job autoruns...'
 Wait-Job -Name LogActivity_autoruns -ErrorAction SilentlyContinue
 Stop-Transcript
-Compress-Archive -Path $AutoHardenTransScriptLog -CompressionLevel "Optimal" -DestinationPath ${AutoHardenTransScriptLog}.zip -ErrorAction SilentlyContinue
+Compress-Archive -Path $AutoHardenTransScriptLog -CompressionLevel "Optimal" -DestinationPath "${AutoHardenTransScriptLog}.zip" -ErrorAction SilentlyContinue
 if( [System.IO.File]::Exists("${AutoHardenTransScriptLog}.zip") ){
 	rm -Force $AutoHardenTransScriptLog
 }
@@ -1624,8 +1657,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfc6swhhPqrkccTi2GTlbQOgA
-# vcygggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzmNsx87csbiSlmY7UNjrmdeS
+# jWegggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1683,16 +1716,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFAJ4tYimrSkhGgyAUdw7+qH5OwlfMA0GCSqGSIb3DQEBAQUA
-# BIICAKWfsgw3T+EsrGrgXttlFIiPB3cvlXozVpX3R5Y8RV+n1+LcvU6e/3tQc743
-# RCwusjcd2cEhqFZdDI9FS0lS21uRHSks99gTvSDEVL0jx1q2hpJ8uUqTGE9JsU0E
-# Rz/Yo2YMKq+72D7Mo1oYD5EF9iU+o8LOwTaccrvsKsZCfKUaQcFlIheWVInhKSQu
-# g6eFntcdu4OLYRpmk/x9wZHW6sZdDQb6tt1arg1IaOXJEnbi0/KNCSfVzQ/hrdl1
-# uTnLFWyRNc7CZRGlf9HnWobEab+3Wf/Jd/WarR7GJ69ubFcrVTq+RZWWy6VGoY9M
-# ag3OOzDIwf4eS9RaVlrRrY8/Gj6ueoTJcLxfTEmcQt2Npts+BxDxtgV8RhPQN9Em
-# VDWZqmqQgZ2DQyCvGcGW7oEKulN4wNOiJGYVf9Ss8SKUu0rj1V5pH9DmSuinhU5J
-# bTA+Mz3uRcBXcpmagdbrb9P/H/ZLwNgfQEwQNtosEkSOKVCCqcJeDsJ8F4wpyJA+
-# c2UFxgHUHVGTumuB2WFcQKkhpbMRfsJ27YtidLqshLAEXGfR9zRRUcgNW4XyOZxl
-# CQyH8+rsWtcTFwuVkyzSBFCXNBwTGiOhmnSjgiFWVermpKwbuVn/mLfONvt9h28y
-# P6mSWgvQNrNaC/D6gmAou+4iCxsYDrl/RTG1HyJcryFBnTCd
+# KoZIhvcNAQkEMRYEFLmJw2Y/YQZwXF79XmvHq9QGdU1BMA0GCSqGSIb3DQEBAQUA
+# BIICADHF52eAIWqI6aeQRHLAoUz9Rr/QI+paOBhv7dS4Z+MJg5eRZIBL6EMql/dz
+# lAxabENJeo6IeKs06HMzcCIkCFikYhETDO2EyFbV0N9lx/xmYhhp1IKhQ75aT0s5
+# UaIS2+nYbJjpVya8zDWn4J9yZUj4rZGWSIridAXGxScfywMZoEYSrPUH5jk2yNJa
+# XBX0hRfydUX70CeB89NmbwaFSd8e3BMuuxT0114a+lKxWxrj9/dgrN2ihc1bIEFZ
+# ZX/9I1ZI3PcuJXbsq7pzyCU6fZRaqREVSZf4da8iPzN5PHRVePPta+thw7VLlOs5
+# OVeWRryVpuRED4iKV4iDUDYPfV/Dl0ck0SmmjArEt/iYO4I9YVDDgtifvwSdBRRN
+# tiJ7TPMyG9tyVR49FVTIC6HtsEqdq8lB0g7GONiRbsIvtN3NaonQ/LEiuekxLd/Y
+# KviGiuwMS6ij8RnaAn3PNoOZhWv5MfDzHSXy2/LlBlgLmwIMSS9UVfX41AOnNLP4
+# bGSRygWwz6JC3cqGBpMAc2Wy1/MpT+AX8RZCwGmy9WrfUkYTAiqke4uJeSyrGXTb
+# JLlV8Zu0GPqvskUZtpMEZrof7rL/YYlu/MM6jBkbIDF4KJYrYZVBsRgAZhSdbwZ1
+# hBZZ63dgLMlw99DGhVYXePe1RduyToPFxzUAfnZBd5fx+aQD
 # SIG # End signature block
