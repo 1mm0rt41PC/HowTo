@@ -2,7 +2,7 @@
 # Enable sysmon
 if( -not (Get-Command sysmon -errorAction SilentlyContinue) ){
 	chocoInstall sysmon
-	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
+	$sysmonconfig = curl.exe $AutoHarden_SysmonUrl
 	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
 		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
 		sysmon.exe -accepteula -i C:\Windows\sysmon.xml

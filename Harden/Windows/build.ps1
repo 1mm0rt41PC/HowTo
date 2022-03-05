@@ -91,6 +91,8 @@ echo 'if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).gr
 echo '$AutoHarden_Folder="C:\Windows\AutoHarden"' >> $output
 echo '$AutoHarden_Logs="${AutoHarden_Folder}\logs"' >> $output
 echo '$AutoHarden_AsksFolder="${AutoHarden_Folder}\asks"' >> $output
+echo '#$AutoHarden_SysmonUrl="https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml"' >> $output
+echo '$AutoHarden_SysmonUrl="https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/sysmonconfig.xml"' >> $output
 echo 'mkdir $AutoHarden_Folder -Force -ErrorAction Continue | Out-Null' >> $output
 echo 'mkdir $AutoHarden_Logs -Force -ErrorAction Continue | Out-Null' >> $output
 echo 'mkdir $AutoHarden_AsksFolder -Force -ErrorAction Continue | Out-Null' >> $output

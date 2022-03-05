@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-03-04
-$AutoHarden_version="2022-03-04"
+# Update: 2022-03-05
+$AutoHarden_version="2022-03-05"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -50,6 +50,8 @@ if( ![bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -
 $AutoHarden_Folder="C:\Windows\AutoHarden"
 $AutoHarden_Logs="${AutoHarden_Folder}\logs"
 $AutoHarden_AsksFolder="${AutoHarden_Folder}\asks"
+#$AutoHarden_SysmonUrl="https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml"
+$AutoHarden_SysmonUrl="https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/sysmonconfig.xml"
 mkdir $AutoHarden_Folder -Force -ErrorAction Continue | Out-Null
 mkdir $AutoHarden_Logs -Force -ErrorAction Continue | Out-Null
 mkdir $AutoHarden_AsksFolder -Force -ErrorAction Continue | Out-Null
@@ -1548,7 +1550,7 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Software-instal
 # Enable sysmon
 if( -not (Get-Command sysmon -errorAction SilentlyContinue) ){
 	chocoInstall sysmon
-	$sysmonconfig = curl.exe https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
+	$sysmonconfig = curl.exe $AutoHarden_SysmonUrl
 	if( -not [String]::IsNullOrWhiteSpace($sysmonconfig) ){
 		$sysmonconfig | Out-File -Encoding ASCII C:\Windows\sysmon.xml
 		sysmon.exe -accepteula -i C:\Windows\sysmon.xml
@@ -1657,8 +1659,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzmNsx87csbiSlmY7UNjrmdeS
-# jWegggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqwhB57kAyV/DbfzqRF04EJL2
+# oDKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1716,16 +1718,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFLmJw2Y/YQZwXF79XmvHq9QGdU1BMA0GCSqGSIb3DQEBAQUA
-# BIICADHF52eAIWqI6aeQRHLAoUz9Rr/QI+paOBhv7dS4Z+MJg5eRZIBL6EMql/dz
-# lAxabENJeo6IeKs06HMzcCIkCFikYhETDO2EyFbV0N9lx/xmYhhp1IKhQ75aT0s5
-# UaIS2+nYbJjpVya8zDWn4J9yZUj4rZGWSIridAXGxScfywMZoEYSrPUH5jk2yNJa
-# XBX0hRfydUX70CeB89NmbwaFSd8e3BMuuxT0114a+lKxWxrj9/dgrN2ihc1bIEFZ
-# ZX/9I1ZI3PcuJXbsq7pzyCU6fZRaqREVSZf4da8iPzN5PHRVePPta+thw7VLlOs5
-# OVeWRryVpuRED4iKV4iDUDYPfV/Dl0ck0SmmjArEt/iYO4I9YVDDgtifvwSdBRRN
-# tiJ7TPMyG9tyVR49FVTIC6HtsEqdq8lB0g7GONiRbsIvtN3NaonQ/LEiuekxLd/Y
-# KviGiuwMS6ij8RnaAn3PNoOZhWv5MfDzHSXy2/LlBlgLmwIMSS9UVfX41AOnNLP4
-# bGSRygWwz6JC3cqGBpMAc2Wy1/MpT+AX8RZCwGmy9WrfUkYTAiqke4uJeSyrGXTb
-# JLlV8Zu0GPqvskUZtpMEZrof7rL/YYlu/MM6jBkbIDF4KJYrYZVBsRgAZhSdbwZ1
-# hBZZ63dgLMlw99DGhVYXePe1RduyToPFxzUAfnZBd5fx+aQD
+# KoZIhvcNAQkEMRYEFBpk2AdsptRsFCu0rXDoGq2+ZKLiMA0GCSqGSIb3DQEBAQUA
+# BIICADoqYfTYmfZ17NPr37IiJI8RHtRxP6Klljt6DcTbwBl5CrTR2gp1dmh+qBC7
+# 5qbs4oWMJ0J2RolZWzNUQDmXv9P4ivftHX7/hTihnecnQGojq1Ma5kLmBR3pY4Za
+# X3J/e9lgjfcA8CPS+GcI+1n0mfUFBcxRD750MECbIuTZ0ctvunJfd765VfWR80Jh
+# v6LOkq+rjUMpLjU9Kf5eJG7UVRxFMl067ytPVBORo/zDrg6R/yyChFe+WBmaLYw8
+# XYX2HRJX+iGYQRq5IsRQkHQm7tdMZrh6JLmiIIiFWpKRPdRWnvE0OntnVBcc0Qo1
+# 0PF3qL3tuTGcfnhM2AvJus9iWIa90XtApZ0DUSzGO7tN5zpGZp86tHGjnkRM6lqf
+# kwvbbUWHuC9i7RHjBvtx68dHoHLT6apkAqYufFvDWngKmIGzK+o5rg/dE+0k0Fk4
+# hgN+mom0NEm2jc+1USrW2tGIIfJCtkfy3QKv5mL68atfEpk6L8dR7n46mhWilYI7
+# yw8tWJkOsNz2UzhUuextMGCIa+Nh8/Q4YJeq/CgNcy2MbriwZvxPyaxW8tdb/5Us
+# VlBq+rk57T9iRVlkTq0y9y+ezE5qGyM1pVYn19zQCG6cPhSqtq9Ir4bK+y+dUsXZ
+# 2bEjdR7ZoIj/9QSBYNCnKjv+0izGW5ANYkj6ZsEXBjvKiPX5
 # SIG # End signature block
