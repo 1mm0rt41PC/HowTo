@@ -334,6 +334,11 @@ fi
 ([ "${HASH_TYPE^^}" = "NETNTLMV2" ] || [ "${HASH_TYPE^^}" = "NTLMV2" ]) && export HASH_TYPE=5600
 [ "${HASH_TYPE^^}" = "PMKID" ] && export HASH_TYPE=16800
 [ "${HASH_TYPE^^}" = "JWT" ] && export HASH_TYPE=16500
+if [ "${HASH_TYPE^^}" = "TEST" ]; then
+	export HASH_TYPE=1000;
+	export TEST_DICO=$HASHES;
+	export HASHES=$TRAINING_NTLM;
+fi
 
 if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_TYPE" ]) || [ ! -f "$HASHES" ]; then
 	echo -e '\033[31m*******************************************************************************'
@@ -341,6 +346,8 @@ if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_
 	echo "Invalid hash type >$HASH_TYPE<"
 	echo 'Usage:'
 	echo "  $0 <hash-type> <hash-file>"
+	echo "  $0 test <dico-to-test> (will be tested against $TRAINING_NTLM in NTLM)"
+	echo "  TEST_DICO=<dico-to-test> $0 <hash-type> <hash-file>"
 	echo ''
 	echo 'With:'
 	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
@@ -350,14 +357,21 @@ if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_
 fi
 
 if [ "$TEST_DICO" != "" ]; then
-	if title "Test dico $TEST_DICO ?"; then
+	if title "Test dico $TEST_DICO against $HASHES in $HASH_TYPE type ?"; then
+		export known_pass=`$HCB -m $HASH_TYPE $HASHES --show /opt/.training_ntlm.txt | wc -l`
+		echo "[*] Test dico $TEST_DICO against $HASHES in $HASH_TYPE type" >> $SCRIPT_PATH/.test-dico.log
+		echo "[*] NB password know at this point: $known_pass" | tee -a $SCRIPT_PATH/.test-dico.log
 		hashcat 0 `absPath $TEST_DICO`
 		for rule in $RULES; do
 			if title "Using dico $TEST_DICO with rule $rule"; then
 				hashcat 0 `absPath $TEST_DICO` -r `absPath $HC/rules/$rule`
 				loopOnPotfile
 			fi
+			export known_pass2=`$HCB -m $HASH_TYPE $HASHES --show /opt/.training_ntlm.txt | wc -l`
+			echo "[*] NB password know at this point: `expr $known_pass2 '-' $known_pass`" | tee -a $SCRIPT_PATH/.test-dico.log
 		done
+		export known_pass2=`$HCB -m $HASH_TYPE $HASHES --show /opt/.training_ntlm.txt | wc -l`
+		echo "[*] NB password know at this point: `expr $known_pass2 '-' $known_pass`" | tee -a $SCRIPT_PATH/.test-dico.log
 	fi
 	exit 0
 fi
