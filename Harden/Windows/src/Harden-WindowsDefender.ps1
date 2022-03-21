@@ -73,7 +73,7 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	# https://blogs.windows.com/windowsexperience/2018/03/20/announcing-windows-server-vnext-ltsc-build-17623/
 	# ---------------------
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	Invoke-WebRequest -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
+	Invoke-WebRequest -UseBasicParsing -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
 	rm $env:temp\ProcessMitigation.xml

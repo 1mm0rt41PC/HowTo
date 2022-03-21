@@ -89,7 +89,7 @@ $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable -Exec
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 if( ask "Auto update AutoHarden every day at 08h00 AM" "0-AutoUpdateFromWeb.ask" ){
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	Invoke-WebRequest -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+	Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
 		Write-Host "[*] The downloaded PS1 has a valid signature !"
@@ -677,7 +677,7 @@ if( -not (ask "Disable WindowsDefender" "Optimiz-DisableDefender.ask") -and (ask
 	# https://blogs.windows.com/windowsexperience/2018/03/20/announcing-windows-server-vnext-ltsc-build-17623/
 	# ---------------------
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	Invoke-WebRequest -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
+	Invoke-WebRequest -UseBasicParsing -Uri https://demo.wd.microsoft.com/Content/ProcessMitigation.xml -OutFile $env:temp\ProcessMitigation.xml
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	Set-ProcessMitigation -PolicyFilePath $env:temp\ProcessMitigation.xml
 	rm $env:temp\ProcessMitigation.xml
@@ -746,7 +746,7 @@ Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Block
 $autodicover=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 autodicover"
 if( [string]::IsNullOrEmpty($autodicover) ){
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	$tlds = Invoke-WebRequest -Uri 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
+	$tlds = Invoke-WebRequest -UseBasicParsing -Uri 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 
 	$domains = $tlds.Content.ToLower().Replace("`r","").Replace("\r","").Split("`n") | where { -not [string]::IsNullOrEmpty($_) -and -not $_.StartsWith('#') } | foreach {
@@ -821,7 +821,7 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableCABlueCoat" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-DisableCABlueCoat"
 # See http://blogs.msmvps.com/alunj/2016/05/26/untrusting-the-blue-coat-intermediate-ca-from-windows/
-#Invoke-WebRequest -Uri "https://crt.sh/?id=19538258" -OutFile "${env:temp}/Hardening-DisableCABlueCoat.crt"
+#Invoke-WebRequest -UseBasicParsing -Uri "https://crt.sh/?id=19538258" -OutFile "${env:temp}/Hardening-DisableCABlueCoat.crt"
 echo @'
 -----BEGIN CERTIFICATE-----
 MIIGTDCCBTSgAwIBAgIQUWMOvf4tj/x5cQN2PXVSwzANBgkqhkiG9w0BAQsFADCB
@@ -1662,8 +1662,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMXPrU3ucA2U+zFSmppe865v/
-# Htugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZB+tEeXgDnUk8AY4WA/o9Fjb
+# 2Sugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1721,16 +1721,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFJFHBqa7cJu4PYki1+6z59XrQ1lYMA0GCSqGSIb3DQEBAQUA
-# BIICALpVvSBZ++F+HDftHsUY6PoeJO7mjmU6e34jZMdkIlrM+IVX+yWDq5Te82V/
-# vPO6QSpGPgyJmXsqiwwXE9FVQmQDuaW1AJ53Tejx2tOlsnx6Yn6wJLkcoGVMksJN
-# 3a2JelwtpgJfP23+Bwl5o2AtJR1LRgREYSQGG4rT/W7geFVSKSakYrFJwoA2ilbL
-# FLxNiXa9Z+UZv9pwMZXJeuSMWssqLINXmyauMZJxtlFKarg9NqDCdQxVca9oOhI1
-# wVbLCmEO1910BU7FZ2qj2QMjrTgA4wm9s4LNOmkJ8/EeY5+5NKgsNJIRVF5SX1Nq
-# xOP8TmD4ogtDEoo0L/2YTSjyhpsV34AdWRD3RRkD+Zn/0uE5bkcZG9a2z5TuqeB9
-# Zo9BWKXPEip7cQzu74C4zyJzvqWEZ06ME4upDDkSvS6mWBfyvr/JPPoaeHEbvhn8
-# DYabnCzHA11RhL3sVq7ikw++zwAoFIY093tjkY8DRrO2e1oQEIcALy39vvx47a2f
-# 7acGrLDdoIsYCHBpL++QdT38up/GBxrma1jbWKktTQDyybcE4WT6w5pq/B9Wcv/g
-# eswSXHWsBuyc2fItDWmDO19ebyXZdpQoNrLHurNQpqWtwezh0Q+6awCkwPAaY3VW
-# JTVnlEW1NEM3/Gu0nCPOsbR+Ns+RKMB+2M30NUZguH7hVKvX
+# KoZIhvcNAQkEMRYEFJ5JOMgh/dU7J41oCNpG0S6XP9dsMA0GCSqGSIb3DQEBAQUA
+# BIICAJkBvDzEe0jz2DghC0I2zLJ/AI8UJPGwvKfdN622UpQythueacBNldD43Xpg
+# RTqkLoLTGzJe2fRyLf8Ro2WFZbIhiNzupTqH7/ib3x/Pje+WrmTiMWC0Ikgkp8E1
+# VycUVOXh+4+FVr2iPvmNFgWx7hPPx0Jg3ZWfKxGYdGOtr4VEcJ1sym1mybWvzWqk
+# KBHjJKrdjuXXbyJC/D+bPqpuLHk1lInu6bk3Qecii7qlzkCR5Q5qKuw4edrFRSB8
+# CTAkjMq0kPOtfgADWZgHhuD8HarZIFx19QSQBEKC7cOJSEJtfLaINnQyAza9k/rO
+# ugVrwg0uTKgku8SBKbmAT8vSxyIMy5mVT7GZbKuhWY+7XChhKmVkhgxeP3wVZXmJ
+# B9WHz3htO6Yq+SJnECJbp4lLpuJqQVwiC6+g7AD/wpiFci4ptIIEK140X0oUpLMD
+# 66CVhciJcyd19CeipLEfLtUyzmutBwgInRXZL3YkJ7CSayKUd4TQMtTKcX1X3Hac
+# uEYmdUe93TAPuluwWhdg/N7NbL/Of3wO1QOR8JDWcdiq/7+NvC3sF98GTg+8843v
+# 76KZOcvjjX9rEymtVcxMwpoAU0nlYA3ApqaOIJnjJYz3nyxZZP0/Jpm2KgxcnqGi
+# Uo5oSrhk9iVeExx7mfu4qYaUEUZk4VxV4Itts0BVMJmtkjJr
 # SIG # End signature block
