@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-03-05
-$AutoHarden_version="2022-03-05"
+# Update: 2022-03-21
+$AutoHarden_version="2022-03-21"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -443,6 +443,9 @@ reg add 'HKEY_CLASSES_ROOT\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1F
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\OneDrive' /v PreventNetworkTrafficPreUserSignIn /t REG_DWORD /d 1 /f
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OneDrive' /v DisableFileSync /t REG_DWORD /d 1 /f
 reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\OneDrive' /v DisableFileSyncNGSC /t REG_DWORD /d 1 /f
+
+[System.Environment]::SetEnvironmentVariable('OneDrive','NUL',[System.EnvironmentVariableTarget]::User)
+[System.Environment]::SetEnvironmentVariable('OneDrive','NUL',[System.EnvironmentVariableTarget]::Machine)
 }
 Write-Progress -Activity AutoHarden -Status "Crapware-Onedrive" -Completed
 
@@ -1176,7 +1179,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Cha
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
 
 if( -not [System.IO.File]::Exists("${AutoHarden_Logs}\AuditPol_BEFORE.log.zip") ){
-	Auditpol /get /category:* > $AutoHarden_Logs\AuditPol_BEFORE.log
+	Auditpol /get /category:* | Out-File -Encoding UT8 $AutoHarden_Logs\AuditPol_BEFORE.log
 	Compress-Archive -Path "${AutoHarden_Logs}\AuditPol_BEFORE.log" -CompressionLevel "Optimal" -DestinationPath "${AutoHarden_Logs}\AuditPol_BEFORE.log.zip"
 }
 
@@ -1409,7 +1412,7 @@ echo "##########################################################################
 Write-Progress -Activity AutoHarden -Status "Optimiz-cmd-color" -PercentComplete 0
 Write-Host -BackgroundColor Blue -ForegroundColor White "Running Optimiz-cmd-color"
 # https://ss64.com/nt/syntax-ansi.html
-reg.exe add HKEY_CURRENT_USER\Console /v VirtualTerminalLevel /d 1 /t REG_DWORD
+reg.exe add HKEY_CURRENT_USER\Console /v VirtualTerminalLevel /d 1 /t REG_DWORD /f
 Write-Progress -Activity AutoHarden -Status "Optimiz-cmd-color" -Completed
 
 
@@ -1659,8 +1662,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqwhB57kAyV/DbfzqRF04EJL2
-# oDKgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMXPrU3ucA2U+zFSmppe865v/
+# Htugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1718,16 +1721,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFBpk2AdsptRsFCu0rXDoGq2+ZKLiMA0GCSqGSIb3DQEBAQUA
-# BIICADoqYfTYmfZ17NPr37IiJI8RHtRxP6Klljt6DcTbwBl5CrTR2gp1dmh+qBC7
-# 5qbs4oWMJ0J2RolZWzNUQDmXv9P4ivftHX7/hTihnecnQGojq1Ma5kLmBR3pY4Za
-# X3J/e9lgjfcA8CPS+GcI+1n0mfUFBcxRD750MECbIuTZ0ctvunJfd765VfWR80Jh
-# v6LOkq+rjUMpLjU9Kf5eJG7UVRxFMl067ytPVBORo/zDrg6R/yyChFe+WBmaLYw8
-# XYX2HRJX+iGYQRq5IsRQkHQm7tdMZrh6JLmiIIiFWpKRPdRWnvE0OntnVBcc0Qo1
-# 0PF3qL3tuTGcfnhM2AvJus9iWIa90XtApZ0DUSzGO7tN5zpGZp86tHGjnkRM6lqf
-# kwvbbUWHuC9i7RHjBvtx68dHoHLT6apkAqYufFvDWngKmIGzK+o5rg/dE+0k0Fk4
-# hgN+mom0NEm2jc+1USrW2tGIIfJCtkfy3QKv5mL68atfEpk6L8dR7n46mhWilYI7
-# yw8tWJkOsNz2UzhUuextMGCIa+Nh8/Q4YJeq/CgNcy2MbriwZvxPyaxW8tdb/5Us
-# VlBq+rk57T9iRVlkTq0y9y+ezE5qGyM1pVYn19zQCG6cPhSqtq9Ir4bK+y+dUsXZ
-# 2bEjdR7ZoIj/9QSBYNCnKjv+0izGW5ANYkj6ZsEXBjvKiPX5
+# KoZIhvcNAQkEMRYEFJFHBqa7cJu4PYki1+6z59XrQ1lYMA0GCSqGSIb3DQEBAQUA
+# BIICALpVvSBZ++F+HDftHsUY6PoeJO7mjmU6e34jZMdkIlrM+IVX+yWDq5Te82V/
+# vPO6QSpGPgyJmXsqiwwXE9FVQmQDuaW1AJ53Tejx2tOlsnx6Yn6wJLkcoGVMksJN
+# 3a2JelwtpgJfP23+Bwl5o2AtJR1LRgREYSQGG4rT/W7geFVSKSakYrFJwoA2ilbL
+# FLxNiXa9Z+UZv9pwMZXJeuSMWssqLINXmyauMZJxtlFKarg9NqDCdQxVca9oOhI1
+# wVbLCmEO1910BU7FZ2qj2QMjrTgA4wm9s4LNOmkJ8/EeY5+5NKgsNJIRVF5SX1Nq
+# xOP8TmD4ogtDEoo0L/2YTSjyhpsV34AdWRD3RRkD+Zn/0uE5bkcZG9a2z5TuqeB9
+# Zo9BWKXPEip7cQzu74C4zyJzvqWEZ06ME4upDDkSvS6mWBfyvr/JPPoaeHEbvhn8
+# DYabnCzHA11RhL3sVq7ikw++zwAoFIY093tjkY8DRrO2e1oQEIcALy39vvx47a2f
+# 7acGrLDdoIsYCHBpL++QdT38up/GBxrma1jbWKktTQDyybcE4WT6w5pq/B9Wcv/g
+# eswSXHWsBuyc2fItDWmDO19ebyXZdpQoNrLHurNQpqWtwezh0Q+6awCkwPAaY3VW
+# JTVnlEW1NEM3/Gu0nCPOsbR+Ns+RKMB+2M30NUZguH7hVKvX
 # SIG # End signature block

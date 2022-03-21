@@ -21,7 +21,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Cha
 reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-DNS-Client/Operational" /v Enabled /t REG_DWORD /d 1 /f
 
 if( -not [System.IO.File]::Exists("${AutoHarden_Logs}\AuditPol_BEFORE.log.zip") ){
-	Auditpol /get /category:* > $AutoHarden_Logs\AuditPol_BEFORE.log
+	Auditpol /get /category:* | Out-File -Encoding UT8 $AutoHarden_Logs\AuditPol_BEFORE.log
 	Compress-Archive -Path "${AutoHarden_Logs}\AuditPol_BEFORE.log" -CompressionLevel "Optimal" -DestinationPath "${AutoHarden_Logs}\AuditPol_BEFORE.log.zip"
 }
 
