@@ -228,6 +228,23 @@ function stats_on
 
 
 ####################################################################################################
+# View help/usage
+# @return [NONE]
+function usage
+{
+	echo 'Usage:'
+	echo "  $0 <hash-type> <hash-file>"
+	echo "  $0 test <dico-to-test> (will be tested against $TRAINING_NTLM in NTLM)"
+	echo "  TEST_DICO=<dico-to-test> $0 <hash-type> <hash-file>"
+	echo ''
+	echo 'With:'
+	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
+	echo '  <hash-file>: The file that contains the hashed passwords'
+	#$HCB --force --example-hashes
+}
+
+
+####################################################################################################
 # PREREQUISITES
 ####################################################################################################
 # For Cygwin
@@ -275,13 +292,7 @@ if [ "$1" = "--rebuild" ]; then
 fi
 
 if [ "$1" = "" ] || [ "$HASHES" = "" ]; then
-	echo 'Usage:'
-	echo "  $0 <hash-type> <hash-file>"
-	echo ''
-	echo 'With:'
-	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2, JWT). See hashcat --help'
-	echo '  <hash-file>: The file that contains the hashed passwords'
-	#$HCB --force --example-hashes
+	usage
 	exit
 fi
 
@@ -344,15 +355,7 @@ if [ "$HASH_TYPE" -lt 0 ] || !([ -n "$HASH_TYPE" ] && [ "$HASH_TYPE" -eq "$HASH_
 	echo -e '\033[31m*******************************************************************************'
 	echo -e 'Invalid Argument !\033[0m'
 	echo "Invalid hash type >$HASH_TYPE<"
-	echo 'Usage:'
-	echo "  $0 <hash-type> <hash-file>"
-	echo "  $0 test <dico-to-test> (will be tested against $TRAINING_NTLM in NTLM)"
-	echo "  TEST_DICO=<dico-to-test> $0 <hash-type> <hash-file>"
-	echo ''
-	echo 'With:'
-	echo '  <hash-type>: The type of the hash (ex:1000 for NTLM, 5500 for NetNTLMv1, 5600 for NetNTLMv2). See hashcat --help'
-	echo '  <hash-file>: The file that contains the hashed passwords'
-	#$HCB --force --example-hashes
+	usage
 	exit
 fi
 
