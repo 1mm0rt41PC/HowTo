@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-03-21
-$AutoHarden_version="2022-03-21"
+# Update: 2022-03-31
+$AutoHarden_version="2022-03-31"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -1107,6 +1107,24 @@ Write-Progress -Activity AutoHarden -Status "Hardening-FileExtension" -Completed
 
 
 echo "####################################################################################################"
+echo "# Hardening-Navigator"
+echo "####################################################################################################"
+Write-Progress -Activity AutoHarden -Status "Hardening-Navigator" -PercentComplete 0
+Write-Host -BackgroundColor Blue -ForegroundColor White "Running Hardening-Navigator"
+# Enable support for chromecast
+reg add HKEY_LOCAL_MACHINE\Software\Policies\Google\Chrome /v EnableMediaRouter /d 1 /f
+# Disable password management
+reg add HKEY_LOCAL_MACHINE\Software\Policies\Google\Chrome /v PasswordManagerEnabled /d 0 /f
+
+reg add HKEY_LOCAL_MACHINE\Software\Policies\BraveSoftware\Brave /v PasswordManagerEnabled /d 0 /f
+reg add HKEY_LOCAL_MACHINE\Software\Policies\BraveSoftware\Brave /v EnableMediaRouter /d 1 /f
+
+reg add HKEY_LOCAL_MACHINE\Software\Policies\Chromium /v PasswordManagerEnabled /d 0 /f
+reg add HKEY_LOCAL_MACHINE\Software\Policies\Chromium /v EnableMediaRouter /d 1 /f
+Write-Progress -Activity AutoHarden -Status "Hardening-Navigator" -Completed
+
+
+echo "####################################################################################################"
 echo "# Hardening-RemoteAssistance"
 echo "####################################################################################################"
 Write-Progress -Activity AutoHarden -Status "Hardening-RemoteAssistance" -PercentComplete 0
@@ -1662,8 +1680,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZB+tEeXgDnUk8AY4WA/o9Fjb
-# 2Sugggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU0pvo9stAdYZXVUdnVurCu7Ot
+# H22gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1721,16 +1739,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFJ5JOMgh/dU7J41oCNpG0S6XP9dsMA0GCSqGSIb3DQEBAQUA
-# BIICAJkBvDzEe0jz2DghC0I2zLJ/AI8UJPGwvKfdN622UpQythueacBNldD43Xpg
-# RTqkLoLTGzJe2fRyLf8Ro2WFZbIhiNzupTqH7/ib3x/Pje+WrmTiMWC0Ikgkp8E1
-# VycUVOXh+4+FVr2iPvmNFgWx7hPPx0Jg3ZWfKxGYdGOtr4VEcJ1sym1mybWvzWqk
-# KBHjJKrdjuXXbyJC/D+bPqpuLHk1lInu6bk3Qecii7qlzkCR5Q5qKuw4edrFRSB8
-# CTAkjMq0kPOtfgADWZgHhuD8HarZIFx19QSQBEKC7cOJSEJtfLaINnQyAza9k/rO
-# ugVrwg0uTKgku8SBKbmAT8vSxyIMy5mVT7GZbKuhWY+7XChhKmVkhgxeP3wVZXmJ
-# B9WHz3htO6Yq+SJnECJbp4lLpuJqQVwiC6+g7AD/wpiFci4ptIIEK140X0oUpLMD
-# 66CVhciJcyd19CeipLEfLtUyzmutBwgInRXZL3YkJ7CSayKUd4TQMtTKcX1X3Hac
-# uEYmdUe93TAPuluwWhdg/N7NbL/Of3wO1QOR8JDWcdiq/7+NvC3sF98GTg+8843v
-# 76KZOcvjjX9rEymtVcxMwpoAU0nlYA3ApqaOIJnjJYz3nyxZZP0/Jpm2KgxcnqGi
-# Uo5oSrhk9iVeExx7mfu4qYaUEUZk4VxV4Itts0BVMJmtkjJr
+# KoZIhvcNAQkEMRYEFH84t5HOiO3r88itexFFB2RYRT1IMA0GCSqGSIb3DQEBAQUA
+# BIICAAW5JKzfaqH8hB2q4ld79SqVDVPiHb9b8ykQwgumq0OGjAQqGiv0eAJUNmoy
+# 42bdn1LdFOq8fXD7BQ3SVbexeHcXLJ7UOJYhvB0r8x0028v5S4paNVsrQSE5/APM
+# DPD6nfc/Oq6QSFGhX8rtUfpgvSEl9YShOfVSuplWUcpoU4q5ayVfF9MuEqnmh+Qw
+# OgF6qPA4sVgEs68icLr7mWE0vTYot41L3kqqOb2ZPSxZmr5BqUTXfdcbpHDdpYIh
+# f2iI1YlfKqH6lmiBfMXEXCyIP1IIXo/U1Nj/UF9/bzZ+K56OMNoL6oGf85bS4b+T
+# IQ3dczZH78eiTJax0rXwnyO1JJ5OAcDw5FDBCusGV7FJymQ3XBVUozf4T9EogEhI
+# ITnRoYHz498Nwa6yD9oPM/t9PIeGMRKbecZHYfN8AYJ8eDdlY4pxyA8EfUH2JjYM
+# suZUdM2VC1ntcokdgRRX2bmzNsqOztHIPhsUBRiAPScr4zdEJxnWMz7Wp1TZtUax
+# TNWePFXNggjiQMKdz1r+DSAKwaNTzmf/QZXuLXkdFjc22ThnIHf5SlEh0s5b6HGQ
+# iHtTYlGKtCQ1YhhKox51EQo3s9C1qTho4oGbqtMzHjk7NwJHTksCGtnq/KXEvK3I
+# SqSfx/nx1o8PiTTMbMI2NrBaVs2+vWz48gQaC3PmOAkdFB/O
 # SIG # End signature block
