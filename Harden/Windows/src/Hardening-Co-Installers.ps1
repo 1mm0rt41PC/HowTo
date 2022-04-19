@@ -1,1 +1,0 @@
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Installer" /t REG_DWORD /v DisableCoInstallers /d 1 /f

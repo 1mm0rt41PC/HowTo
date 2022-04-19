@@ -1,2 +1,0 @@
-# From: https://www.windowslatest.com/2020/03/15/windows-10-will-finally-allow-you-to-reclaim-reserved-storage/#:~:text=If%20you%20clean%20install%20Windows,for%20your%20additional%20system%20files
-DISM.exe /Online /Set-ReservedStorageState /State:Disabled
