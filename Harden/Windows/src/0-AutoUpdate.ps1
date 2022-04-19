@@ -5,7 +5,7 @@ $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable -Exec
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 if( ask "Auto update AutoHarden every day at 08h00 AM" "0-AutoUpdateFromWeb.ask" ){
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+	Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/1mm0rt41PC/AutoHarden/master/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
 		Write-Host "[*] The downloaded PS1 has a valid signature !"

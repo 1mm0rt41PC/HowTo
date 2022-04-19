@@ -99,8 +99,9 @@ auditpol /set /subcategory:"{0CCE9223-69AE-11D9-BED3-505054503030}" /success:ena
 #   Partage de fichiers,{0CCE9224-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9224-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030} == "Filtering Platform Packet Drop"
-auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030} == "Filtering Platform Connection"
+auditpol /set /subcategory:"{0CCE9226-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Autres événements d’accès à l’objet,{0CCE9227-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9227-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers détaillé,{0CCE9244-69AE-11D9-BED3-505054503030}

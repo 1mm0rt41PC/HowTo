@@ -17,8 +17,8 @@
 # along with this program; see the file COPYING. If not, write to the
 # Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# Update: 2022-03-31
-$AutoHarden_version="2022-03-31"
+# Update: 2022-04-19
+$AutoHarden_version="2022-04-19"
 $global:AutoHarden_boradcastMsg=$true
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
@@ -89,7 +89,7 @@ $Setting = New-ScheduledTaskSettingsSet -RestartOnIdle -StartWhenAvailable -Exec
 Register-ScheduledTask -TaskName "AutoHarden" -Trigger $Trigger -User "NT AUTHORITY\SYSTEM" -Action $Action -RunLevel Highest -Settings $Setting -Force
 if( ask "Auto update AutoHarden every day at 08h00 AM" "0-AutoUpdateFromWeb.ask" ){
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Disable-NetFirewallRule
-	Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/1mm0rt41PC/HowTo/master/Harden/Windows/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
+	Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/1mm0rt41PC/AutoHarden/master/AutoHarden_RELEASE.ps1 -OutFile C:\Windows\AutoHarden\AutoHarden_temp.ps1
 	Get-NetFirewallRule -Name '*AutoHarden*Powershell*' | Enable-NetFirewallRule
 	if( (Get-AuthenticodeSignature C:\Windows\AutoHarden\AutoHarden_temp.ps1).Status -eq [System.Management.Automation.SignatureStatus]::Valid ){
 		Write-Host "[*] The downloaded PS1 has a valid signature !"
@@ -955,7 +955,11 @@ New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePor
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "137" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP137" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "UDP" -RemotePort "138" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-UDP138" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios2" -ErrorAction Ignore
 New-NetFirewallRule -direction Outbound -Action Block -Protocol "TCP" -RemotePort "139" -Group AutoHarden-NetBios -Name "[AutoHarden-$AutoHarden_version] NetBios-TCP139" -DisplayName "[AutoHarden-$AutoHarden_version] NetBios3" -ErrorAction Ignore
-set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip* -Name NetbiosOptions -Value 2
+Set-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\tcpip* -Name NetbiosOptions -Value 2
+# https://admx.help/?Category=KB160177
+# This secures the machine by telling Windows to treat itself as a NetBIOS P-node (point-to-point system).
+# These systems will only resolve NBT-NS queries using WINS – no broadcasts will take place. Success!
+Set-ItemProperty HKLM:\System\CurrentControlSet\Services\NetBT\Parameters -Name NodeType -Value 2
 Write-Progress -Activity AutoHarden -Status "Hardening-DisableNetbios" -Completed
 
 
@@ -1018,6 +1022,8 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinHttpAutoProxySv
 reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "DefaultConnectionSettings" /f
 reg delete "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v "SavedLegacySettings" /f
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /t REG_DWORD /v WpadOverride /d 0 /f
+# https://web.archive.org/web/20160301201733/http://blog.raido.be/?p=426
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /t REG_DWORD /v AutoDetect /d 0 /f
 RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8
 ipconfig /flushdns
 $_wpad=Select-String -Path C:\Windows\System32\drivers\etc\hosts -Pattern "0.0.0.0 wpad"
@@ -1275,8 +1281,9 @@ auditpol /set /subcategory:"{0CCE9223-69AE-11D9-BED3-505054503030}" /success:ena
 #   Partage de fichiers,{0CCE9224-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9224-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Rejet de paquet par la plateforme de filtrage,{0CCE9225-69AE-11D9-BED3-505054503030} == "Filtering Platform Packet Drop"
-auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
+auditpol /set /subcategory:"{0CCE9225-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Connexion de la plateforme de filtrage,{0CCE9226-69AE-11D9-BED3-505054503030} == "Filtering Platform Connection"
+auditpol /set /subcategory:"{0CCE9226-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
 #   Autres événements d’accès à l’objet,{0CCE9227-69AE-11D9-BED3-505054503030}
 auditpol /set /subcategory:"{0CCE9227-69AE-11D9-BED3-505054503030}" /success:enable /failure:disable
 #   Partage de fichiers détaillé,{0CCE9244-69AE-11D9-BED3-505054503030}
@@ -1680,8 +1687,8 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # SIG # Begin signature block
 # MIINoAYJKoZIhvcNAQcCoIINkTCCDY0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU0pvo9stAdYZXVUdnVurCu7Ot
-# H22gggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/zNX8G8DR4ADo62uGJ/nTc+1
+# OqWgggo9MIIFGTCCAwGgAwIBAgIQlPiyIshB45hFPPzNKE4fTjANBgkqhkiG9w0B
 # AQ0FADAYMRYwFAYDVQQDEw1BdXRvSGFyZGVuLUNBMB4XDTE5MTAyOTIxNTUxNVoX
 # DTM5MTIzMTIzNTk1OVowFTETMBEGA1UEAxMKQXV0b0hhcmRlbjCCAiIwDQYJKoZI
 # hvcNAQEBBQADggIPADCCAgoCggIBALrMv49xZXZjF92Xi3cWVFQrkIF+yYNdU3GS
@@ -1739,16 +1746,16 @@ Write-Progress -Activity AutoHarden -Status "ZZZ-30.__END__" -Completed
 # MBgxFjAUBgNVBAMTDUF1dG9IYXJkZW4tQ0ECEJT4siLIQeOYRTz8zShOH04wCQYF
 # Kw4DAhoFAKB4MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkD
 # MQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJ
-# KoZIhvcNAQkEMRYEFH84t5HOiO3r88itexFFB2RYRT1IMA0GCSqGSIb3DQEBAQUA
-# BIICAAW5JKzfaqH8hB2q4ld79SqVDVPiHb9b8ykQwgumq0OGjAQqGiv0eAJUNmoy
-# 42bdn1LdFOq8fXD7BQ3SVbexeHcXLJ7UOJYhvB0r8x0028v5S4paNVsrQSE5/APM
-# DPD6nfc/Oq6QSFGhX8rtUfpgvSEl9YShOfVSuplWUcpoU4q5ayVfF9MuEqnmh+Qw
-# OgF6qPA4sVgEs68icLr7mWE0vTYot41L3kqqOb2ZPSxZmr5BqUTXfdcbpHDdpYIh
-# f2iI1YlfKqH6lmiBfMXEXCyIP1IIXo/U1Nj/UF9/bzZ+K56OMNoL6oGf85bS4b+T
-# IQ3dczZH78eiTJax0rXwnyO1JJ5OAcDw5FDBCusGV7FJymQ3XBVUozf4T9EogEhI
-# ITnRoYHz498Nwa6yD9oPM/t9PIeGMRKbecZHYfN8AYJ8eDdlY4pxyA8EfUH2JjYM
-# suZUdM2VC1ntcokdgRRX2bmzNsqOztHIPhsUBRiAPScr4zdEJxnWMz7Wp1TZtUax
-# TNWePFXNggjiQMKdz1r+DSAKwaNTzmf/QZXuLXkdFjc22ThnIHf5SlEh0s5b6HGQ
-# iHtTYlGKtCQ1YhhKox51EQo3s9C1qTho4oGbqtMzHjk7NwJHTksCGtnq/KXEvK3I
-# SqSfx/nx1o8PiTTMbMI2NrBaVs2+vWz48gQaC3PmOAkdFB/O
+# KoZIhvcNAQkEMRYEFGNviq9Jryxr/CKDu0eMH6ANbRRxMA0GCSqGSIb3DQEBAQUA
+# BIICALBtetGWd9GELKBasGl3vvUwoqaVQ7KIqt9nQa2P6xGuju5jD9VJ8FURWx44
+# /sWu2qROqFbA8AYs6Regh9/DPU7bUXPd0paBYGAzZcEIycs5T88KLwBjuB3a5Nly
+# AlRVFfD1WbfZYoVCxYBWj9DaFscmhE8802Rh+pTO4osiIBPp9akqa8SIheTSCVf3
+# XrFFYpsnLNUl0Yd6TYACfSzgh2cvAW+fH+86PXO2izwAT29S7Vc3afdmMZqQNDhf
+# rN4PhV+vQRRS46hp9fzoPpwDxs/9FHtJOBqMtaDd6/QYFwR5OR4XJSBcQF5bX1c1
+# G/qANTOijqXtu7FAwbvDsZVtjZjO0tobXqMoZpTKpldcC7tgQ9Pe7ys/zQLS5p+/
+# PBZkD+BvTtqZRFcUmQo6ZIfvdXOwI2nBVHmvlJ0DGqHlDZ49vf7lmMEA862e3+qD
+# E8cksZ/GK70aYe+THn+Ru8BHml+Ju5PXDVZsnXqxVxjBuJRLGOK2rUCbcu5IyZ4P
+# PZlxrkgGTS6CEeRUI3kqHwudPaJg09hzEtU55zO7g6Wto7L7pFRyZLSsP7X4DJiq
+# kgD5L3GViJqMHSj0uj9rLGN6mc5PwVFGltn/lSP9TfW84blKZoLbfWqeLP300g8p
+# p8dzcbrKKBFMsGTrOeEZUS/IWH42s0msUdTFjhV52k48Rfzn
 # SIG # End signature block
